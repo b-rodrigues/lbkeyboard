@@ -1,0 +1,17 @@
+Package: lbkeyboard
+Title: Analysis Of Different Keyboard Layouts for Inputting Luxembourguish
+Version: 0.0.0.9000
+Authors@R: 
+    person("Bruno", "Rodrigues", , "bruno@brodrigues.co", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: What the package does (one paragraph).
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Depends: 
+    R (>= 2.10)
+Imports: 
+    magrittr
