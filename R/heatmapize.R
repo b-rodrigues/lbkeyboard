@@ -6,6 +6,9 @@
 #' @param high A colour specification for high frequencies. Can be a hex colour code or one of the inbuilt colours. Defaults to "red".
 #' @return The original keyboard dataframe but with an adjusted \code{fill} column, which colours each character according to its relative frequency.
 #'
+#' @importFrom scales colour_ramp
+#' @importFrom dplyr full_join mutate coalesce 
+#'
 #' @export
 #'
 #' @examples

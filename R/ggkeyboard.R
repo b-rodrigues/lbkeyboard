@@ -8,6 +8,9 @@
 #' @param adjust_text_colour Whether to lighten the text colour on dark keys. Defaults to TRUE.
 #' @param measurements Measurements of various aspects of the keyboard key height and width, gaps between keys and rows, etc. See \code{\link{keyboard_measurements}}.
 #'
+#' @import ggplot2
+#' @importFrom dplyr case_when group_by ungroup left_join rowwise
+#'
 #' @export
 #'
 #' @examples
