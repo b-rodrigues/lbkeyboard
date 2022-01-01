@@ -18,7 +18,6 @@
 #' A dataset containing rows and keys of a full ISO Swiss French layout, as commonly used in Luxembourg
 "ch_qwertz"
 
-
 #' Sample of french text
 #'
 #' A sample of french text

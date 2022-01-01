@@ -13,8 +13,8 @@
 #' @examples
 #' \dontrun{
 #' # Create some random string
-#' text <- sample(replicate(10, letters), replace = TRUE)
-#' letter_freq(text)
+#' data("french")
+#' letter_freq(french)
 #' }
 letter_freq <- function(text, only_alpha = TRUE){
   text %>%
