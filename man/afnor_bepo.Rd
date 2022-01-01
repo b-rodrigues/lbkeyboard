@@ -3,7 +3,7 @@
 \docType{data}
 \name{afnor_bepo}
 \alias{afnor_bepo}
-\title{Afnor BÉPO}
+\title{Afnor BÉPO keyboard}
 \format{
 An object of class \code{data.table} (inherits from \code{data.frame}) with 119 rows and 19 columns.
 }

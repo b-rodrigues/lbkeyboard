@@ -3,7 +3,7 @@
 \docType{data}
 \name{ch_qwertz}
 \alias{ch_qwertz}
-\title{Swiss French}
+\title{Swiss French keyboard}
 \format{
 An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 119 rows and 19 columns.
 }

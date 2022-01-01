@@ -3,7 +3,7 @@
 \docType{data}
 \name{afnor_azerty}
 \alias{afnor_azerty}
-\title{Afnor AZERTY}
+\title{Afnor AZERTY keyboard}
 \format{
 An object of class \code{data.table} (inherits from \code{data.frame}) with 119 rows and 19 columns.
 }
