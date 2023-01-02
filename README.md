@@ -158,6 +158,10 @@ ggkeyboard(heatmap_bepo_en)
 Here again, we see that the BÉPO layout seems to fare better than the
 QWERTZ layout.
 
+## Optimization algorithm
+
+TBD
+
 ## Acknowledgment
 
 This package uses some code from my fork of the
