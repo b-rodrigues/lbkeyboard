@@ -32,3 +32,8 @@
 #'
 #' A sample of luxembourguish text
 "luxembourguish"
+
+#' Sample of english text
+#'
+#' A sample of english text
+"english"

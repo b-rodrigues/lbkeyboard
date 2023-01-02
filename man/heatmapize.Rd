@@ -24,8 +24,8 @@ Colours the keys of the keyboard according the relative frequency of characters 
 \examples{
 \dontrun{
 # Create some random string
-text <- sample(replicate(10, letters), replace = TRUE)
-letter_freq_df <- letter_freq(text)
+data("french")
+letter_freq_df <- letter_freq(french)
 heatmap_azerty <- heatmapize(afnor_azerty, letter_freq_df)
 }
 }

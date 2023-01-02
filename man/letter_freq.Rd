@@ -20,7 +20,7 @@ Counts the frequency of each letter in a string of text
 \examples{
 \dontrun{
 # Create some random string
-text <- sample(replicate(10, letters), replace = TRUE)
-letter_freq(text)
+data("french")
+letter_freq(french)
 }
 }
