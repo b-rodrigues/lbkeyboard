@@ -8,6 +8,7 @@ optimize_layout(
   text_samples,
   keyboard = NULL,
   keys_to_optimize = letters,
+  fixed_keys = NULL,
   population_size = 100,
   generations = 500,
   mutation_rate = 0.1,
@@ -29,6 +30,11 @@ If NULL, uses a default 30-key layout.}
 
 \item{keys_to_optimize}{Character vector of keys to include in optimization.
 Default is lowercase letters a-z. Only these keys will be permuted.}
+
+\item{fixed_keys}{Character vector of keys that should remain in their
+original positions. These keys will not be moved during optimization.
+Default is NULL (no fixed keys). For example, use \code{fixed_keys = c("a", "s", "d", "f")}
+to keep the left home row keys in place while optimizing all others.}
 
 \item{population_size}{Number of individuals in the population. Default 100.}
 
@@ -61,6 +67,9 @@ A list with the following components:
 \item{improvement}{Percentage improvement over starting layout}
 \item{history}{Data frame with best and mean effort per generation}
 \item{parameters}{List of algorithm parameters used}
+\item{fixed_keys}{Character vector of keys that were held fixed}
+\item{n_fixed}{Number of fixed keys}
+\item{n_optimized}{Number of keys that were optimized}
 }
 }
 \description{
@@ -111,6 +120,13 @@ print(result$layout)
 
 # Check improvement
 cat("Improvement:", result$improvement, "\%\n")
+
+# Optimize while keeping home row keys fixed
+result_fixed <- optimize_layout(
+  text_samples = french,
+  fixed_keys = c("a", "s", "d", "f", "j", "k", "l"),
+  generations = 200
+)
 
 # Plot convergence
 plot(result$history$generation, result$history$best,

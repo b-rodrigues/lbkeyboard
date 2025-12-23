@@ -397,6 +397,69 @@ std::vector<char> ox_crossover(
   return child;
 }
 
+// Order Crossover with fixed positions - only crossover non-fixed keys
+std::vector<char> ox_crossover_fixed(
+    const std::vector<char>& parent1,
+    const std::vector<char>& parent2,
+    const std::vector<bool>& is_fixed
+) {
+  int n = parent1.size();
+  std::vector<char> child(n, '\0');
+  std::vector<bool> used(256, false);
+
+  // First, copy all fixed positions from parent1 (they're the same in both)
+  for (int i = 0; i < n; i++) {
+    if (is_fixed[i]) {
+      child[i] = parent1[i];
+      used[(unsigned char)parent1[i]] = true;
+    }
+  }
+
+  // Get indices of non-fixed positions
+  std::vector<int> free_indices;
+  for (int i = 0; i < n; i++) {
+    if (!is_fixed[i]) {
+      free_indices.push_back(i);
+    }
+  }
+
+  if (free_indices.empty()) {
+    return parent1;  // All positions are fixed
+  }
+
+  int m = free_indices.size();
+  std::uniform_int_distribution<int> dist(0, m - 1);
+  int start = dist(get_rng());
+  int end = dist(get_rng());
+  if (start > end) std::swap(start, end);
+
+  // Copy segment from parent1's free positions
+  for (int i = start; i <= end; i++) {
+    int idx = free_indices[i];
+    child[idx] = parent1[idx];
+    used[(unsigned char)parent1[idx]] = true;
+  }
+
+  // Get order of non-fixed chars from parent2
+  std::vector<char> parent2_free_order;
+  for (int i = 0; i < n; i++) {
+    if (!is_fixed[i] && !used[(unsigned char)parent2[i]]) {
+      parent2_free_order.push_back(parent2[i]);
+    }
+  }
+
+  // Fill remaining free positions
+  int j = 0;
+  for (int i = 0; i < m; i++) {
+    int idx = free_indices[(end + 1 + i) % m];
+    if (child[idx] == '\0') {
+      child[idx] = parent2_free_order[j++];
+    }
+  }
+
+  return child;
+}
+
 // Swap mutation
 void swap_mutation(std::vector<char>& layout, double mutation_rate) {
   std::uniform_real_distribution<double> prob(0.0, 1.0);
@@ -405,6 +468,21 @@ void swap_mutation(std::vector<char>& layout, double mutation_rate) {
   if (prob(get_rng()) < mutation_rate) {
     int i = pos(get_rng());
     int j = pos(get_rng());
+    std::swap(layout[i], layout[j]);
+  }
+}
+
+// Swap mutation with fixed positions - only swap non-fixed keys
+void swap_mutation_fixed(std::vector<char>& layout, double mutation_rate,
+                         const std::vector<int>& free_indices) {
+  if (free_indices.size() < 2) return;
+
+  std::uniform_real_distribution<double> prob(0.0, 1.0);
+  std::uniform_int_distribution<int> pos(0, free_indices.size() - 1);
+
+  if (prob(get_rng()) < mutation_rate) {
+    int i = free_indices[pos(get_rng())];
+    int j = free_indices[pos(get_rng())];
     std::swap(layout[i], layout[j]);
   }
 }
@@ -422,6 +500,33 @@ void scramble_mutation(std::vector<char>& layout, double mutation_rate) {
   }
 }
 
+// Scramble mutation with fixed positions - only scramble among free keys
+void scramble_mutation_fixed(std::vector<char>& layout, double mutation_rate,
+                             const std::vector<int>& free_indices) {
+  if (free_indices.size() < 2) return;
+
+  std::uniform_real_distribution<double> prob(0.0, 1.0);
+
+  if (prob(get_rng()) < mutation_rate) {
+    int m = free_indices.size();
+    std::uniform_int_distribution<int> dist(0, m - 1);
+    int start = dist(get_rng());
+    int len = std::min(3, m - start);
+
+    // Extract values at free positions
+    std::vector<char> segment(len);
+    for (int i = 0; i < len; i++) {
+      segment[i] = layout[free_indices[start + i]];
+    }
+
+    // Shuffle and put back
+    std::shuffle(segment.begin(), segment.end(), get_rng());
+    for (int i = 0; i < len; i++) {
+      layout[free_indices[start + i]] = segment[i];
+    }
+  }
+}
+
 // Inversion mutation
 void inversion_mutation(std::vector<char>& layout, double mutation_rate) {
   std::uniform_real_distribution<double> prob(0.0, 1.0);
@@ -433,6 +538,32 @@ void inversion_mutation(std::vector<char>& layout, double mutation_rate) {
     int end = dist(get_rng());
     if (start > end) std::swap(start, end);
     std::reverse(layout.begin() + start, layout.begin() + end + 1);
+  }
+}
+
+// Inversion mutation with fixed positions
+void inversion_mutation_fixed(std::vector<char>& layout, double mutation_rate,
+                              const std::vector<int>& free_indices) {
+  if (free_indices.size() < 2) return;
+
+  std::uniform_real_distribution<double> prob(0.0, 1.0);
+
+  if (prob(get_rng()) < mutation_rate) {
+    int m = free_indices.size();
+    std::uniform_int_distribution<int> dist(0, m - 1);
+    int start = dist(get_rng());
+    int end = dist(get_rng());
+    if (start > end) std::swap(start, end);
+
+    // Extract, reverse, put back
+    std::vector<char> segment(end - start + 1);
+    for (int i = start; i <= end; i++) {
+      segment[i - start] = layout[free_indices[i]];
+    }
+    std::reverse(segment.begin(), segment.end());
+    for (int i = start; i <= end; i++) {
+      layout[free_indices[i]] = segment[i - start];
+    }
   }
 }
 
@@ -478,9 +609,32 @@ List optimize_keyboard_layout(
     double w_same_finger = 3.0,
     double w_same_hand = 1.0,
     double w_row_change = 0.5,
-    bool verbose = true
+    bool verbose = true,
+    std::vector<bool> fixed_positions = std::vector<bool>()
 ) {
   int n_keys = initial_layout.size();
+
+  // Handle fixed positions
+  bool has_fixed = !fixed_positions.empty();
+  std::vector<bool> is_fixed(n_keys, false);
+  std::vector<int> free_indices;
+
+  if (has_fixed && (int)fixed_positions.size() == n_keys) {
+    is_fixed = fixed_positions;
+    for (int i = 0; i < n_keys; i++) {
+      if (!is_fixed[i]) {
+        free_indices.push_back(i);
+      }
+    }
+    if (verbose) {
+      Rcpp::Rcout << "Fixed positions: " << (n_keys - free_indices.size())
+                  << " keys, optimizing: " << free_indices.size() << " keys" << std::endl;
+    }
+  } else {
+    for (int i = 0; i < n_keys; i++) {
+      free_indices.push_back(i);
+    }
+  }
 
   // Combine all text samples
   std::string combined_text;
@@ -495,10 +649,22 @@ List optimize_keyboard_layout(
   // First individual is the initial layout
   population[0] = initial_layout;
 
-  // Rest are random permutations
+  // Rest are random permutations (only permuting non-fixed positions)
   for (int i = 1; i < population_size; i++) {
     population[i] = initial_layout;
-    std::shuffle(population[i].begin(), population[i].end(), get_rng());
+    if (has_fixed) {
+      // Only shuffle the free positions
+      std::vector<char> free_chars;
+      for (int idx : free_indices) {
+        free_chars.push_back(initial_layout[idx]);
+      }
+      std::shuffle(free_chars.begin(), free_chars.end(), get_rng());
+      for (size_t j = 0; j < free_indices.size(); j++) {
+        population[i][free_indices[j]] = free_chars[j];
+      }
+    } else {
+      std::shuffle(population[i].begin(), population[i].end(), get_rng());
+    }
   }
 
   // Calculate initial fitness
@@ -548,15 +714,25 @@ List optimize_keyboard_layout(
 
       // Crossover
       if (prob(get_rng()) < crossover_rate) {
-        child = ox_crossover(population[parent1_idx], population[parent2_idx]);
+        if (has_fixed) {
+          child = ox_crossover_fixed(population[parent1_idx], population[parent2_idx], is_fixed);
+        } else {
+          child = ox_crossover(population[parent1_idx], population[parent2_idx]);
+        }
       } else {
         child = population[parent1_idx];
       }
 
       // Mutation (apply multiple mutation types with lower individual rates)
-      swap_mutation(child, mutation_rate);
-      scramble_mutation(child, mutation_rate * 0.3);
-      inversion_mutation(child, mutation_rate * 0.2);
+      if (has_fixed) {
+        swap_mutation_fixed(child, mutation_rate, free_indices);
+        scramble_mutation_fixed(child, mutation_rate * 0.3, free_indices);
+        inversion_mutation_fixed(child, mutation_rate * 0.2, free_indices);
+      } else {
+        swap_mutation(child, mutation_rate);
+        scramble_mutation(child, mutation_rate * 0.3);
+        inversion_mutation(child, mutation_rate * 0.2);
+      }
 
       new_population[i] = child;
       new_fitness[i] = calculate_effort(
@@ -605,7 +781,9 @@ List optimize_keyboard_layout(
     Named("history_best") = history_best,
     Named("history_mean") = history_mean,
     Named("generations") = generations,
-    Named("population_size") = population_size
+    Named("population_size") = population_size,
+    Named("n_fixed") = n_keys - (int)free_indices.size(),
+    Named("n_optimized") = (int)free_indices.size()
   );
 }
 

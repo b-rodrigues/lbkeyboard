@@ -8,8 +8,8 @@ calculate_effort <- function(layout_keys, pos_x, pos_y, pos_row, pos_col, text, 
     .Call(`_lbkeyboard_calculate_effort`, layout_keys, pos_x, pos_y, pos_row, pos_col, text, char_freq, char_list, w_base, w_same_finger, w_same_hand, w_row_change)
 }
 
-optimize_keyboard_layout <- function(initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size = 100L, generations = 500L, mutation_rate = 0.1, crossover_rate = 0.8, tournament_size = 5L, elite_count = 2L, w_base = 1.0, w_same_finger = 3.0, w_same_hand = 1.0, w_row_change = 0.5, verbose = TRUE) {
-    .Call(`_lbkeyboard_optimize_keyboard_layout`, initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size, generations, mutation_rate, crossover_rate, tournament_size, elite_count, w_base, w_same_finger, w_same_hand, w_row_change, verbose)
+optimize_keyboard_layout <- function(initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size = 100L, generations = 500L, mutation_rate = 0.1, crossover_rate = 0.8, tournament_size = 5L, elite_count = 2L, w_base = 1.0, w_same_finger = 3.0, w_same_hand = 1.0, w_row_change = 0.5, verbose = TRUE, fixed_positions = logical(0)) {
+    .Call(`_lbkeyboard_optimize_keyboard_layout`, initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size, generations, mutation_rate, crossover_rate, tournament_size, elite_count, w_base, w_same_finger, w_same_hand, w_row_change, verbose, fixed_positions)
 }
 
 layout_effort <- function(layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, w_base = 1.0, w_same_finger = 3.0, w_same_hand = 1.0, w_row_change = 0.5) {

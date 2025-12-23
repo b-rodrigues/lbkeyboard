@@ -13,6 +13,10 @@
 #'   If NULL, uses a default 30-key layout.
 #' @param keys_to_optimize Character vector of keys to include in optimization.
 #'   Default is lowercase letters a-z. Only these keys will be permuted.
+#' @param fixed_keys Character vector of keys that should remain in their
+#'   original positions. These keys will not be moved during optimization.
+#'   Default is NULL (no fixed keys). For example, use `fixed_keys = c("a", "s", "d", "f")`
+#'   to keep the left home row keys in place while optimizing all others.
 #' @param population_size Number of individuals in the population. Default 100.
 #' @param generations Number of generations to evolve. Default 500.
 #' @param mutation_rate Probability of mutation per individual. Default 0.1.
@@ -36,6 +40,9 @@
 #'     \item{improvement}{Percentage improvement over starting layout}
 #'     \item{history}{Data frame with best and mean effort per generation}
 #'     \item{parameters}{List of algorithm parameters used}
+#'     \item{fixed_keys}{Character vector of keys that were held fixed}
+#'     \item{n_fixed}{Number of fixed keys}
+#'     \item{n_optimized}{Number of keys that were optimized}
 #'   }
 #'
 #' @details
@@ -62,6 +69,11 @@
 #'   \item Elitism to preserve best solutions
 #' }
 #'
+#' When \code{fixed_keys} is specified, those keys remain in their original
+#' positions and only the remaining keys are permuted during optimization.
+#' This is useful for keeping commonly-used keys (like punctuation or
+#' frequently-used letters) in familiar positions.
+#'
 #' @importFrom dplyr filter select mutate arrange
 #'
 #' @export
@@ -85,6 +97,13 @@
 #' # Check improvement
 #' cat("Improvement:", result$improvement, "%\n")
 #'
+#' # Optimize while keeping home row keys fixed
+#' result_fixed <- optimize_layout(
+#'   text_samples = french,
+#'   fixed_keys = c("a", "s", "d", "f", "j", "k", "l"),
+#'   generations = 200
+#' )
+#'
 #' # Plot convergence
 #' plot(result$history$generation, result$history$best,
 #'      type = "l", xlab = "Generation", ylab = "Effort")
@@ -93,6 +112,7 @@ optimize_layout <- function(
     text_samples,
     keyboard = NULL,
     keys_to_optimize = letters,
+    fixed_keys = NULL,
     population_size = 100,
     generations = 500,
     mutation_rate = 0.1,
@@ -169,10 +189,20 @@ optimize_layout <- function(
     w_row_change = effort_weights$row_change
   )
 
+  # Handle fixed keys
+  fixed_positions <- rep(FALSE, length(initial_layout))
+  if (!is.null(fixed_keys) && length(fixed_keys) > 0) {
+    fixed_keys <- tolower(fixed_keys)
+    fixed_positions <- tolower(initial_layout) %in% fixed_keys
+  }
+
+  n_fixed <- sum(fixed_positions)
+  n_optimized <- length(initial_layout) - n_fixed
+
   if (verbose) {
     message("Starting optimization...")
     message("Initial effort: ", round(initial_effort, 2))
-    message("Keys to optimize: ", length(initial_layout))
+    message("Keys to optimize: ", n_optimized, " (", n_fixed, " fixed)")
     message("Text length: ", nchar(combined_text), " characters")
   }
 
@@ -196,7 +226,8 @@ optimize_layout <- function(
     w_same_finger = effort_weights$same_finger,
     w_same_hand = effort_weights$same_hand,
     w_row_change = effort_weights$row_change,
-    verbose = verbose
+    verbose = verbose,
+    fixed_positions = fixed_positions
   )
 
   # Create output layout data frame
@@ -234,7 +265,10 @@ optimize_layout <- function(
       tournament_size = tournament_size,
       elite_count = elite_count,
       effort_weights = effort_weights
-    )
+    ),
+    fixed_keys = if (!is.null(fixed_keys)) fixed_keys else character(0),
+    n_fixed = n_fixed,
+    n_optimized = n_optimized
   )
 }
 

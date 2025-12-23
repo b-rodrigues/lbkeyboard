@@ -191,6 +191,27 @@ breakdown <- calculate_layout_effort(
 print(breakdown)
 ```
 
+### Fixed Key Positions
+
+You can keep certain keys in their original positions while optimizing the rest:
+
+```{r, eval=FALSE}
+# Keep home row keys fixed, optimize everything else
+result <- optimize_layout(
+  text_samples = french,
+  fixed_keys = c("a", "s", "d", "f", "j", "k", "l"),
+  generations = 200
+)
+
+# Check how many keys were optimized
+cat("Fixed:", result$n_fixed, "Optimized:", result$n_optimized, "\n")
+```
+
+This is useful for:
+- Keeping frequently-used keys in familiar positions
+- Preserving muscle memory for certain keys
+- Partial optimization of existing layouts
+
 ### Algorithm Parameters
 
 The genetic algorithm supports tuning:
@@ -200,6 +221,7 @@ The genetic algorithm supports tuning:
 - `mutation_rate`: Probability of mutation (default 0.1)
 - `crossover_rate`: Probability of crossover (default 0.8)
 - `effort_weights`: Weights for different effort components
+- `fixed_keys`: Keys to keep in their original positions
 
 The algorithm is implemented in C++ via Rcpp for efficiency
 

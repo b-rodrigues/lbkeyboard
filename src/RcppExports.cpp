@@ -32,8 +32,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // optimize_keyboard_layout
-List optimize_keyboard_layout(std::vector<char> initial_layout, std::vector<double> pos_x, std::vector<double> pos_y, std::vector<int> pos_row, std::vector<int> pos_col, std::vector<std::string> text_samples, std::vector<double> char_freq, std::vector<char> char_list, int population_size, int generations, double mutation_rate, double crossover_rate, int tournament_size, int elite_count, double w_base, double w_same_finger, double w_same_hand, double w_row_change, bool verbose);
-RcppExport SEXP _lbkeyboard_optimize_keyboard_layout(SEXP initial_layoutSEXP, SEXP pos_xSEXP, SEXP pos_ySEXP, SEXP pos_rowSEXP, SEXP pos_colSEXP, SEXP text_samplesSEXP, SEXP char_freqSEXP, SEXP char_listSEXP, SEXP population_sizeSEXP, SEXP generationsSEXP, SEXP mutation_rateSEXP, SEXP crossover_rateSEXP, SEXP tournament_sizeSEXP, SEXP elite_countSEXP, SEXP w_baseSEXP, SEXP w_same_fingerSEXP, SEXP w_same_handSEXP, SEXP w_row_changeSEXP, SEXP verboseSEXP) {
+List optimize_keyboard_layout(std::vector<char> initial_layout, std::vector<double> pos_x, std::vector<double> pos_y, std::vector<int> pos_row, std::vector<int> pos_col, std::vector<std::string> text_samples, std::vector<double> char_freq, std::vector<char> char_list, int population_size, int generations, double mutation_rate, double crossover_rate, int tournament_size, int elite_count, double w_base, double w_same_finger, double w_same_hand, double w_row_change, bool verbose, std::vector<bool> fixed_positions);
+RcppExport SEXP _lbkeyboard_optimize_keyboard_layout(SEXP initial_layoutSEXP, SEXP pos_xSEXP, SEXP pos_ySEXP, SEXP pos_rowSEXP, SEXP pos_colSEXP, SEXP text_samplesSEXP, SEXP char_freqSEXP, SEXP char_listSEXP, SEXP population_sizeSEXP, SEXP generationsSEXP, SEXP mutation_rateSEXP, SEXP crossover_rateSEXP, SEXP tournament_sizeSEXP, SEXP elite_countSEXP, SEXP w_baseSEXP, SEXP w_same_fingerSEXP, SEXP w_same_handSEXP, SEXP w_row_changeSEXP, SEXP verboseSEXP, SEXP fixed_positionsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -56,7 +56,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type w_same_hand(w_same_handSEXP);
     Rcpp::traits::input_parameter< double >::type w_row_change(w_row_changeSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(optimize_keyboard_layout(initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size, generations, mutation_rate, crossover_rate, tournament_size, elite_count, w_base, w_same_finger, w_same_hand, w_row_change, verbose));
+    Rcpp::traits::input_parameter< std::vector<bool> >::type fixed_positions(fixed_positionsSEXP);
+    rcpp_result_gen = Rcpp::wrap(optimize_keyboard_layout(initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size, generations, mutation_rate, crossover_rate, tournament_size, elite_count, w_base, w_same_finger, w_same_hand, w_row_change, verbose, fixed_positions));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -114,7 +115,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_lbkeyboard_calculate_effort", (DL_FUNC) &_lbkeyboard_calculate_effort, 12},
-    {"_lbkeyboard_optimize_keyboard_layout", (DL_FUNC) &_lbkeyboard_optimize_keyboard_layout, 19},
+    {"_lbkeyboard_optimize_keyboard_layout", (DL_FUNC) &_lbkeyboard_optimize_keyboard_layout, 20},
     {"_lbkeyboard_layout_effort", (DL_FUNC) &_lbkeyboard_layout_effort, 12},
     {"_lbkeyboard_effort_breakdown", (DL_FUNC) &_lbkeyboard_effort_breakdown, 8},
     {"_lbkeyboard_random_layout", (DL_FUNC) &_lbkeyboard_random_layout, 1},
