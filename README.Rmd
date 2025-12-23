@@ -18,13 +18,15 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-lbkeyboard provides several functions to generate optimized keyboard layouts for Luxembourg; this means that the layout
-needs to work well with French, German, Luxembourguish and English. These 4 languages are the most used languages in the
+lbkeyboard provides several functions to generate optimized keyboard layouts for
+Luxembourg; this means that the layout needs to work well with French, German,
+Luxembourguish and English. These 4 languages are the most used languages in the
 country, with French being (very likely) the most used language.
 
 ## Installation
 
-You can install the development version of lbkeyboard from [GitHub](https://github.com/) with:
+You can install the development version of lbkeyboard from
+[GitHub](https://github.com/b-rodrigues/lbkeyboard) with:
 
 ``` r
 # install.packages("devtools")
@@ -52,10 +54,12 @@ and here the AZERTY layout:
 ggkeyboard(keyboard = afnor_azerty, layout = "iso")
 ```
 
-AZERTY and BÉPO are the layouts used in France; AZERTY is, by a very wide margin, the most used layout in France.
-BÉPO is an optimized layout for the French layout.
+AZERTY and BÉPO are the layouts used in France; AZERTY is, by a very wide
+margin, the most used layout in France. BÉPO is an optimized layout for the
+French layout.
 
-In Luxembourg, the most used layout is the Swiss French (or German, depending on the user's preferences):
+In Luxembourg, the most used layout is the Swiss French (or German, depending on
+the user's preferences):
 
 ```{r}
 ggkeyboard(keyboard = ch_qwertz, layout = "iso")
@@ -106,8 +110,9 @@ ggkeyboard(heatmap_qwertz)
 ggkeyboard(heatmap_bepo_de)
 ```
 
-Even though BÉPO is originally a layout optimized for the French language, we can see from the heatmap that the 
-most frequently used letters are in the home row, which is not the case for the Swiss German (QWERTZ layout).
+Even though BÉPO is originally a layout optimized for the French language, we
+can see from the heatmap that the most frequently used letters are in the home
+row, which is not the case for the Swiss German (QWERTZ layout).
 
 Let's also generate some heatmaps for English:
 
@@ -123,18 +128,20 @@ ggkeyboard(heatmap_qwertz)
 ggkeyboard(heatmap_bepo_en)
 ```
 
-Here again, we see that the BÉPO layout seems to fare better than the QWERTZ layout.
-
-
-
+Here again, we see that the BÉPO layout seems to fare better than the QWERTZ
+layout.
 
 ## Optimization Algorithm
 
-The package includes a genetic algorithm for finding optimal keyboard layouts. The algorithm uses a **Carpalx-inspired effort model** that considers:
+The package includes a genetic algorithm for finding optimal keyboard layouts.
+The algorithm uses a **Carpalx-inspired effort model** that considers:
 
-- **Base key effort**: Based on row position, finger strength, and distance from home position
-- **Same-finger bigrams**: High penalty when consecutive keys use the same finger
-- **Same-hand sequences**: Moderate penalty, with inward rolls penalized less than outward rolls
+- **Base key effort**: Based on row position, finger strength, and distance from
+  home position
+- **Same-finger bigrams**: High penalty when consecutive keys use the same
+  finger
+- **Same-hand sequences**: Moderate penalty, with inward rolls penalized less
+  than outward rolls
 - **Row changes**: Penalty for reaching between rows on same hand
 
 ### Basic Usage
@@ -175,6 +182,7 @@ comparison <- compare_layouts(
   ),
   text_samples = french
 )
+
 print(comparison)
 ```
 
@@ -188,6 +196,7 @@ breakdown <- calculate_layout_effort(
   french,
   breakdown = TRUE
 )
+
 print(breakdown)
 ```
 
@@ -227,5 +236,6 @@ The algorithm is implemented in C++ via Rcpp for efficiency
 
 ## Acknowledgment
 
-This package uses some code from my fork of the [ggkeyboard](https://github.com/b-rodrigues/ggkeyboard) package 
-(original package can be found [here](https://github.com/sharlagelfand/ggkeyboard).
+This package uses some code from my fork of the
+[ggkeyboard](https://github.com/b-rodrigues/ggkeyboard) package (original
+package can be found [here](https://github.com/sharlagelfand/ggkeyboard).
