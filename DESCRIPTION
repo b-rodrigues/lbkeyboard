@@ -1,17 +1,30 @@
 Package: lbkeyboard
-Title: Analysis Of Different Keyboard Layouts for Inputting Luxembourguish
-Version: 0.0.0.9000
-Authors@R: 
+Title: Analysis and Optimization of Keyboard Layouts for Luxembourgish
+Version: 0.1.0
+Authors@R:
     person("Bruno", "Rodrigues", , "bruno@brodrigues.co", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Description: Tools for analyzing and optimizing keyboard layouts for
+    Luxembourgish and other languages. Includes visualization of keyboard
+    layouts, letter frequency analysis, and a genetic algorithm for
+    finding optimal layouts that minimize typing effort. The effort model
+    is inspired by Carpalx and considers finger travel distance, same-finger
+    bigrams, hand alternation, and row changes.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
-Depends: 
-    R (>= 2.10)
-Imports: 
-    magrittr
+Depends:
+    R (>= 3.5.0)
+Imports:
+    dplyr,
+    ggplot2,
+    magrittr,
+    purrr,
+    Rcpp,
+    scales,
+    stringr
+LinkingTo:
+    Rcpp
+SystemRequirements: C++11

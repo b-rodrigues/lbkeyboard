@@ -128,8 +128,102 @@ Here again, we see that the BÉPO layout seems to fare better than the QWERTZ la
 
 
 
-## Optimization algorithm
-TBD
+## Optimization Algorithm
+
+The package includes a genetic algorithm for finding optimal keyboard layouts. The algorithm uses a **Carpalx-inspired effort model** that considers:
+
+- **Base key effort**: Based on row position, finger strength, and distance from home position
+- **Same-finger bigrams**: High penalty when consecutive keys use the same finger
+- **Same-hand sequences**: Moderate penalty, with inward rolls penalized less than outward rolls
+- **Row changes**: Penalty for reaching between rows on same hand
+
+### Basic Usage
+
+```{r, eval=FALSE}
+# Load sample texts
+data(french)
+data(luxembourguish)
+
+# Optimize layout for multiple languages
+result <- optimize_layout(
+  text_samples = c(french, luxembourguish),
+  generations = 200,
+  verbose = TRUE
+)
+
+# View the optimized layout
+print(result$layout)
+
+# Check improvement over starting layout
+cat("Improvement:", round(result$improvement, 2), "%\n")
+```
+
+### Comparing Layouts
+
+You can compare the typing effort across different keyboard layouts:
+
+```{r, eval=FALSE}
+data(afnor_bepo)
+data(afnor_azerty)
+data(ch_qwertz)
+
+comparison <- compare_layouts(
+  keyboards = list(
+    BEPO = afnor_bepo,
+    AZERTY = afnor_azerty,
+    QWERTZ = ch_qwertz
+  ),
+  text_samples = french
+)
+print(comparison)
+```
+
+### Effort Breakdown
+
+Get detailed breakdown of effort components:
+
+```{r, eval=FALSE}
+breakdown <- calculate_layout_effort(
+  afnor_bepo,
+  french,
+  breakdown = TRUE
+)
+print(breakdown)
+```
+
+### Fixed Key Positions
+
+You can keep certain keys in their original positions while optimizing the rest:
+
+```{r, eval=FALSE}
+# Keep home row keys fixed, optimize everything else
+result <- optimize_layout(
+  text_samples = french,
+  fixed_keys = c("a", "s", "d", "f", "j", "k", "l"),
+  generations = 200
+)
+
+# Check how many keys were optimized
+cat("Fixed:", result$n_fixed, "Optimized:", result$n_optimized, "\n")
+```
+
+This is useful for:
+- Keeping frequently-used keys in familiar positions
+- Preserving muscle memory for certain keys
+- Partial optimization of existing layouts
+
+### Algorithm Parameters
+
+The genetic algorithm supports tuning:
+
+- `population_size`: Number of candidate layouts (default 100)
+- `generations`: Evolution iterations (default 500)
+- `mutation_rate`: Probability of mutation (default 0.1)
+- `crossover_rate`: Probability of crossover (default 0.8)
+- `effort_weights`: Weights for different effort components
+- `fixed_keys`: Keys to keep in their original positions
+
+The algorithm is implemented in C++ via Rcpp for efficiency
 
 ## Acknowledgment
 
