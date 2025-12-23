@@ -1,0 +1,198 @@
+---
+title: "Getting Started with lbkeyboard"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with lbkeyboard}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This vignette provides a complete walkthrough of the lbkeyboard package, 
+demonstrating how to analyze, visualize, and optimize keyboard layouts.
+
+## Setup
+
+```{r setup}
+library(lbkeyboard)
+```
+
+## Understanding Keyboard Layouts
+
+The package includes several built-in keyboard layouts:
+
+- **afnor_bepo** - French BÉPO optimized layout
+- **afnor_azerty** - French AZERTY layout
+- **ch_qwertz** - Swiss QWERTZ layout
+
+Visualize layouts with `ggkeyboard()`:
+
+```{r qwertz-viz, eval=FALSE}
+# Visualize the QWERTZ layout commonly used in Luxembourg
+ggkeyboard(keyboard = ch_qwertz, layout = "iso")
+```
+
+For quick console output, use `print_layout()` with the 26 letter keys:
+
+```{r ascii-qwerty}
+# QWERTY layout (letters only)
+qwerty <- c(
+  "q", "w", "e", "r", "t", "y", "u", "i", "o", "p",
+  "a", "s", "d", "f", "g", "h", "j", "k", "l",
+  "z", "x", "c", "v", "b", "n", "m"
+)
+print_layout(qwerty)
+```
+
+## Letter Frequency Analysis
+
+Before optimizing a layout, we need text samples to analyze. The package 
+includes sample texts in French, German, English, and Luxembourgish:
+
+```{r load-data}
+data("french")
+data("german")
+data("english")
+data("luxembourguish")
+
+# View first 200 characters of French sample
+cat(substr(french, 1, 200), "...\n")
+```
+
+Calculate letter frequencies:
+
+```{r letter-freq}
+freq_french <- letter_freq(french)
+head(freq_french, 10)
+```
+
+## Creating Heatmaps
+
+Visualize which keys are used most frequently with heatmaps:
+  
+```{r heatmap, eval=FALSE}
+heatmap_data <- heatmapize(ch_qwertz, freq_french)
+ggkeyboard(heatmap_data)
+```
+
+The color intensity shows key usage - brighter colors indicate more frequent 
+keys. An ideal layout would have the brightest keys on the home row.
+
+## Calculating Typing Effort
+
+The package uses a Carpalx-inspired effort model. Calculate effort for any layout:
+
+```{r effort-calc}
+effort <- calculate_layout_effort(
+  keyboard = ch_qwertz,
+  text_samples = french,
+  breakdown = TRUE
+)
+
+effort
+```
+
+The effort components are:
+
+- **base_effort** - Cost of reaching each key
+- **same_finger_effort** - Penalty for consecutive keys using same finger
+- **same_hand_effort** - Penalty for same-hand sequences
+- **row_change_effort** - Penalty for switching rows within hand
+
+## Comparing Layouts
+
+Compare multiple layouts to find the best for your text:
+
+```{r compare}
+comparison <- compare_layouts(
+  keyboards = list(
+    QWERTZ = ch_qwertz,
+    BEPO = afnor_bepo,
+    AZERTY = afnor_azerty
+  ),
+  text_samples = french
+)
+
+comparison
+```
+
+Lower effort is better. The `relative` column shows effort as a percentage 
+of the best layout.
+
+## Optimizing a Layout
+
+Now let's optimize a layout using the genetic algorithm:
+
+```{r optimize, results='hide'}
+result <- optimize_layout(
+  text_samples = c(french, luxembourguish),
+  generations = 50,  # Use more (200-500) for better results
+  population_size = 50,
+  verbose = FALSE
+)
+```
+
+View the results:
+
+```{r optimize-results}
+cat("Improvement:", round(result$improvement, 2), "%\n")
+cat("Final effort:", round(result$effort, 2), "\n")
+
+# View the optimized layout
+print_layout(result$layout)
+```
+
+## Using Fixed Keys
+
+Keep certain keys in place while optimizing the rest:
+
+```{r fixed-keys, results='hide'}
+result_fixed <- optimize_layout(
+  text_samples = french,
+  fixed_keys = c("z", "x", "c", "v"),  # Keep Ctrl shortcuts
+  generations = 50,
+  verbose = FALSE
+)
+```
+
+```{r fixed-keys-result}
+cat("Fixed keys:", result_fixed$n_fixed, "\n")
+cat("Optimized keys:", result_fixed$n_optimized, "\n")
+print_layout(result_fixed$layout)
+```
+
+## Tracking Convergence
+
+The optimization returns history data you can plot:
+
+```{r convergence, fig.width=7, fig.height=4}
+plot(result$history$generation, result$history$best,
+     type = "l", col = "blue", lwd = 2,
+     xlab = "Generation", ylab = "Effort",
+     main = "Optimization Convergence")
+lines(result$history$generation, result$history$mean, 
+      col = "gray", lty = 2)
+legend("topright", c("Best", "Mean"), 
+       col = c("blue", "gray"), lty = c(1, 2))
+```
+
+## Next Steps
+
+For more advanced optimization with custom constraints, see the 
+**Composable Rules System** vignette:
+
+```r
+vignette("rules-system", package = "lbkeyboard")
+```
+
+This covers:
+
+- Soft preferences (hand balance, row placement)
+- Combining multiple rules
+- Fine-tuning rule weights

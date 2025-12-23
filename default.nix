@@ -1,5 +1,5 @@
 let
-  pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/2025-01-09.tar.gz") {};
+  pkgs = import (fetchTarball "https://github.com/rstats-on-nix/nixpkgs/archive/2025-12-22.tar.gz") {};
 
   # Package dependencies from DESCRIPTION
   rpkgs = builtins.attrValues {

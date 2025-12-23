@@ -104,6 +104,16 @@
 #'   generations = 200
 #' )
 #'
+#' # Optimize with soft preference rules
+#' result_rules <- optimize_layout(
+#'   text_samples = french,
+#'   rules = list(
+#'     prefer_hand(c("a", "e", "i", "o", "u"), "left", weight = 2.0),
+#'     balance_hands(0.5, weight = 1.0)
+#'   ),
+#'   generations = 200
+#' )
+#'
 #' # Plot convergence
 #' plot(result$history$generation, result$history$best,
 #'      type = "l", xlab = "Generation", ylab = "Effort")
@@ -113,6 +123,7 @@ optimize_layout <- function(
     keyboard = NULL,
     keys_to_optimize = letters,
     fixed_keys = NULL,
+    rules = NULL,
     population_size = 100,
     generations = 500,
     mutation_rate = 0.1,
@@ -189,12 +200,18 @@ optimize_layout <- function(
     w_row_change = effort_weights$row_change
   )
 
-  # Handle fixed keys
+  # Handle fixed keys (from fixed_keys parameter)
   fixed_positions <- rep(FALSE, length(initial_layout))
   if (!is.null(fixed_keys) && length(fixed_keys) > 0) {
     fixed_keys <- tolower(fixed_keys)
     fixed_positions <- tolower(initial_layout) %in% fixed_keys
   }
+
+  # Compile rules
+  compiled_rules <- compile_rules(rules, initial_layout, keyboard_opt)
+
+  # Merge fixed positions from rules with fixed_keys parameter
+  fixed_positions <- fixed_positions | compiled_rules$fixed_positions
 
   n_fixed <- sum(fixed_positions)
   n_optimized <- length(initial_layout) - n_fixed
@@ -204,6 +221,9 @@ optimize_layout <- function(
     message("Initial effort: ", round(initial_effort, 2))
     message("Keys to optimize: ", n_optimized, " (", n_fixed, " fixed)")
     message("Text length: ", nchar(combined_text), " characters")
+    if (!is.null(rules) && length(rules) > 0) {
+      message("Rules applied: ", length(rules))
+    }
   }
 
   # Run genetic algorithm
@@ -227,7 +247,16 @@ optimize_layout <- function(
     w_same_hand = effort_weights$same_hand,
     w_row_change = effort_weights$row_change,
     verbose = verbose,
-    fixed_positions = fixed_positions
+    fixed_positions = fixed_positions,
+    # Rule parameters
+    hand_pref_indices = compiled_rules$hand_pref_indices,
+    hand_pref_targets = compiled_rules$hand_pref_targets,
+    hand_pref_weight = compiled_rules$hand_pref_weight,
+    row_pref_indices = compiled_rules$row_pref_indices,
+    row_pref_targets = compiled_rules$row_pref_targets,
+    row_pref_weight = compiled_rules$row_pref_weight,
+    balance_target = compiled_rules$balance_target,
+    balance_weight = compiled_rules$balance_weight
   )
 
   # Create output layout data frame
@@ -266,6 +295,7 @@ optimize_layout <- function(
       elite_count = elite_count,
       effort_weights = effort_weights
     ),
+    rules = rules,
     fixed_keys = if (!is.null(fixed_keys)) fixed_keys else character(0),
     n_fixed = n_fixed,
     n_optimized = n_optimized

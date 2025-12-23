@@ -219,7 +219,7 @@ public:
 // -----------------------------------------------------------------
 
 // Calculate total typing effort for a text sample given a layout
-// [[Rcpp::export]]
+// Internal function - not exported (std::vector<char> not supported by Rcpp)
 double calculate_effort(
     const std::vector<char>& layout_keys,
     const std::vector<double>& pos_x,
@@ -313,6 +313,156 @@ double calculate_effort(
   }
 
   return total_effort;
+}
+
+// -----------------------------------------------------------------
+// RULE PENALTY CALCULATIONS
+// -----------------------------------------------------------------
+
+// Calculate penalties from soft preference rules
+double calculate_rule_penalties(
+    const std::vector<char>& layout,
+    const std::vector<int>& pos_row,
+    const std::vector<int>& pos_col,
+    const std::vector<double>& char_freq,
+    const std::vector<char>& char_list,
+    // Hand preference rule
+    const std::vector<int>& hand_pref_indices,
+    const std::vector<int>& hand_pref_targets,
+    double hand_pref_weight,
+    // Row preference rule
+    const std::vector<int>& row_pref_indices,
+    const std::vector<int>& row_pref_targets,
+    double row_pref_weight,
+    // Balance hands rule
+    double balance_target,
+    double balance_weight
+) {
+  double penalty = 0.0;
+  int n = layout.size();
+
+  // Build character -> position mapping
+  std::unordered_map<char, int> char_to_pos;
+  for (int i = 0; i < n; i++) {
+    char_to_pos[layout[i]] = i;
+    if (layout[i] >= 'a' && layout[i] <= 'z') {
+      char_to_pos[layout[i] - 32] = i;
+    }
+  }
+
+  // Calculate hand for each position (based on column)
+  // Columns 0-5 = left hand, 6+ = right hand (simplified)
+  auto get_hand = [&](int pos) -> int {
+    int col = pos_col[pos];
+    if (col <= 4) return 0;  // left
+    if (col >= 5) return 1;  // right
+    return 0;
+  };
+
+  // Hand preference penalties
+  if (hand_pref_weight > 0.0 && !hand_pref_indices.empty()) {
+    for (size_t i = 0; i < hand_pref_indices.size(); i++) {
+      int orig_idx = hand_pref_indices[i];
+      if (orig_idx >= 0 && orig_idx < n) {
+        char key = layout[orig_idx];
+        auto it = char_to_pos.find(key);
+        if (it != char_to_pos.end()) {
+          int actual_hand = get_hand(it->second);
+          int target_hand = hand_pref_targets[i];
+          if (actual_hand != target_hand) {
+            penalty += hand_pref_weight;
+          }
+        }
+      }
+    }
+  }
+
+  // Row preference penalties
+  if (row_pref_weight > 0.0 && !row_pref_indices.empty()) {
+    for (size_t i = 0; i < row_pref_indices.size(); i++) {
+      int orig_idx = row_pref_indices[i];
+      if (orig_idx >= 0 && orig_idx < n) {
+        char key = layout[orig_idx];
+        auto it = char_to_pos.find(key);
+        if (it != char_to_pos.end()) {
+          int actual_row = pos_row[it->second];
+          int target_row = row_pref_targets[i];
+          if (actual_row != target_row) {
+            // Penalty proportional to row distance
+            penalty += row_pref_weight * std::abs(actual_row - target_row);
+          }
+        }
+      }
+    }
+  }
+
+  // Hand balance penalty
+  if (balance_weight > 0.0) {
+    double left_load = 0.0;
+    double total_load = 0.0;
+
+    for (size_t i = 0; i < char_list.size(); i++) {
+      char c = std::tolower(char_list[i]);
+      auto it = char_to_pos.find(c);
+      if (it != char_to_pos.end()) {
+        int hand = get_hand(it->second);
+        double freq = char_freq[i];
+        total_load += freq;
+        if (hand == 0) {
+          left_load += freq;
+        }
+      }
+    }
+
+    if (total_load > 0.0) {
+      double actual_balance = left_load / total_load;
+      double imbalance = std::abs(actual_balance - balance_target);
+      // Quadratic penalty for imbalance
+      penalty += balance_weight * imbalance * imbalance * 100.0;
+    }
+  }
+
+  return penalty;
+}
+
+// Calculate effort including rule penalties
+double calculate_effort_with_rules(
+    const std::vector<char>& layout_keys,
+    const std::vector<double>& pos_x,
+    const std::vector<double>& pos_y,
+    const std::vector<int>& pos_row,
+    const std::vector<int>& pos_col,
+    const std::string& text,
+    const std::vector<double>& char_freq,
+    const std::vector<char>& char_list,
+    double w_base,
+    double w_same_finger,
+    double w_same_hand,
+    double w_row_change,
+    // Rule parameters
+    const std::vector<int>& hand_pref_indices,
+    const std::vector<int>& hand_pref_targets,
+    double hand_pref_weight,
+    const std::vector<int>& row_pref_indices,
+    const std::vector<int>& row_pref_targets,
+    double row_pref_weight,
+    double balance_target,
+    double balance_weight
+) {
+  double base_effort = calculate_effort(
+    layout_keys, pos_x, pos_y, pos_row, pos_col,
+    text, char_freq, char_list,
+    w_base, w_same_finger, w_same_hand, w_row_change
+  );
+
+  double rule_penalty = calculate_rule_penalties(
+    layout_keys, pos_row, pos_col, char_freq, char_list,
+    hand_pref_indices, hand_pref_targets, hand_pref_weight,
+    row_pref_indices, row_pref_targets, row_pref_weight,
+    balance_target, balance_weight
+  );
+
+  return base_effort + rule_penalty;
 }
 
 // -----------------------------------------------------------------
@@ -589,8 +739,8 @@ int tournament_select(const std::vector<double>& fitness, int tournament_size) {
 // MAIN GENETIC ALGORITHM
 // -----------------------------------------------------------------
 
-// [[Rcpp::export]]
-List optimize_keyboard_layout(
+// Internal function - not exported (std::vector<char> not supported by Rcpp)
+List optimize_keyboard_layout_internal(
     std::vector<char> initial_layout,
     std::vector<double> pos_x,
     std::vector<double> pos_y,
@@ -610,7 +760,16 @@ List optimize_keyboard_layout(
     double w_same_hand = 1.0,
     double w_row_change = 0.5,
     bool verbose = true,
-    std::vector<bool> fixed_positions = std::vector<bool>()
+    std::vector<bool> fixed_positions = std::vector<bool>(),
+    // Rule parameters
+    std::vector<int> hand_pref_indices = std::vector<int>(),
+    std::vector<int> hand_pref_targets = std::vector<int>(),
+    double hand_pref_weight = 0.0,
+    std::vector<int> row_pref_indices = std::vector<int>(),
+    std::vector<int> row_pref_targets = std::vector<int>(),
+    double row_pref_weight = 0.0,
+    double balance_target = 0.5,
+    double balance_weight = 0.0
 ) {
   int n_keys = initial_layout.size();
 
@@ -667,13 +826,27 @@ List optimize_keyboard_layout(
     }
   }
 
+  // Check if we have any rules to apply
+  bool has_rules = (hand_pref_weight > 0.0 || row_pref_weight > 0.0 || balance_weight > 0.0);
+
   // Calculate initial fitness
   for (int i = 0; i < population_size; i++) {
-    fitness[i] = calculate_effort(
-      population[i], pos_x, pos_y, pos_row, pos_col,
-      combined_text, char_freq, char_list,
-      w_base, w_same_finger, w_same_hand, w_row_change
-    );
+    if (has_rules) {
+      fitness[i] = calculate_effort_with_rules(
+        population[i], pos_x, pos_y, pos_row, pos_col,
+        combined_text, char_freq, char_list,
+        w_base, w_same_finger, w_same_hand, w_row_change,
+        hand_pref_indices, hand_pref_targets, hand_pref_weight,
+        row_pref_indices, row_pref_targets, row_pref_weight,
+        balance_target, balance_weight
+      );
+    } else {
+      fitness[i] = calculate_effort(
+        population[i], pos_x, pos_y, pos_row, pos_col,
+        combined_text, char_freq, char_list,
+        w_base, w_same_finger, w_same_hand, w_row_change
+      );
+    }
   }
 
   // Track best solution
@@ -735,11 +908,22 @@ List optimize_keyboard_layout(
       }
 
       new_population[i] = child;
-      new_fitness[i] = calculate_effort(
-        child, pos_x, pos_y, pos_row, pos_col,
-        combined_text, char_freq, char_list,
-        w_base, w_same_finger, w_same_hand, w_row_change
-      );
+      if (has_rules) {
+        new_fitness[i] = calculate_effort_with_rules(
+          child, pos_x, pos_y, pos_row, pos_col,
+          combined_text, char_freq, char_list,
+          w_base, w_same_finger, w_same_hand, w_row_change,
+          hand_pref_indices, hand_pref_targets, hand_pref_weight,
+          row_pref_indices, row_pref_targets, row_pref_weight,
+          balance_target, balance_weight
+        );
+      } else {
+        new_fitness[i] = calculate_effort(
+          child, pos_x, pos_y, pos_row, pos_col,
+          combined_text, char_freq, char_list,
+          w_base, w_same_finger, w_same_hand, w_row_change
+        );
+      }
     }
 
     population = std::move(new_population);
@@ -950,6 +1134,93 @@ List effort_breakdown(
     Named("same_finger_bigrams") = same_finger_count,
     Named("same_hand_bigrams") = same_hand_count,
     Named("hand_alternations") = hand_alternation_count
+  );
+}
+
+// Wrapper for R interface - handles type conversion
+// [[Rcpp::export]]
+List optimize_keyboard_layout(
+    CharacterVector initial_layout,
+    NumericVector pos_x,
+    NumericVector pos_y,
+    IntegerVector pos_row,
+    IntegerVector pos_col,
+    CharacterVector text_samples,
+    NumericVector char_freq,
+    CharacterVector char_list,
+    int population_size = 100,
+    int generations = 500,
+    double mutation_rate = 0.1,
+    double crossover_rate = 0.8,
+    int tournament_size = 5,
+    int elite_count = 2,
+    double w_base = 1.0,
+    double w_same_finger = 3.0,
+    double w_same_hand = 1.0,
+    double w_row_change = 0.5,
+    bool verbose = true,
+    LogicalVector fixed_positions = LogicalVector(),
+    IntegerVector hand_pref_indices = IntegerVector(),
+    IntegerVector hand_pref_targets = IntegerVector(),
+    double hand_pref_weight = 0.0,
+    IntegerVector row_pref_indices = IntegerVector(),
+    IntegerVector row_pref_targets = IntegerVector(),
+    double row_pref_weight = 0.0,
+    double balance_target = 0.5,
+    double balance_weight = 0.0
+) {
+  int n = initial_layout.size();
+  
+  // Convert initial_layout from CharacterVector to std::vector<char>
+  std::vector<char> layout_keys(n);
+  for (int i = 0; i < n; i++) {
+    std::string s = Rcpp::as<std::string>(initial_layout[i]);
+    layout_keys[i] = s.empty() ? ' ' : s[0];
+  }
+  
+  // Convert other vectors
+  std::vector<double> px = Rcpp::as<std::vector<double>>(pos_x);
+  std::vector<double> py = Rcpp::as<std::vector<double>>(pos_y);
+  std::vector<int> pr = Rcpp::as<std::vector<int>>(pos_row);
+  std::vector<int> pc = Rcpp::as<std::vector<int>>(pos_col);
+  
+  // Convert text_samples
+  std::vector<std::string> texts;
+  for (int i = 0; i < text_samples.size(); i++) {
+    texts.push_back(Rcpp::as<std::string>(text_samples[i]));
+  }
+  
+  // Convert char_freq and char_list
+  std::vector<double> cf = Rcpp::as<std::vector<double>>(char_freq);
+  std::vector<char> cl(char_list.size());
+  for (int i = 0; i < char_list.size(); i++) {
+    std::string s = Rcpp::as<std::string>(char_list[i]);
+    cl[i] = s.empty() ? ' ' : s[0];
+  }
+  
+  // Convert fixed_positions
+  std::vector<bool> fixed;
+  if (fixed_positions.size() > 0) {
+    for (int i = 0; i < fixed_positions.size(); i++) {
+      fixed.push_back(fixed_positions[i]);
+    }
+  }
+  
+  // Convert rule parameters
+  std::vector<int> hpi = Rcpp::as<std::vector<int>>(hand_pref_indices);
+  std::vector<int> hpt = Rcpp::as<std::vector<int>>(hand_pref_targets);
+  std::vector<int> rpi = Rcpp::as<std::vector<int>>(row_pref_indices);
+  std::vector<int> rpt = Rcpp::as<std::vector<int>>(row_pref_targets);
+  
+  return optimize_keyboard_layout_internal(
+    layout_keys, px, py, pr, pc,
+    texts, cf, cl,
+    population_size, generations, mutation_rate, crossover_rate,
+    tournament_size, elite_count, w_base, w_same_finger, w_same_hand,
+    w_row_change, verbose, fixed,
+    hpi, hpt, hand_pref_weight,
+    rpi, rpt, row_pref_weight,
+    balance_target, balance_weight
   );
 }
 

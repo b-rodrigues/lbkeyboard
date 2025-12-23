@@ -1,0 +1,296 @@
+---
+title: "Composable Rules System"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Composable Rules System}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The lbkeyboard package includes a **composable rules system** that lets you 
+customize the keyboard optimization with constraints and preferences. Rules 
+can be combined freely to express complex requirements.
+
+## Setup
+
+```{r setup}
+library(lbkeyboard)
+data("french")
+```
+
+## Types of Rules
+
+There are two types of rules:
+
+| Type | Description |
+|------|-------------|
+| **Hard constraints** | Keys cannot move from their position |
+| **Soft preferences** | Penalty added when preference is violated |
+
+### Hard Constraints
+
+#### `fix_keys()` - Lock Keys in Place
+
+Use `fix_keys()` to prevent certain keys from moving during optimization.
+This is useful for preserving keyboard shortcuts:
+
+```{r fix-keys}
+# Keep Ctrl+Z, Ctrl+X, Ctrl+C, Ctrl+V shortcuts
+rule <- fix_keys(c("z", "x", "c", "v"))
+print(rule)
+```
+
+Keys are matched case-insensitively:
+
+```{r fix-keys-upper}
+# These are equivalent
+fix_keys(c("A", "B"))
+fix_keys(c("a", "b"))
+```
+
+### Soft Preferences
+
+Soft preferences add a penalty to the effort score when not satisfied.
+The **weight** parameter controls how strongly the preference is enforced.
+
+#### `prefer_hand()` - Hand Placement Preference
+
+Specify which keys should go on which hand:
+
+```{r prefer-hand}
+# Put vowels on the left hand
+rule <- prefer_hand(
+  keys = c("a", "e", "i", "o", "u"),
+  hand = "left",
+  weight = 2.0
+)
+print(rule)
+```
+
+This adds a penalty of 2.0 for each vowel that ends up on the right hand.
+
+#### `prefer_row()` - Row Placement Preference
+
+Specify which row keys should be placed on:
+
+- Row 1 = Top row (QWERTY row)
+- Row 2 = Home row (ASDF row) 
+- Row 3 = Bottom row (ZXCV row)
+
+```{r prefer-row}
+# Put the most common English letters on home row
+common_letters <- c("e", "t", "a", "o", "i", "n", "s", "r")
+rule <- prefer_row(common_letters, row = 2, weight = 1.5)
+print(rule)
+```
+
+The penalty is proportional to the distance from the target row.
+
+#### `balance_hands()` - Hand Usage Balance
+
+Aim for balanced typing load between hands:
+
+```{r balance-hands}
+# Target 50% left, 50% right
+rule <- balance_hands(target = 0.5, weight = 1.0)
+print(rule)
+
+# Or slight preference for right hand (40% left, 60% right)
+rule_right <- balance_hands(target = 0.4, weight = 1.0)
+```
+
+The penalty increases quadratically as the actual balance deviates from target.
+
+#### `keep_like()` - Match Reference Layout
+
+Keep specified keys in similar positions to a reference layout:
+
+```{r keep-like}
+# Keep bottom row like QWERTY
+rule <- keep_like(
+  reference = "qwerty",
+  keys = c("z", "x", "c", "v", "b", "n", "m"),
+  weight = 3.0
+)
+print(rule)
+```
+
+## Combining Rules
+
+The real power comes from combining multiple rules. Pass a list of rules
+to `optimize_layout()`:
+
+```{r combined-rules, results='hide'}
+result <- optimize_layout(
+  text_samples = french,
+  rules = list(
+    # Hard: keep shortcut keys fixed
+    fix_keys(c("z", "x", "c", "v")),
+    
+    # Soft: vowels on left hand
+    prefer_hand(c("a", "e", "i", "o", "u"), "left", weight = 2.0),
+    
+    # Soft: common letters on home row
+    prefer_row(c("e", "t", "a", "o", "n", "i", "s", "r"), 2, weight = 1.0),
+    
+    # Soft: aim for balanced hands
+    balance_hands(0.5, weight = 0.5)
+  ),
+  generations = 50,
+  verbose = FALSE
+)
+```
+
+```{r combined-result}
+print_layout(result$layout)
+cat("\nImprovement:", round(result$improvement, 2), "%\n")
+```
+
+## Choosing Weights
+
+The **weight** parameter determines how strongly each preference influences 
+the optimization. Here are some guidelines:
+
+| Weight | Effect |
+|--------|--------|
+| 0.5 - 1.0 | Mild preference, may be overridden |
+| 1.0 - 2.0 | Moderate preference |
+| 2.0 - 5.0 | Strong preference |
+| 5.0+ | Very strong, almost like a constraint |
+
+**Tips:**
+
+- Start with weight = 1.0 and adjust based on results
+- Higher weights can slow convergence
+- Balance between typing efficiency and your preferences
+
+## Examples
+
+### Ergonomic Vowels Layout
+
+Put vowels on strong fingers of the left hand:
+
+```{r ergonomic-vowels, results='hide'}
+result <- optimize_layout(
+  text_samples = french,
+  rules = list(
+    # Vowels on left hand
+    prefer_hand(c("a", "e", "i", "o", "u"), "left", weight = 3.0),
+    
+    # Common consonants on right hand
+    prefer_hand(c("t", "n", "s", "r", "l"), "right", weight = 2.0),
+    
+    # Most frequent on home row
+    prefer_row(c("e", "t", "a", "n", "i", "s"), 2, weight = 1.5)
+  ),
+  generations = 50,
+  verbose = FALSE
+)
+```
+
+```{r ergonomic-result}
+print_layout(result$layout)
+```
+
+### Preserving Familiar Keys
+
+Keep commonly-used keys in familiar positions:
+
+```{r preserve-familiar, results='hide'}
+result <- optimize_layout(
+  text_samples = french,
+  rules = list(
+    # Hard: fix entire bottom row
+    fix_keys(c("z", "x", "c", "v", "b", "n", "m")),
+    
+    # Soft: keep remaining keys roughly like QWERTY
+    keep_like("qwerty", weight = 0.5)
+  ),
+  generations = 50,
+  verbose = FALSE
+)
+```
+
+```{r preserve-result}
+print_layout(result$layout)
+cat("Fixed:", result$n_fixed, "keys\n")
+```
+
+### Balanced Multilingual Layout
+
+Optimize for multiple languages with balanced hands:
+
+```{r multilingual, results='hide'}
+data("german")
+data("english")
+
+result <- optimize_layout(
+  text_samples = c(french, german, english),
+  rules = list(
+    # Keep shortcuts
+    fix_keys(c("z", "x", "c", "v")),
+    
+    # Strict hand balance for multilingual comfort
+    balance_hands(0.5, weight = 2.0)
+  ),
+  generations = 50,
+  verbose = FALSE
+)
+```
+
+```{r multilingual-result}
+print_layout(result$layout)
+```
+
+## Comparison: With vs Without Rules
+
+Let's compare optimization results:
+
+```{r comparison, results='hide'}
+# Without rules
+result_plain <- optimize_layout(
+  text_samples = french,
+  generations = 50,
+  verbose = FALSE
+)
+
+# With rules
+result_rules <- optimize_layout(
+  text_samples = french,
+  rules = list(
+    fix_keys(c("z", "x", "c", "v")),
+    prefer_hand(c("a", "e", "i", "o", "u"), "left", weight = 2.0)
+  ),
+  generations = 50,
+  verbose = FALSE
+)
+```
+
+```{r comparison-result}
+cat("Without rules - Effort:", round(result_plain$effort, 2), "\n")
+print_layout(result_plain$layout)
+
+cat("\nWith rules - Effort:", round(result_rules$effort, 2), "\n")
+print_layout(result_rules$layout)
+```
+
+The layout with rules might have slightly higher effort, but it respects 
+your preferences and constraints.
+
+## Rule Reference
+
+| Function | Parameters | Description |
+|----------|------------|-------------|
+| `fix_keys(keys)` | keys: character vector | Hard constraint - keys don't move |
+| `prefer_hand(keys, hand, weight)` | hand: "left"/"right" | Soft penalty for wrong hand |
+| `prefer_row(keys, row, weight)` | row: 1, 2, or 3 | Soft penalty for wrong row |
+| `prefer_finger(keys, fingers, weight)` | fingers: 0-9 | Soft penalty for wrong finger |
+| `balance_hands(target, weight)` | target: 0-1 | Soft penalty for hand imbalance |
+| `keep_like(ref, keys, weight)` | ref: "qwerty" or vector | Soft penalty for layout mismatch |

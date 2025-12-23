@@ -9,6 +9,7 @@ optimize_layout(
   keyboard = NULL,
   keys_to_optimize = letters,
   fixed_keys = NULL,
+  rules = NULL,
   population_size = 100,
   generations = 500,
   mutation_rate = 0.1,
@@ -101,6 +102,11 @@ The genetic algorithm uses:
 \item Tournament selection
 \item Elitism to preserve best solutions
 }
+
+When \code{fixed_keys} is specified, those keys remain in their original
+positions and only the remaining keys are permuted during optimization.
+This is useful for keeping commonly-used keys (like punctuation or
+frequently-used letters) in familiar positions.
 }
 \examples{
 \dontrun{
@@ -125,6 +131,16 @@ cat("Improvement:", result$improvement, "\%\n")
 result_fixed <- optimize_layout(
   text_samples = french,
   fixed_keys = c("a", "s", "d", "f", "j", "k", "l"),
+  generations = 200
+)
+
+# Optimize with soft preference rules
+result_rules <- optimize_layout(
+  text_samples = french,
+  rules = list(
+    prefer_hand(c("a", "e", "i", "o", "u"), "left", weight = 2.0),
+    balance_hands(0.5, weight = 1.0)
+  ),
   generations = 200
 )
 
