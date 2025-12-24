@@ -1129,6 +1129,9 @@ List effort_breakdown(
   int hand_alternation_count = 0;
   int trigram_count = 0;
 
+  // Get text length for proper scaling (must match calculate_effort)
+  double text_len = static_cast<double>(combined_text.length());
+
   // Base effort
   for (size_t i = 0; i < cl.size(); i++) {
     char c = cl[i];
@@ -1138,7 +1141,8 @@ List effort_breakdown(
     }
     if (it != char_to_pos.end()) {
       int pos = it->second;
-      base_effort += base_key_effort(pr[pos], pc[pos], fingers[pos]) * cf[i];
+      // CRITICAL: Must scale by text_len to match calculate_effort()
+      base_effort += base_key_effort(pr[pos], pc[pos], fingers[pos]) * cf[i] * text_len;
     }
   }
 

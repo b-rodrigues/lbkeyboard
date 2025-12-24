@@ -184,6 +184,29 @@ optimize_layout <- function(
     stop("No matching keys found in keyboard layout")
   }
 
+  # CRITICAL FIX: Normalize row numbers to handle full keyboards
+  # Full keyboards may have rows 0-6 (function, number, letters, space)
+  # But our C++ model expects letter rows to be numbered 1-3
+  # Map the actual letter rows to: 1=top, 2=home, 3=bottom
+  unique_rows <- sort(unique(keyboard_opt$row))
+  if (length(unique_rows) == 3) {
+    # Standard case: exactly 3 rows of letters
+    keyboard_opt <- keyboard_opt %>%
+      dplyr::mutate(
+        row = match(row, unique_rows)  # Maps to 1, 2, 3
+      )
+  } else if (length(unique_rows) > 3) {
+    # More than 3 rows - might include number row or other rows
+    # Assume middle 3 rows are the letter rows
+    warning("Keyboard has more than 3 rows. Using middle 3 rows as letter rows.")
+    letter_rows <- unique_rows[ceiling(length(unique_rows)/2 - 1):ceiling(length(unique_rows)/2 + 1)]
+    keyboard_opt <- keyboard_opt %>%
+      dplyr::filter(row %in% letter_rows) %>%
+      dplyr::mutate(
+        row = match(row, letter_rows)  # Maps to 1, 2, 3
+      )
+  }
+
   # Calculate character frequencies from text samples
   combined_text <- paste(text_samples, collapse = " ")
   freq_df <- letter_freq(combined_text, only_alpha = TRUE)
@@ -644,6 +667,29 @@ calculate_layout_effort <- function(
 
   if (nrow(keyboard_eval) == 0) {
     stop("No matching keys found in keyboard layout")
+  }
+
+  # CRITICAL FIX: Normalize row numbers to handle full keyboards
+  # Full keyboards may have rows 0-6 (function, number, letters, space)
+  # But our C++ model expects letter rows to be numbered 1-3
+  # Map the actual letter rows to: 1=top, 2=home, 3=bottom
+  unique_rows <- sort(unique(keyboard_eval$row))
+  if (length(unique_rows) == 3) {
+    # Standard case: exactly 3 rows of letters
+    keyboard_eval <- keyboard_eval %>%
+      dplyr::mutate(
+        row = match(row, unique_rows)  # Maps to 1, 2, 3
+      )
+  } else if (length(unique_rows) > 3) {
+    # More than 3 rows - might include number row or other rows
+    # Assume middle 3 rows are the letter rows
+    warning("Keyboard has more than 3 rows. Using middle 3 rows as letter rows.")
+    letter_rows <- unique_rows[ceiling(length(unique_rows)/2 - 1):ceiling(length(unique_rows)/2 + 1)]
+    keyboard_eval <- keyboard_eval %>%
+      dplyr::filter(row %in% letter_rows) %>%
+      dplyr::mutate(
+        row = match(row, letter_rows)  # Maps to 1, 2, 3
+      )
   }
 
   # Calculate frequencies
