@@ -32,8 +32,7 @@ struct KeyPosition {
 
 // Default finger assignments for standard ISO layout columns
 // This maps column position to finger (for rows 1-3: top, home, bottom letter rows)
-// Default finger assignments for standard ISO layout columns
-// This maps column position to finger (standard touch typing zones)
+// NOTE: This is a fallback for when x_mid is not available
 int get_finger_for_column(int col) {
   // Left hand: 0-4
   // 0: Pinky (Q, A, Z)
@@ -41,23 +40,50 @@ int get_finger_for_column(int col) {
   // 2: Middle (E, D, C)
   // 3: Index (R, F, V)
   // 4: Index (T, G, B)
-  
+
   // Right hand: 5-9+
   // 5: Index (Y, H, N)
   // 6: Index (U, J, M)
   // 7: Middle (I, K)
   // 8: Ring (O, L)
   // 9+: Pinky (P)
-  
+
   if (col == 0) return 0;       // left pinky
   if (col == 1) return 1;       // left ring
   if (col == 2) return 2;       // left middle
   if (col <= 4) return 3;       // left index (cols 3, 4)
-  
+
   if (col <= 6) return 6;       // right index (cols 5, 6)
   if (col == 7) return 7;       // right middle
   if (col == 8) return 8;       // right ring
   return 9;                     // right pinky
+}
+
+// BETTER: Calculate finger based on x_mid position (works for any layout)
+// Assumes standard touch typing: hands split at keyboard center
+int get_finger_for_x_position(double x_mid, double min_x, double max_x) {
+  // Find keyboard center
+  double center = (min_x + max_x) / 2.0;
+  double width = max_x - min_x;
+
+  // Normalize position relative to center
+  double rel_pos = (x_mid - center) / (width / 2.0);  // -1 to +1
+
+  // Left hand (negative): -1.0 to 0.0
+  if (rel_pos < 0) {
+    double abs_pos = -rel_pos;  // 0 to 1.0
+    if (abs_pos > 0.75) return 0;  // far left = left pinky
+    if (abs_pos > 0.50) return 1;  // left ring
+    if (abs_pos > 0.25) return 2;  // left middle
+    return 3;                       // left index
+  }
+  // Right hand (positive): 0.0 to 1.0
+  else {
+    if (rel_pos < 0.25) return 6;  // right index
+    if (rel_pos < 0.50) return 7;  // right middle
+    if (rel_pos < 0.75) return 8;  // right ring
+    return 9;                       // right pinky
+  }
 }
 
 int get_hand_for_finger(int finger) {
@@ -262,11 +288,16 @@ double calculate_effort(
     }
   }
 
-  // Calculate finger assignments
+  // Calculate finger assignments based on x position (works for any layout!)
+  // Find min/max x to determine keyboard bounds
+  double min_x = *std::min_element(pos_x.begin(), pos_x.end());
+  double max_x = *std::max_element(pos_x.begin(), pos_x.end());
+
   std::vector<int> fingers(n);
   std::vector<int> hands(n);
   for (int i = 0; i < n; i++) {
-    fingers[i] = get_finger_for_column(pos_col[i]);
+    // Use x position for layout-independent finger assignment
+    fingers[i] = get_finger_for_x_position(pos_x[i], min_x, max_x);
     hands[i] = get_hand_for_finger(fingers[i]);
   }
 
@@ -1112,10 +1143,13 @@ List effort_breakdown(
     }
   }
 
-  // Calculate fingers
+  // Calculate fingers based on x position (layout-independent)
+  double min_x = *std::min_element(px.begin(), px.end());
+  double max_x = *std::max_element(px.begin(), px.end());
+
   std::vector<int> fingers(n), hands(n);
   for (int i = 0; i < n; i++) {
-    fingers[i] = get_finger_for_column(pc[i]);
+    fingers[i] = get_finger_for_x_position(px[i], min_x, max_x);
     hands[i] = get_hand_for_finger(fingers[i]);
   }
 
