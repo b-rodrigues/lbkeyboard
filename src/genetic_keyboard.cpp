@@ -126,30 +126,65 @@ double finger_penalty(int finger) {
   return 1.5; // Fallback
 }
 
-// Distance from home position penalty
-// Lateral movement (horizontal) is penalized
+// Distance from home position penalty (LEGACY - column-based)
+// Kept for compatibility but should use x-position version
 double home_distance_penalty(int col, int finger) {
-  // Home positions for each finger (approximate column)
   int home_col;
   switch(finger) {
-    case 0: home_col = 0; break;   // left pinky
-    case 1: home_col = 1; break;   // left ring
-    case 2: home_col = 2; break;   // left middle
-    case 3: home_col = 3; break;   // left index
-    case 6: home_col = 6; break;   // right index (home on J/col 6)
-    case 7: home_col = 7; break;   // right middle
-    case 8: home_col = 8; break;   // right ring
-    case 9: home_col = 9; break;   // right pinky
+    case 0: home_col = 0; break;
+    case 1: home_col = 1; break;
+    case 2: home_col = 2; break;
+    case 3: home_col = 3; break;
+    case 6: home_col = 6; break;
+    case 7: home_col = 7; break;
+    case 8: home_col = 8; break;
+    case 9: home_col = 9; break;
     default: home_col = col;
   }
-
   double dist = std::abs(col - home_col);
-  return 1.0 + 0.3 * dist;  // 30% penalty per column away from home
+  return 1.0 + 0.3 * dist;
 }
 
-// Base effort for a single key
+// Distance from home position penalty (x-position based - layout independent!)
+// Keys in the center of a finger's zone are easier than keys at the edges
+double home_distance_penalty_x(double x_mid, int finger, double min_x, double max_x) {
+  double center = (min_x + max_x) / 2.0;
+  double width = max_x - min_x;
+  double rel_pos = (x_mid - center) / (width / 2.0);  // -1 to +1
+
+  // Define home position (resting position) for each finger
+  // This is the center of each finger's zone
+  double home_pos;
+  switch(finger) {
+    case 0: home_pos = -0.875; break;  // left pinky (far left)
+    case 1: home_pos = -0.625; break;  // left ring
+    case 2: home_pos = -0.375; break;  // left middle
+    case 3: home_pos = -0.125; break;  // left index
+    case 6: home_pos =  0.125; break;  // right index
+    case 7: home_pos =  0.375; break;  // right middle
+    case 8: home_pos =  0.625; break;  // right ring
+    case 9: home_pos =  0.875; break;  // right pinky (far right)
+    default: home_pos = rel_pos; break;
+  }
+
+  // Calculate distance from home position within finger's zone
+  double dist = std::abs(rel_pos - home_pos);
+
+  // Normalize: dist of 0.25 = 1 finger zone away
+  // This roughly corresponds to moving 1 "column" in the old system
+  double normalized_dist = dist / 0.25;
+
+  return 1.0 + 0.3 * normalized_dist;  // 30% penalty per zone away from home
+}
+
+// Base effort for a single key (LEGACY - column-based)
 double base_key_effort(int row, int col, int finger) {
   return row_penalty(row) * finger_penalty(finger) * home_distance_penalty(col, finger);
+}
+
+// Base effort for a single key (x-position based - USE THIS!)
+double base_key_effort_x(int row, double x_mid, int finger, double min_x, double max_x) {
+  return row_penalty(row) * finger_penalty(finger) * home_distance_penalty_x(x_mid, finger, min_x, max_x);
 }
 
 // -----------------------------------------------------------------
@@ -320,7 +355,8 @@ double calculate_effort(
     }
     if (it != char_to_pos.end()) {
       int pos = it->second;
-      double base = base_key_effort(pos_row[pos], pos_col[pos], fingers[pos]);
+      // Use x-position-based effort (layout-independent!)
+      double base = base_key_effort_x(pos_row[pos], pos_x[pos], fingers[pos], min_x, max_x);
       // Multiply by text_len to scale properly
       total_effort += w_base * base * char_freq[i] * text_len;
     }
@@ -1176,7 +1212,8 @@ List effort_breakdown(
     if (it != char_to_pos.end()) {
       int pos = it->second;
       // CRITICAL: Must scale by text_len to match calculate_effort()
-      base_effort += base_key_effort(pr[pos], pc[pos], fingers[pos]) * cf[i] * text_len;
+      // Use x-position-based effort (layout-independent!)
+      base_effort += base_key_effort_x(pr[pos], px[pos], fingers[pos], min_x, max_x) * cf[i] * text_len;
     }
   }
 
