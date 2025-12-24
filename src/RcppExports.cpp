@@ -51,8 +51,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // optimize_keyboard_layout
-List optimize_keyboard_layout(CharacterVector initial_layout, NumericVector pos_x, NumericVector pos_y, IntegerVector pos_row, IntegerVector pos_col, CharacterVector text_samples, NumericVector char_freq, CharacterVector char_list, int population_size, int generations, double mutation_rate, double crossover_rate, int tournament_size, int elite_count, double w_base, double w_same_finger, double w_same_hand, double w_row_change, bool verbose, LogicalVector fixed_positions, IntegerVector hand_pref_indices, IntegerVector hand_pref_targets, double hand_pref_weight, IntegerVector row_pref_indices, IntegerVector row_pref_targets, double row_pref_weight, double balance_target, double balance_weight);
-RcppExport SEXP _lbkeyboard_optimize_keyboard_layout(SEXP initial_layoutSEXP, SEXP pos_xSEXP, SEXP pos_ySEXP, SEXP pos_rowSEXP, SEXP pos_colSEXP, SEXP text_samplesSEXP, SEXP char_freqSEXP, SEXP char_listSEXP, SEXP population_sizeSEXP, SEXP generationsSEXP, SEXP mutation_rateSEXP, SEXP crossover_rateSEXP, SEXP tournament_sizeSEXP, SEXP elite_countSEXP, SEXP w_baseSEXP, SEXP w_same_fingerSEXP, SEXP w_same_handSEXP, SEXP w_row_changeSEXP, SEXP verboseSEXP, SEXP fixed_positionsSEXP, SEXP hand_pref_indicesSEXP, SEXP hand_pref_targetsSEXP, SEXP hand_pref_weightSEXP, SEXP row_pref_indicesSEXP, SEXP row_pref_targetsSEXP, SEXP row_pref_weightSEXP, SEXP balance_targetSEXP, SEXP balance_weightSEXP) {
+List optimize_keyboard_layout(CharacterVector initial_layout, NumericVector pos_x, NumericVector pos_y, IntegerVector pos_row, IntegerVector pos_col, CharacterVector text_samples, NumericVector char_freq, CharacterVector char_list, int population_size, int generations, double mutation_rate, double crossover_rate, int tournament_size, int elite_count, double w_base, double w_same_finger, double w_same_hand, double w_row_change, bool verbose, LogicalVector fixed_positions, CharacterVector hand_pref_keys, IntegerVector hand_pref_targets, double hand_pref_weight, CharacterVector row_pref_keys, IntegerVector row_pref_targets, double row_pref_weight, double balance_target, double balance_weight);
+RcppExport SEXP _lbkeyboard_optimize_keyboard_layout(SEXP initial_layoutSEXP, SEXP pos_xSEXP, SEXP pos_ySEXP, SEXP pos_rowSEXP, SEXP pos_colSEXP, SEXP text_samplesSEXP, SEXP char_freqSEXP, SEXP char_listSEXP, SEXP population_sizeSEXP, SEXP generationsSEXP, SEXP mutation_rateSEXP, SEXP crossover_rateSEXP, SEXP tournament_sizeSEXP, SEXP elite_countSEXP, SEXP w_baseSEXP, SEXP w_same_fingerSEXP, SEXP w_same_handSEXP, SEXP w_row_changeSEXP, SEXP verboseSEXP, SEXP fixed_positionsSEXP, SEXP hand_pref_keysSEXP, SEXP hand_pref_targetsSEXP, SEXP hand_pref_weightSEXP, SEXP row_pref_keysSEXP, SEXP row_pref_targetsSEXP, SEXP row_pref_weightSEXP, SEXP balance_targetSEXP, SEXP balance_weightSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -76,15 +76,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type w_row_change(w_row_changeSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< LogicalVector >::type fixed_positions(fixed_positionsSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type hand_pref_indices(hand_pref_indicesSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type hand_pref_keys(hand_pref_keysSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type hand_pref_targets(hand_pref_targetsSEXP);
     Rcpp::traits::input_parameter< double >::type hand_pref_weight(hand_pref_weightSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type row_pref_indices(row_pref_indicesSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type row_pref_keys(row_pref_keysSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type row_pref_targets(row_pref_targetsSEXP);
     Rcpp::traits::input_parameter< double >::type row_pref_weight(row_pref_weightSEXP);
     Rcpp::traits::input_parameter< double >::type balance_target(balance_targetSEXP);
     Rcpp::traits::input_parameter< double >::type balance_weight(balance_weightSEXP);
-    rcpp_result_gen = Rcpp::wrap(optimize_keyboard_layout(initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size, generations, mutation_rate, crossover_rate, tournament_size, elite_count, w_base, w_same_finger, w_same_hand, w_row_change, verbose, fixed_positions, hand_pref_indices, hand_pref_targets, hand_pref_weight, row_pref_indices, row_pref_targets, row_pref_weight, balance_target, balance_weight));
+    rcpp_result_gen = Rcpp::wrap(optimize_keyboard_layout(initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size, generations, mutation_rate, crossover_rate, tournament_size, elite_count, w_base, w_same_finger, w_same_hand, w_row_change, verbose, fixed_positions, hand_pref_keys, hand_pref_targets, hand_pref_weight, row_pref_keys, row_pref_targets, row_pref_weight, balance_target, balance_weight));
     return rcpp_result_gen;
 END_RCPP
 }

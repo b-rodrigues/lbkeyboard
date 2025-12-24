@@ -1,0 +1,8 @@
+pandoc: 3.7.0.2
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  getting-started: getting-started.html
+  luxembourg-optimization: luxembourg-optimization.html
+  rules-system: rules-system.html
+last_built: 2025-12-24T15:38Z

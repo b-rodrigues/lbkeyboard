@@ -6,6 +6,7 @@ let
     inherit (pkgs.rPackages)
       # Direct dependencies (Imports)
       dplyr
+      GA
       ggplot2
       magrittr
       purrr
@@ -18,9 +19,11 @@ let
       tibble
       # Development tools
       devtools
+      codetools
       knitr
       rmarkdown
       roxygen2
+      pkgdown
       testthat
       usethis
       ;

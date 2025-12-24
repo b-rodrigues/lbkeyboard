@@ -16,7 +16,7 @@ optimize_layout(
   crossover_rate = 0.8,
   tournament_size = 5,
   elite_count = 2,
-  effort_weights = list(base = 1, same_finger = 3, same_hand = 1, row_change = 0.5),
+  effort_weights = list(base = 3, same_finger = 3, same_hand = 0.5, row_change = 0.5),
   verbose = TRUE
 )
 }

@@ -234,10 +234,10 @@ compile_rules <- function(rules, layout, keyboard) {
   if (is.null(rules) || length(rules) == 0) {
     return(list(
       fixed_positions = rep(FALSE, length(layout)),
-      hand_pref_indices = integer(0),
+      hand_pref_keys = character(0),
       hand_pref_targets = integer(0),
       hand_pref_weight = 0.0,
-      row_pref_indices = integer(0),
+      row_pref_keys = character(0),
       row_pref_targets = integer(0),
       row_pref_weight = 0.0,
       balance_target = 0.5,
@@ -260,13 +260,13 @@ compile_rules <- function(rules, layout, keyboard) {
   fixed_positions <- rep(FALSE, n_keys)
   layout_lower <- tolower(layout)
 
-  # Hand preference data
-  hand_pref_indices <- integer(0)
+  # Hand preference data - store characters, not indices
+  hand_pref_keys <- character(0)
   hand_pref_targets <- integer(0)
   hand_pref_weight <- 0.0
 
-  # Row preference data
-  row_pref_indices <- integer(0)
+  # Row preference data - store characters, not indices
+  row_pref_keys <- character(0)
   row_pref_targets <- integer(0)
   row_pref_weight <- 0.0
 
@@ -295,22 +295,18 @@ compile_rules <- function(rules, layout, keyboard) {
       "prefer_hand" = {
         hand_target <- if (rule$hand == "left") 0L else 1L
         for (key in rule$keys) {
-          idx <- which(layout_lower == key)
-          if (length(idx) > 0) {
-            hand_pref_indices <- c(hand_pref_indices, idx - 1L)  # 0-indexed
-            hand_pref_targets <- c(hand_pref_targets, hand_target)
-          }
+          # Store the key character directly, not the position index
+          hand_pref_keys <- c(hand_pref_keys, key)
+          hand_pref_targets <- c(hand_pref_targets, hand_target)
         }
         hand_pref_weight <- max(hand_pref_weight, rule$weight)
       },
 
       "prefer_row" = {
         for (key in rule$keys) {
-          idx <- which(layout_lower == key)
-          if (length(idx) > 0) {
-            row_pref_indices <- c(row_pref_indices, idx - 1L)  # 0-indexed
-            row_pref_targets <- c(row_pref_targets, rule$row)
-          }
+          # Store the key character directly, not the position index
+          row_pref_keys <- c(row_pref_keys, key)
+          row_pref_targets <- c(row_pref_targets, rule$row)
         }
         row_pref_weight <- max(row_pref_weight, rule$weight)
       },
@@ -335,10 +331,10 @@ compile_rules <- function(rules, layout, keyboard) {
 
   list(
     fixed_positions = fixed_positions,
-    hand_pref_indices = as.integer(hand_pref_indices),
+    hand_pref_keys = as.character(hand_pref_keys),
     hand_pref_targets = as.integer(hand_pref_targets),
     hand_pref_weight = as.numeric(hand_pref_weight),
-    row_pref_indices = as.integer(row_pref_indices),
+    row_pref_keys = as.character(row_pref_keys),
     row_pref_targets = as.integer(row_pref_targets),
     row_pref_weight = as.numeric(row_pref_weight),
     balance_target = as.numeric(balance_target),

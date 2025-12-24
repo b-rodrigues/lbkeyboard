@@ -78,5 +78,5 @@ test_that("print_layout works with character vector", {
 })
 
 test_that("print_layout errors on wrong length", {
-  expect_error(print_layout(letters[1:10]), "exactly 26 keys")
+  expect_error(print_layout(letters[1:10]), "26 keys")
 })

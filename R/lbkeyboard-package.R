@@ -27,4 +27,5 @@
 #' @name lbkeyboard-package
 #' @useDynLib lbkeyboard, .registration = TRUE
 #' @importFrom Rcpp evalCpp
+#' @importFrom GA ga
 NULL

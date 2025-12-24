@@ -12,100 +12,56 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.width = 7,
+  fig.width = 8,
   fig.height = 4,
-  cache = TRUE
+  cache = FALSE
 )
 library(lbkeyboard)
 ```
 
-## Abstract
-
-Luxembourg presents a unique linguistic environment where four languages—French, 
-German, Luxembourgish, and English—are used daily. This analysis uses genetic 
-algorithm optimization to find keyboard layouts that minimize typing effort 
-across all four languages. We compare unconstrained optimization with 
-constrained variants based on QWERTZ and BÉPO, providing practical 
-recommendations for different user needs.
-
 ## Introduction
 
-The standard keyboard layouts (QWERTY, QWERTZ, AZERTY) were designed for 
-mechanical typewriters and single-language use. Luxembourg's multilingual 
-environment creates a unique challenge: a keyboard layout must work efficiently 
-for French (the most common written language), German (widely used in business), 
-Luxembourgish (the national language), and English (used internationally).
+Luxembourg's multilingual environment requires a keyboard that works efficiently 
+for French, German, Luxembourgish, and English. This vignette demonstrates 
+keyboard optimization with **30-key layouts including accented characters** 
+(é, è, ä, ü) in direct access.
 
-This vignette presents a systematic optimization study using the `lbkeyboard` 
-package's genetic algorithm, which employs a Carpalx-inspired effort model 
-considering:
+We present three optimizations:
 
-- **Base key effort**: Position-dependent cost based on row and finger
-- **Same-finger bigrams**: High penalty for consecutive keys on same finger
-- **Same-hand sequences**: Moderate penalty with roll direction consideration
-- **Row changes**: Penalty for vertical finger movement within a hand
+1. **Unconstrained**: Maximum efficiency (30 movable keys)
+2. **Minimal Disruption**: E on home row left index (8 movable keys)
+3. **QWERTZ-Based**: Fixed optimal home row (9 movable keys)
 
-## Data and Methodology
-
-### Text Samples
-
-We use representative text samples from all four languages:
+## Data Preparation
 
 ```{r load-data}
 data("french")
 data("german")
 data("english")
 data("luxembourguish")
-```
 
-```{r sample-sizes, echo=FALSE}
-sample_info <- data.frame(
-  Language = c("French", "German", "Luxembourgish", "English"),
-  Characters = c(nchar(french), nchar(german), 
-                 nchar(luxembourguish), nchar(english))
-)
-knitr::kable(sample_info, caption = "Text sample sizes by language")
-```
-
-### Language Weighting
-
-Based on estimated language usage in Luxembourg, we weight the samples:
-
-- **French**: 45% (primary written language)
-- **German**: 25% (business and media)
-- **Luxembourgish**: 20% (daily communication)
-- **English**: 10% (international use)
-
-```{r combine-texts}
+# Weight by estimated usage in Luxembourg
 all_texts <- c(
-  rep(french, 4),
-  rep(german, 2),
-  rep(luxembourguish, 2),
-  english
+  rep(french, 4),         # 45% French
+  rep(german, 2),         # 25% German
+  rep(luxembourguish, 2), # 20% Luxembourgish
+  english                 # 10% English
 )
-total_chars <- sum(nchar(all_texts))
+
+cat("Total corpus:", format(sum(nchar(all_texts)), big.mark = ","), "characters\n")
 ```
 
-The combined corpus contains **`r format(total_chars, big.mark=",")`** characters.
-
-### Letter Frequency Analysis
-
-```{r letter-freq}
+```{r freq-analysis}
 freq_all <- letter_freq(paste(all_texts, collapse = " "))
 ```
 
 ```{r freq-table, echo=FALSE}
-freq_top <- head(freq_all, 12)
-freq_top$frequencies <- round(freq_top$frequencies * 100, 2)
-names(freq_top) <- c("Letter", "Count", "Scaled", "Frequency (%)")
-knitr::kable(freq_top, caption = "Most frequent letters across all languages")
+freq_top <- head(freq_all, 10)
+freq_top$pct <- paste0(round(freq_top$frequencies * 100, 1), "%")
+knitr::kable(freq_top[, c("characters", "total", "pct")],
+             col.names = c("Letter", "Count", "Frequency"),
+             caption = "Top 10 most frequent characters")
 ```
-
-The letter **e** dominates at `r round(freq_all$frequencies[1] * 100, 1)`%, 
-followed by **n** (`r round(freq_all$frequencies[2] * 100, 1)`%) and **a** 
-(`r round(freq_all$frequencies[3] * 100, 1)`%). This frequency distribution 
-guides our optimization toward placing these letters in the most accessible 
-positions.
 
 ## Optimization Parameters
 
@@ -114,19 +70,47 @@ GENERATIONS <- 200
 POPULATION_SIZE <- 80
 ```
 
-All optimizations use `r GENERATIONS` generations with a population size of 
-`r POPULATION_SIZE`. For production use, increasing to 500+ generations may 
-yield further improvements.
+## Helper Function: Hand Balance
 
-## Results
+Calculate what percentage of keystrokes go to each hand:
 
-### 1. Unconstrained Optimization
+```{r hand-balance-fn}
+calculate_hand_balance <- function(layout, freq_df) {
+  # Get layout as data frame
+  if (is.list(layout) && "layout" %in% names(layout)) {
+    layout_df <- layout$layout
+  } else {
+    layout_df <- layout
+  }
+  
+  # Determine hand based on column position
+  # Columns 0-4 = left hand, 5+ = right hand
+  left_keys <- layout_df$key[layout_df$number < 5]
+  right_keys <- layout_df$key[layout_df$number >= 5]
+  
+  # Calculate frequency for each hand
+  left_freq <- sum(freq_df$frequencies[freq_df$characters %in% left_keys], na.rm = TRUE)
+  right_freq <- sum(freq_df$frequencies[freq_df$characters %in% right_keys], na.rm = TRUE)
+  
+  # Normalize
+  total <- left_freq + right_freq
+  list(
+    left = round(left_freq / total * 100, 1),
+    right = round(right_freq / total * 100, 1)
+  )
+}
+```
 
-We first find the theoretically optimal layout with no constraints:
+---
+
+## 1. Unconstrained 30-Key Optimization
+
+All 30 keys (26 letters + 4 accents) are free to move:
 
 ```{r opt-unconstrained, results='hide'}
 result_unconstrained <- optimize_layout(
   text_samples = all_texts,
+  include_accents = TRUE,
   generations = GENERATIONS,
   population_size = POPULATION_SIZE,
   verbose = FALSE
@@ -134,216 +118,177 @@ result_unconstrained <- optimize_layout(
 ```
 
 ```{r unconstrained-result}
-cat("Initial effort:", round(result_unconstrained$initial_effort, 0), "\n")
-cat("Final effort:  ", round(result_unconstrained$effort, 0), "\n")
-cat("Improvement:   ", round(result_unconstrained$improvement, 1), "%\n")
+cat("Improvement:", round(result_unconstrained$improvement, 1), "%\n")
 ```
-
-**Unconstrained optimal layout:**
 
 ```{r unconstrained-layout}
 print_layout(result_unconstrained$layout)
 ```
 
-This layout achieves a **`r round(result_unconstrained$improvement, 1)`%** 
-reduction in typing effort compared to QWERTY.
+```{r heatmap-unconstrained, echo=FALSE, fig.cap="Unconstrained layout - frequency heatmap", fig.width=8, fig.height=4, warning=FALSE}
+# Create heatmap helper
+make_heatmap <- function(result, freq_df) {
+  data(ch_qwertz, envir = environment())
+  kb <- ch_qwertz
+  letter_rows <- tolower(kb$key) %in% c(letters, "é", "è", "ä", "ü")
+  layout_keys <- result$layout$key
+  n_update <- min(sum(letter_rows), length(layout_keys))
+  kb$key[which(letter_rows)[1:n_update]] <- layout_keys[1:n_update]
+  kb$key_label[which(letter_rows)[1:n_update]] <- toupper(layout_keys[1:n_update])
+  heatmapize(kb, freq_df) |> ggkeyboard()
+}
 
-### 2. Balanced Hands Variant
+make_heatmap(result_unconstrained, freq_all)
+```
 
-Adding a hand-balance constraint ensures equal workload distribution:
+---
 
-```{r opt-balanced, results='hide'}
-result_balanced <- optimize_layout(
+## 2. Minimal Disruption (E on Index Finger)
+
+E fixed on home row left index, only top 8 letters movable:
+
+```{r opt-e-index, results='hide'}
+# Extended layout with E on home row left index
+ext_keys_v2 <- c(
+  "q","w","f","r","t","y","u","i","o","p","è",
+  "a","s","d","e","g","h","j","k","l","é",
+  "z","x","c","v","b","n","m","ä","ü"
+)
+
+top_8 <- as.character(freq_all$characters[2:9])
+fixed_v2 <- setdiff(ext_keys_v2, top_8)
+
+kb_v2 <- data.frame(
+  key = ext_keys_v2,
+  key_label = toupper(ext_keys_v2),
+  row = c(rep(1, 11), rep(2, 10), rep(3, 9)),
+  number = c(0:10, 0:9, 0:8),
+  stringsAsFactors = FALSE
+)
+kb_v2$x_mid <- kb_v2$number + c(0, 0.25, 0.5)[kb_v2$row]
+kb_v2$y_mid <- kb_v2$row
+
+result_e_index <- optimize_layout(
   text_samples = all_texts,
-  rules = list(balance_hands(0.5, weight = 2.0)),
+  keyboard = kb_v2,
+  keys_to_optimize = ext_keys_v2,
+  rules = list(fix_keys(fixed_v2)),
   generations = GENERATIONS,
   population_size = POPULATION_SIZE,
   verbose = FALSE
 )
 ```
 
-```{r balanced-result}
-cat("Final effort: ", round(result_balanced$effort, 0), "\n")
-cat("Improvement:  ", round(result_balanced$improvement, 1), "%\n")
+```{r e-index-result}
+cat("Keys to relearn:", 8, "\n")
+cat("Improvement:", round(result_e_index$improvement, 1), "%\n")
 ```
 
-```{r balanced-layout}
-print_layout(result_balanced$layout)
+```{r e-index-layout}
+print_layout(result_e_index$layout)
 ```
 
-The balanced variant achieves **`r round(result_balanced$improvement, 1)`%** 
-improvement while maintaining ergonomic hand distribution.
+```{r heatmap-e-index, echo=FALSE, fig.cap="E on Index layout - frequency heatmap", fig.width=8, fig.height=4, warning=FALSE}
+make_heatmap(result_e_index, freq_all)
+```
 
-### 3. QWERTZ-Based Optimization
+---
 
-For users transitioning from Swiss QWERTZ, we explore partial optimizations 
-that preserve familiar key positions.
+## 3. QWERTZ-Based with Optimal Home Row
 
-#### 3a. Minimal Constraints (Shortcuts Only)
+Starting from QWERTZ, we fix the home row to the most frequent letters:
+**A S D E U N T R L M**
 
-```{r opt-qwertz-minimal, results='hide'}
-result_qwertz_min <- optimize_layout(
+Only the displaced keys (F, G, H, J, K) and accents need optimization:
+
+```{r opt-qwertz-home, results='hide'}
+# QWERTZ-based with optimal home row
+ext_keys_v3 <- c(
+  "q","w","f","g","h","z","j","i","o","p","è",
+  "a","s","d","e","u","n","t","r","l","m",
+  "y","x","c","v","b","k","é","ä","ü"
+)
+
+movable_v3 <- c("f", "g", "h", "j", "k", "é", "è", "ä", "ü")
+fixed_v3 <- setdiff(ext_keys_v3, movable_v3)
+
+kb_v3 <- data.frame(
+  key = ext_keys_v3,
+  key_label = toupper(ext_keys_v3),
+  row = c(rep(1, 11), rep(2, 10), rep(3, 9)),
+  number = c(0:10, 0:9, 0:8),
+  stringsAsFactors = FALSE
+)
+kb_v3$x_mid <- kb_v3$number + c(0, 0.25, 0.5)[kb_v3$row]
+kb_v3$y_mid <- kb_v3$row
+
+result_qwertz_home <- optimize_layout(
   text_samples = all_texts,
-  rules = list(
-    fix_keys(c("z", "x", "c", "v")),
-    balance_hands(0.5, weight = 1.0)
-  ),
+  keyboard = kb_v3,
+  keys_to_optimize = ext_keys_v3,
+  rules = list(fix_keys(fixed_v3)),
   generations = GENERATIONS,
   population_size = POPULATION_SIZE,
   verbose = FALSE
 )
 ```
 
-```{r qwertz-min-result}
-cat("Fixed keys:   ", result_qwertz_min$n_fixed, "\n")
-cat("Improvement:  ", round(result_qwertz_min$improvement, 1), "%\n")
+```{r qwertz-home-result}
+cat("Keys to relearn:", length(movable_v3), "\n")
+cat("Improvement:", round(result_qwertz_home$improvement, 1), "%\n")
 ```
 
-```{r qwertz-min-layout}
-print_layout(result_qwertz_min$layout)
+```{r qwertz-home-layout}
+print_layout(result_qwertz_home$layout)
 ```
 
-#### 3b. Bottom Row Fixed
-
-```{r opt-qwertz-bottom, results='hide'}
-result_qwertz_bottom <- optimize_layout(
-  text_samples = all_texts,
-  rules = list(
-    fix_keys(c("z", "x", "c", "v", "b", "n", "m")),
-    balance_hands(0.5, weight = 1.0)
-  ),
-  generations = GENERATIONS,
-  population_size = POPULATION_SIZE,
-  verbose = FALSE
-)
+```{r heatmap-qwertz-home, echo=FALSE, fig.cap="QWERTZ Home Row layout - frequency heatmap", fig.width=8, fig.height=4, warning=FALSE}
+make_heatmap(result_qwertz_home, freq_all)
 ```
 
-```{r qwertz-bottom-result}
-cat("Fixed keys:   ", result_qwertz_bottom$n_fixed, "\n")
-cat("Improvement:  ", round(result_qwertz_bottom$improvement, 1), "%\n")
-```
+---
 
-```{r qwertz-bottom-layout}
-print_layout(result_qwertz_bottom$layout)
-```
-
-### 4. BÉPO-Style Optimization
-
-BÉPO places vowels on the left hand and common consonants on the right. We 
-apply this philosophy as soft constraints:
-
-```{r opt-bepo, results='hide'}
-result_bepo <- optimize_layout(
-  text_samples = all_texts,
-  rules = list(
-    fix_keys(c("z", "x", "c", "v")),
-    prefer_hand(c("a", "e", "i", "o", "u"), "left", weight = 3.0),
-    prefer_hand(c("t", "s", "r", "n", "l"), "right", weight = 2.0),
-    prefer_row(c("e", "t", "a", "n", "i", "s"), 2, weight = 1.5),
-    balance_hands(0.5, weight = 1.0)
-  ),
-  generations = GENERATIONS,
-  population_size = POPULATION_SIZE,
-  verbose = FALSE
-)
-```
-
-```{r bepo-result}
-cat("Improvement:  ", round(result_bepo$improvement, 1), "%\n")
-```
-
-```{r bepo-layout}
-print_layout(result_bepo$layout)
-```
-
-## Comparison Summary
+## Comparison
 
 ```{r comparison-table, echo=FALSE}
-results <- list(
-  "Unconstrained" = result_unconstrained,
-  "Balanced Hands" = result_balanced,
-  "QWERTZ (shortcuts)" = result_qwertz_min,
-  "QWERTZ (bottom row)" = result_qwertz_bottom,
-  "BÉPO-style" = result_bepo
-)
+# Calculate hand balance for each layout
+hb1 <- calculate_hand_balance(result_unconstrained, freq_all)
+hb2 <- calculate_hand_balance(result_e_index, freq_all)
+hb3 <- calculate_hand_balance(result_qwertz_home, freq_all)
 
 comparison <- data.frame(
-  Layout = names(results),
-  `Final Effort` = sapply(results, function(r) round(r$effort, 0)),
-  `Improvement (%)` = sapply(results, function(r) round(r$improvement, 1)),
-  `Fixed Keys` = sapply(results, function(r) r$n_fixed),
+  Layout = c("Unconstrained", "E on Index", "QWERTZ Home Row"),
+  `Keys to Learn` = c(30, 8, 9),
+  `Improvement` = c(
+    paste0(round(result_unconstrained$improvement, 1), "%"),
+    paste0(round(result_e_index$improvement, 1), "%"),
+    paste0(round(result_qwertz_home$improvement, 1), "%")
+  ),
+  `Left Hand` = c(
+    paste0(hb1$left, "%"),
+    paste0(hb2$left, "%"),
+    paste0(hb3$left, "%")
+  ),
+  `Right Hand` = c(
+    paste0(hb1$right, "%"),
+    paste0(hb2$right, "%"),
+    paste0(hb3$right, "%")
+  ),
   check.names = FALSE
 )
 
-comparison <- comparison[order(comparison$`Final Effort`), ]
-comparison$Rank <- seq_len(nrow(comparison))
-knitr::kable(comparison, row.names = FALSE,
-             caption = "Layout comparison sorted by typing effort")
-```
-
-```{r convergence-plot, echo=FALSE, fig.cap="Convergence of unconstrained optimization"}
-plot(result_unconstrained$history$generation, 
-     result_unconstrained$history$best,
-     type = "l", col = "steelblue", lwd = 2,
-     xlab = "Generation", ylab = "Effort",
-     main = "Optimization Convergence")
-lines(result_unconstrained$history$generation, 
-      result_unconstrained$history$mean, 
-      col = "gray60", lty = 2)
-legend("topright", c("Best", "Mean"), 
-       col = c("steelblue", "gray60"), lty = c(1, 2), lwd = c(2, 1))
+knitr::kable(comparison, caption = "Layout comparison with hand balance")
 ```
 
 ## Recommendations
 
-Based on our analysis, we recommend:
+| Use Case | Recommended Layout | Improvement |
+|----------|-------------------|-------------|
+| Maximum efficiency | Unconstrained | ~`r round(result_unconstrained$improvement, 0)`% |
+| Minimal relearning | E on Index | ~`r round(result_e_index$improvement, 0)`% |
+| QWERTZ familiarity | QWERTZ Home Row | ~`r round(result_qwertz_home$improvement, 0)`% |
 
-### For Maximum Efficiency
-
-Use the **unconstrained** or **balanced hands** layout for the greatest typing 
-efficiency improvement (`r round(result_unconstrained$improvement, 0)`-`r round(result_balanced$improvement, 0)`%). 
-This requires complete relearning but provides the largest benefit for 
-dedicated users.
-
-### For Practical Transition
-
-Use the **QWERTZ (shortcuts only)** layout, which achieves 
-**`r round(result_qwertz_min$improvement, 0)`% improvement** while preserving 
-Ctrl+Z/X/C/V shortcuts. Only 22 keys need relearning.
-
-### For Minimal Disruption
-
-The **QWERTZ (bottom row fixed)** layout preserves more familiar keys while 
-still achieving **`r round(result_qwertz_bottom$improvement, 0)`% improvement**.
-
-## Special Characters
-
-Luxembourg's languages require access to special characters:
-
-| Character | Languages | Suggested Access |
-|-----------|-----------|------------------|
-| ä, ö, ü | German, Luxembourgish | AltGr + a/o/u |
-| ë | Luxembourgish | AltGr + e |
-| é, è, ê | French | Dead key or AltGr |
-| à, â | French | Dead key or AltGr |
-
-## Number Row
-
-Two configurations are recommended:
-
-1. **Direct numbers** (programming/data entry): 1234567890 on base layer
-2. **French-style** (prose writing): Symbols on base layer, numbers via Shift
-
-## Conclusion
-
-This analysis demonstrates that substantial typing efficiency gains 
-(`r round(min(sapply(results, function(r) r$improvement)), 0)`-`r round(max(sapply(results, function(r) r$improvement)), 0)`%) 
-are achievable for Luxembourg's multilingual environment. The choice of layout 
-depends on the user's willingness to relearn and their specific use case.
-
-The optimized layouts place high-frequency letters (e, n, a, s, i, t, r) on the 
-home row and strong fingers, while minimizing same-finger bigrams common in 
-French and German text.
+All layouts include **É, È, Ä, Ü in direct access** — no dead keys or AltGr needed.
 
 ## Session Info
 

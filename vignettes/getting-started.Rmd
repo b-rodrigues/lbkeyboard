@@ -182,6 +182,21 @@ legend("topright", c("Best", "Mean"),
        col = c("blue", "gray"), lty = c(1, 2))
 ```
 
+## Including Accented Characters
+
+For languages with frequent accented characters (French, German, Luxembourgish),
+you can optimize a 30-key layout that includes é, è, ä, ü as first-class keys:
+
+```{r accents-example, eval=FALSE}
+result_accents <- optimize_layout(
+  text_samples = french,
+  include_accents = TRUE,  # Adds é, è, ä, ü to the optimization
+  generations = 200
+)
+```
+
+This eliminates the need for dead keys or AltGr for the most common accents.
+
 ## Next Steps
 
 For more advanced optimization with custom constraints, see the 

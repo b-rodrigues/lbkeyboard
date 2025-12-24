@@ -121,9 +121,10 @@
 optimize_layout <- function(
     text_samples,
     keyboard = NULL,
-    keys_to_optimize = letters,
+    keys_to_optimize = NULL,
     fixed_keys = NULL,
     rules = NULL,
+    include_accents = FALSE,
     population_size = 100,
     generations = 500,
     mutation_rate = 0.1,
@@ -131,9 +132,9 @@ optimize_layout <- function(
     tournament_size = 5,
     elite_count = 2,
     effort_weights = list(
-      base = 1.0,
+      base = 3.0,
       same_finger = 3.0,
-      same_hand = 1.0,
+      same_hand = 0.5,
       row_change = 0.5
     ),
     verbose = TRUE
@@ -143,13 +144,26 @@ optimize_layout <- function(
     stop("text_samples must be a non-empty character vector")
   }
 
+  # Default keys to optimize based on include_accents
+  if (is.null(keys_to_optimize)) {
+    if (include_accents) {
+      keys_to_optimize <- c(letters, "é", "è", "ä", "ü")
+    } else {
+      keys_to_optimize <- letters
+    }
+  }
+
   if (!is.character(keys_to_optimize) || length(keys_to_optimize) == 0) {
     stop("keys_to_optimize must be a non-empty character vector")
   }
 
   # Default keyboard layout (ISO layout letter keys)
   if (is.null(keyboard)) {
-    keyboard <- create_default_keyboard()
+    if (include_accents) {
+      keyboard <- create_extended_keyboard()
+    } else {
+      keyboard <- create_default_keyboard()
+    }
   }
 
   # Filter keyboard to only keys we're optimizing
@@ -226,9 +240,267 @@ optimize_layout <- function(
     }
   }
 
-  # Run genetic algorithm
-  result <- optimize_keyboard_layout(
-    initial_layout = as.character(initial_layout),
+  # Run genetic algorithm using GA package with Random Key Encoding
+  n_keys <- length(initial_layout)
+  fixed_indices <- which(fixed_positions)
+  
+  # Create fitness function (closure capturing all necessary data)
+  fitness_func <- function(x) {
+    # Random Key Encoding: order(x) gives permutation
+    p <- order(x)
+    
+    # HARD CONSTRAINT: Repair permutation to ensure fixed keys stay in place
+    # For each fixed position, swap elements to put correct key back
+    if (length(fixed_indices) > 0) {
+      for (idx in fixed_indices) {
+        if (p[idx] != idx) {
+          # Find where idx currently is in p
+          swap_pos <- which(p == idx)
+          # Swap to put idx back in position idx
+          p[swap_pos] <- p[idx]
+          p[idx] <- idx
+        }
+      }
+    }
+    
+    # Apply permutation to get current layout
+    current_layout <- initial_layout[p]
+    
+    # HARD CONSTRAINT for prefer_hand rules (weight >= 2.0)
+    # Swap violating keys with keys from the correct hand region
+    if (compiled_rules$hand_pref_weight >= 2.0 && length(compiled_rules$hand_pref_keys) > 0) {
+      for (i in seq_along(compiled_rules$hand_pref_keys)) {
+        key <- compiled_rules$hand_pref_keys[i]
+        target_hand <- compiled_rules$hand_pref_targets[i]  # 0=left, 1=right
+        
+        key_idx <- which(current_layout == key)
+        if (length(key_idx) > 0) {
+          current_col <- keyboard_opt$number[key_idx]
+          is_on_target <- (target_hand == 0 && current_col < 5) || (target_hand == 1 && current_col >= 5)
+          
+          if (!is_on_target) {
+            # Find a key on the target hand that's NOT in our preference list
+            if (target_hand == 0) {
+              target_positions <- which(keyboard_opt$number < 5)
+            } else {
+              target_positions <- which(keyboard_opt$number >= 5)
+            }
+            
+            # Find positions with non-preferred keys
+            for (tpos in target_positions) {
+              swap_key <- current_layout[tpos]
+              if (!(swap_key %in% compiled_rules$hand_pref_keys)) {
+                # Swap
+                current_layout[tpos] <- key
+                current_layout[key_idx] <- swap_key
+                break
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    # HARD CONSTRAINT for prefer_row rules (weight >= 1.5)
+    # Swap violating keys with keys from the correct row
+    if (compiled_rules$row_pref_weight >= 1.5 && length(compiled_rules$row_pref_keys) > 0) {
+      for (i in seq_along(compiled_rules$row_pref_keys)) {
+        key <- compiled_rules$row_pref_keys[i]
+        target_row <- compiled_rules$row_pref_targets[i]
+        
+        key_idx <- which(current_layout == key)
+        if (length(key_idx) > 0) {
+          current_row <- keyboard_opt$row[key_idx]
+          
+          if (current_row != target_row) {
+            # Find positions on target row
+            target_positions <- which(keyboard_opt$row == target_row)
+            
+            # Find positions with non-preferred keys (both row and hand)
+            for (tpos in target_positions) {
+              swap_key <- current_layout[tpos]
+              # Don't swap with other row-preferred keys or hand-preferred keys
+              if (!(swap_key %in% compiled_rules$row_pref_keys) &&
+                  !(swap_key %in% compiled_rules$hand_pref_keys)) {
+                # Swap
+                current_layout[tpos] <- key
+                current_layout[key_idx] <- swap_key
+                break
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    # Build keyboard dataframe with current layout
+    current_keyboard <- keyboard_opt
+    current_keyboard$key <- current_layout
+    
+    # Calculate effort using C++ engine DIRECTLY with pre-computed frequencies
+    # (Much faster than calculate_layout_effort which re-processes text each time)
+    effort <- layout_effort(
+      layout = current_layout,
+      pos_x = pos_x,
+      pos_y = pos_y,
+      pos_row = pos_row,
+      pos_col = pos_col,
+      text_samples = text_samples,
+      char_freq = char_freq,
+      char_list = char_list,
+      w_base = effort_weights$base,
+      w_same_finger = effort_weights$same_finger,
+      w_same_hand = effort_weights$same_hand,
+      w_row_change = effort_weights$row_change
+    )
+    
+    # Add penalties for SOFT rule violations (not fixed keys)
+    penalty <- 0
+    
+    # Hand preference penalty
+    if (length(compiled_rules$hand_pref_keys) > 0) {
+      for (i in seq_along(compiled_rules$hand_pref_keys)) {
+        key <- compiled_rules$hand_pref_keys[i]
+        target_hand <- compiled_rules$hand_pref_targets[i]
+        
+        key_pos <- which(current_layout == key)
+        if (length(key_pos) > 0) {
+          col <- keyboard_opt$number[key_pos]
+          actual_hand <- if (col < 5) "left" else "right"
+          if (actual_hand != target_hand) {
+            # Use massive penalty (100000 per violation * weight) to treat high-weight rules as hard constraints
+            penalty <- penalty + compiled_rules$hand_pref_weight * 100000
+          }
+        }
+      }
+    }
+    
+    # Row preference penalty
+    if (length(compiled_rules$row_pref_keys) > 0) {
+      for (i in seq_along(compiled_rules$row_pref_keys)) {
+        key <- compiled_rules$row_pref_keys[i]
+        target_row <- compiled_rules$row_pref_targets[i]
+        
+        key_pos <- which(current_layout == key)
+        if (length(key_pos) > 0) {
+          actual_row <- keyboard_opt$row[key_pos]
+          if (actual_row != target_row) {
+            penalty <- penalty + compiled_rules$row_pref_weight * 1000
+          }
+        }
+      }
+    }
+    
+    # Balance penalty
+    if (compiled_rules$balance_weight > 0) {
+      left_keys <- sum(keyboard_opt$number[match(current_layout, current_layout)] < 5)
+      balance_ratio <- left_keys / n_keys
+      balance_error <- abs(balance_ratio - compiled_rules$balance_target)
+      penalty <- penalty + balance_error * compiled_rules$balance_weight * 500
+    }
+    
+    # GA maximizes, so return negative (effort + penalty)
+    return(-(effort + penalty))
+  }
+  
+  # Run GA optimization
+  if (verbose) {
+    message("Running GA optimization...")
+  }
+  
+  ga_result <- ga(
+    type = "real-valued",
+    fitness = fitness_func,
+    lower = rep(0, n_keys),
+    upper = rep(1, n_keys),
+    popSize = population_size,
+    maxiter = generations,
+    run = min(50, generations),  # Early stopping
+    pmutation = mutation_rate,
+    pcrossover = crossover_rate,
+    elitism = max(1, round(population_size * 0.02)),  # ~2% elitism
+    parallel = FALSE,
+    monitor = FALSE
+  )
+  
+  # Extract best solution - apply same repair logic as in fitness
+  best_p <- order(ga_result@solution[1, ])
+  
+  # Repair to enforce fixed keys
+  if (length(fixed_indices) > 0) {
+    for (idx in fixed_indices) {
+      if (best_p[idx] != idx) {
+        swap_pos <- which(best_p == idx)
+        best_p[swap_pos] <- best_p[idx]
+        best_p[idx] <- idx
+      }
+    }
+  }
+  
+  best_layout <- initial_layout[best_p]
+  
+  # Apply hand preference repair for constraints (weight >= 2.0)
+  if (compiled_rules$hand_pref_weight >= 2.0 && length(compiled_rules$hand_pref_keys) > 0) {
+    for (i in seq_along(compiled_rules$hand_pref_keys)) {
+      key <- compiled_rules$hand_pref_keys[i]
+      target_hand <- compiled_rules$hand_pref_targets[i]
+      
+      key_idx <- which(best_layout == key)
+      if (length(key_idx) > 0) {
+        current_col <- keyboard_opt$number[key_idx]
+        is_on_target <- (target_hand == 0 && current_col < 5) || (target_hand == 1 && current_col >= 5)
+        
+        if (!is_on_target) {
+          if (target_hand == 0) {
+            target_positions <- which(keyboard_opt$number < 5)
+          } else {
+            target_positions <- which(keyboard_opt$number >= 5)
+          }
+          
+          for (tpos in target_positions) {
+            swap_key <- best_layout[tpos]
+            if (!(swap_key %in% compiled_rules$hand_pref_keys)) {
+              best_layout[tpos] <- key
+              best_layout[key_idx] <- swap_key
+              break
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  # Apply row preference repair for constraints (weight >= 1.5)
+  if (compiled_rules$row_pref_weight >= 1.5 && length(compiled_rules$row_pref_keys) > 0) {
+    for (i in seq_along(compiled_rules$row_pref_keys)) {
+      key <- compiled_rules$row_pref_keys[i]
+      target_row <- compiled_rules$row_pref_targets[i]
+      
+      key_idx <- which(best_layout == key)
+      if (length(key_idx) > 0) {
+        current_row <- keyboard_opt$row[key_idx]
+        
+        if (current_row != target_row) {
+          target_positions <- which(keyboard_opt$row == target_row)
+          
+          for (tpos in target_positions) {
+            swap_key <- best_layout[tpos]
+            if (!(swap_key %in% compiled_rules$row_pref_keys) &&
+                !(swap_key %in% compiled_rules$hand_pref_keys)) {
+              best_layout[tpos] <- key
+              best_layout[key_idx] <- swap_key
+              break
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  # Calculate PURE effort (without penalties) for the final layout
+  # This is what we report - ga_result@fitnessValue includes penalties
+  final_effort <- layout_effort(
+    layout = best_layout,
     pos_x = pos_x,
     pos_y = pos_y,
     pos_row = pos_row,
@@ -236,27 +508,23 @@ optimize_layout <- function(
     text_samples = text_samples,
     char_freq = char_freq,
     char_list = char_list,
-    population_size = as.integer(population_size),
-    generations = as.integer(generations),
-    mutation_rate = mutation_rate,
-    crossover_rate = crossover_rate,
-    tournament_size = as.integer(tournament_size),
-    elite_count = as.integer(elite_count),
     w_base = effort_weights$base,
     w_same_finger = effort_weights$same_finger,
     w_same_hand = effort_weights$same_hand,
-    w_row_change = effort_weights$row_change,
-    verbose = verbose,
-    fixed_positions = fixed_positions,
-    # Rule parameters
-    hand_pref_indices = compiled_rules$hand_pref_indices,
-    hand_pref_targets = compiled_rules$hand_pref_targets,
-    hand_pref_weight = compiled_rules$hand_pref_weight,
-    row_pref_indices = compiled_rules$row_pref_indices,
-    row_pref_targets = compiled_rules$row_pref_targets,
-    row_pref_weight = compiled_rules$row_pref_weight,
-    balance_target = compiled_rules$balance_target,
-    balance_weight = compiled_rules$balance_weight
+    w_row_change = effort_weights$row_change
+  )
+  
+  # Build history from GA summary
+  ga_summary <- ga_result@summary
+  history_best <- ga_summary[, "max"]
+  history_mean <- ga_summary[, "mean"]
+  
+  # Package result similar to old format
+  result <- list(
+    layout = best_layout,
+    effort = final_effort,
+    history_best = -history_best,  # Convert back to effort (positive)
+    history_mean = -history_mean
   )
 
   # Create output layout data frame
@@ -273,9 +541,10 @@ optimize_layout <- function(
     message("Improvement: ", round(improvement, 2), "%")
   }
 
-  # Create history data frame
+  # Create history data frame (use actual generations completed, not requested)
+  actual_generations <- length(result$history_best)
   history <- data.frame(
-    generation = seq_len(generations),
+    generation = seq_len(actual_generations),
     best = result$history_best,
     mean = result$history_mean
   )
@@ -349,9 +618,9 @@ calculate_layout_effort <- function(
     text_samples,
     keys_to_evaluate = letters,
     effort_weights = list(
-      base = 1.0,
+      base = 3.0,
       same_finger = 3.0,
-      same_hand = 1.0,
+      same_hand = 0.5,
       row_change = 0.5
     ),
     breakdown = FALSE
@@ -510,9 +779,9 @@ create_default_keyboard <- function() {
   )
 
   numbers <- c(
-    1:10,        # top row positions
-    1:9,         # home row positions
-    1:7          # bottom row positions
+    0:9,         # top row positions (0-indexed for C++)
+    0:8,         # home row positions
+    0:6          # bottom row positions
   )
 
   # Calculate approximate x_mid and y_mid based on ISO layout
@@ -526,6 +795,79 @@ create_default_keyboard <- function() {
   data.frame(
     key = qwerty,
     key_label = toupper(qwerty),
+    row = rows,
+    number = numbers,
+    x_mid = x_mid,
+    y_mid = y_mid,
+    stringsAsFactors = FALSE
+  )
+}
+
+
+#' Create an extended keyboard layout with accented characters
+#'
+#' Creates a 30-key keyboard layout including the 26 standard letters plus
+#' the 4 most common accented characters for French, German, and Luxembourgish:
+#' é, è, ä, ü. This is inspired by BÉPO which places é and è on the home row.
+#'
+#' @return A data frame with 30 rows and columns: key, key_label, row, number, x_mid, y_mid
+#'
+#' @details
+#' The layout has:
+#' - Row 1: 11 keys (10 letters + 1 accent)
+#' - Row 2: 10 keys (9 letters + 1 accent) - home row
+#' - Row 3: 9 keys (7 letters + 2 accents)
+#'
+#' Accented character placements:
+#' - é: Row 2 position 9 (right pinky, home row - most frequent accent)
+#' - è: Row 1 position 10 (right pinky, top row)
+#' - ä: Row 3 position 7 (right ring finger)
+#' - ü: Row 3 position 8 (right pinky)
+#'
+#' @export
+#'
+#' @examples
+#' kb <- create_extended_keyboard()
+#' nrow(kb)  # 30
+create_extended_keyboard <- function() {
+  # Extended layout: 26 letters + 4 accented characters
+  # Inspired by BÉPO which places é and è as first-class keys
+  
+  keys <- c(
+    # Row 1: 11 keys (top row)
+    "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "è",
+    # Row 2: 10 keys (home row) - é on right pinky for easy access
+    "a", "s", "d", "f", "g", "h", "j", "k", "l", "é",
+    # Row 3: 9 keys (bottom row)
+    "z", "x", "c", "v", "b", "n", "m", "ä", "ü"
+  )
+
+  rows <- c(
+    rep(1, 11),  # top row (extended)
+    rep(2, 10),  # home row (extended)
+    rep(3, 9)    # bottom row (extended)
+  )
+
+  numbers <- c(
+    0:10,        # top row positions (0-indexed for C++)
+    0:9,         # home row positions
+    0:8          # bottom row positions
+  )
+
+  # Calculate approximate x_mid and y_mid based on ISO layout
+  x_offset <- c(0, 0.25, 0.5)  # row offsets
+
+  x_mid <- numbers + x_offset[rows]
+  y_mid <- rows
+  
+  # Create key labels (uppercase for letters, as-is for accents)
+  key_labels <- sapply(keys, function(k) {
+    if (k %in% letters) toupper(k) else toupper(k)
+  })
+
+  data.frame(
+    key = keys,
+    key_label = key_labels,
     row = rows,
     number = numbers,
     x_mid = x_mid,

@@ -32,18 +32,32 @@ struct KeyPosition {
 
 // Default finger assignments for standard ISO layout columns
 // This maps column position to finger (for rows 1-3: top, home, bottom letter rows)
+// Default finger assignments for standard ISO layout columns
+// This maps column position to finger (standard touch typing zones)
 int get_finger_for_column(int col) {
-  // Left hand columns 0-5, Right hand columns 6-13
-  // Columns: 0-1 = pinky, 2 = ring, 3 = middle, 4-5 = index (left hand)
-  //          6-7 = index, 8 = middle, 9 = ring, 10+ = pinky (right hand)
-  if (col <= 1) return 0;       // left pinky
-  if (col == 2) return 1;       // left ring
-  if (col == 3) return 2;       // left middle
-  if (col <= 5) return 3;       // left index
-  if (col <= 7) return 6;       // right index
-  if (col == 8) return 7;       // right middle
-  if (col == 9) return 8;       // right ring
-  return 9;                      // right pinky
+  // Left hand: 0-4
+  // 0: Pinky (Q, A, Z)
+  // 1: Ring (W, S, X)
+  // 2: Middle (E, D, C)
+  // 3: Index (R, F, V)
+  // 4: Index (T, G, B)
+  
+  // Right hand: 5-9+
+  // 5: Index (Y, H, N)
+  // 6: Index (U, J, M)
+  // 7: Middle (I, K)
+  // 8: Ring (O, L)
+  // 9+: Pinky (P)
+  
+  if (col == 0) return 0;       // left pinky
+  if (col == 1) return 1;       // left ring
+  if (col == 2) return 2;       // left middle
+  if (col <= 4) return 3;       // left index (cols 3, 4)
+  
+  if (col <= 6) return 6;       // right index (cols 5, 6)
+  if (col == 7) return 7;       // right middle
+  if (col == 8) return 8;       // right ring
+  return 9;                     // right pinky
 }
 
 int get_hand_for_finger(int finger) {
@@ -61,28 +75,29 @@ int get_hand_for_finger(int finger) {
 
 // Row penalties (relative difficulty of reaching each row)
 // Row 0 = number row (hardest), Row 1 = top, Row 2 = home (easiest), Row 3 = bottom
+// Home row should be distinctly advantaged
 double row_penalty(int row) {
   switch(row) {
-    case 0: return 3.0;   // Number row - far reach
-    case 1: return 1.5;   // Top row - moderate reach
-    case 2: return 1.0;   // Home row - no reach needed
-    case 3: return 1.5;   // Bottom row - moderate reach
-    default: return 2.0;
+    case 0: return 3.0;   // Number row - far reach (hardest)
+    case 1: return 1.2;   // Top row - easy reach upward
+    case 2: return 0.5;   // Home row - MUCH better (2.4x better than top)
+    case 3: return 2.0;   // Bottom row - harder (curling fingers under)
+    default: return 2.5;
   }
 }
 
 // Finger strength/dexterity penalty (weaker fingers = higher penalty)
 double finger_penalty(int finger) {
   // Pinkies are weakest, index fingers strongest
-  // finger 0,9 = pinkies, 1,8 = ring, 2,7 = middle, 3,6 = index, 4,5 = thumbs
-  switch(finger % 5) {
-    case 0: return 2.0;   // Pinky - weakest
-    case 1: return 1.3;   // Ring finger
-    case 2: return 1.0;   // Middle finger - strongest for typing
-    case 3: return 1.1;   // Index finger
-    case 4: return 1.5;   // Thumb (rarely used for letters)
-    default: return 1.5;
-  }
+  // Left: 0(P), 1(R), 2(M), 3(I), 4(I)
+  // Right: 5(I), 6(I), 7(M), 8(R), 9(P)
+  
+  if (finger == 0 || finger == 9) return 2.2;  // Pinky (weakest)
+  if (finger == 1 || finger == 8) return 1.4;  // Ring
+  if (finger == 2 || finger == 7) return 1.0;  // Middle
+  if (finger >= 3 && finger <= 6) return 0.85; // Index (strongest, preferred)
+  
+  return 1.5; // Fallback
 }
 
 // Distance from home position penalty
@@ -92,13 +107,13 @@ double home_distance_penalty(int col, int finger) {
   int home_col;
   switch(finger) {
     case 0: home_col = 0; break;   // left pinky
-    case 1: home_col = 2; break;   // left ring
-    case 2: home_col = 3; break;   // left middle
-    case 3: home_col = 4; break;   // left index
-    case 6: home_col = 7; break;   // right index
-    case 7: home_col = 8; break;   // right middle
-    case 8: home_col = 9; break;   // right ring
-    case 9: home_col = 10; break;  // right pinky
+    case 1: home_col = 1; break;   // left ring
+    case 2: home_col = 2; break;   // left middle
+    case 3: home_col = 3; break;   // left index
+    case 6: home_col = 6; break;   // right index (home on J/col 6)
+    case 7: home_col = 7; break;   // right middle
+    case 8: home_col = 8; break;   // right ring
+    case 9: home_col = 9; break;   // right pinky
     default: home_col = col;
   }
 
@@ -255,8 +270,13 @@ double calculate_effort(
   }
 
   double total_effort = 0.0;
+  
+  // Get text length for scaling base effort properly
+  // (char_freq are proportions 0-1, but bigrams count per-character)
+  double text_len = static_cast<double>(text.length());
 
   // Base effort (weighted by character frequency)
+  // Scale by text length so base effort is comparable to bigram effort
   for (size_t i = 0; i < char_list.size(); i++) {
     char c = char_list[i];
     auto it = char_to_pos.find(c);
@@ -269,7 +289,8 @@ double calculate_effort(
     if (it != char_to_pos.end()) {
       int pos = it->second;
       double base = base_key_effort(pos_row[pos], pos_col[pos], fingers[pos]);
-      total_effort += w_base * base * char_freq[i];
+      // Multiply by text_len to scale properly
+      total_effort += w_base * base * char_freq[i] * text_len;
     }
   }
 
@@ -326,12 +347,12 @@ double calculate_rule_penalties(
     const std::vector<int>& pos_col,
     const std::vector<double>& char_freq,
     const std::vector<char>& char_list,
-    // Hand preference rule
-    const std::vector<int>& hand_pref_indices,
+    // Hand preference rule - now uses character keys, not indices
+    const std::vector<char>& hand_pref_keys,
     const std::vector<int>& hand_pref_targets,
     double hand_pref_weight,
-    // Row preference rule
-    const std::vector<int>& row_pref_indices,
+    // Row preference rule - now uses character keys, not indices
+    const std::vector<char>& row_pref_keys,
     const std::vector<int>& row_pref_targets,
     double row_pref_weight,
     // Balance hands rule
@@ -341,17 +362,22 @@ double calculate_rule_penalties(
   double penalty = 0.0;
   int n = layout.size();
 
-  // Build character -> position mapping
+  // Build character -> position mapping for the current layout
   std::unordered_map<char, int> char_to_pos;
   for (int i = 0; i < n; i++) {
     char_to_pos[layout[i]] = i;
+    // If lowercase, add uppercase
     if (layout[i] >= 'a' && layout[i] <= 'z') {
       char_to_pos[layout[i] - 32] = i;
+    }
+    // If uppercase, add lowercase
+    else if (layout[i] >= 'A' && layout[i] <= 'Z') {
+      char_to_pos[layout[i] + 32] = i;
     }
   }
 
   // Calculate hand for each position (based on column)
-  // Columns 0-5 = left hand, 6+ = right hand (simplified)
+  // Columns 0-4 = left hand, 5+ = right hand
   auto get_hand = [&](int pos) -> int {
     int col = pos_col[pos];
     if (col <= 4) return 0;  // left
@@ -359,38 +385,32 @@ double calculate_rule_penalties(
     return 0;
   };
 
-  // Hand preference penalties
-  if (hand_pref_weight > 0.0 && !hand_pref_indices.empty()) {
-    for (size_t i = 0; i < hand_pref_indices.size(); i++) {
-      int orig_idx = hand_pref_indices[i];
-      if (orig_idx >= 0 && orig_idx < n) {
-        char key = layout[orig_idx];
-        auto it = char_to_pos.find(key);
-        if (it != char_to_pos.end()) {
-          int actual_hand = get_hand(it->second);
-          int target_hand = hand_pref_targets[i];
-          if (actual_hand != target_hand) {
-            penalty += hand_pref_weight;
-          }
+  // Hand preference penalties - look up each key character directly
+  if (hand_pref_weight > 0.0 && !hand_pref_keys.empty()) {
+    for (size_t i = 0; i < hand_pref_keys.size(); i++) {
+      char key = std::tolower(hand_pref_keys[i]);
+      auto it = char_to_pos.find(key);
+      if (it != char_to_pos.end()) {
+        int actual_hand = get_hand(it->second);
+        int target_hand = hand_pref_targets[i];
+        if (actual_hand != target_hand) {
+          penalty += hand_pref_weight;
         }
       }
     }
   }
 
-  // Row preference penalties
-  if (row_pref_weight > 0.0 && !row_pref_indices.empty()) {
-    for (size_t i = 0; i < row_pref_indices.size(); i++) {
-      int orig_idx = row_pref_indices[i];
-      if (orig_idx >= 0 && orig_idx < n) {
-        char key = layout[orig_idx];
-        auto it = char_to_pos.find(key);
-        if (it != char_to_pos.end()) {
-          int actual_row = pos_row[it->second];
-          int target_row = row_pref_targets[i];
-          if (actual_row != target_row) {
-            // Penalty proportional to row distance
-            penalty += row_pref_weight * std::abs(actual_row - target_row);
-          }
+  // Row preference penalties - look up each key character directly
+  if (row_pref_weight > 0.0 && !row_pref_keys.empty()) {
+    for (size_t i = 0; i < row_pref_keys.size(); i++) {
+      char key = std::tolower(row_pref_keys[i]);
+      auto it = char_to_pos.find(key);
+      if (it != char_to_pos.end()) {
+        int actual_row = pos_row[it->second];
+        int target_row = row_pref_targets[i];
+        if (actual_row != target_row) {
+          // Penalty proportional to row distance
+          penalty += row_pref_weight * std::abs(actual_row - target_row);
         }
       }
     }
@@ -439,11 +459,11 @@ double calculate_effort_with_rules(
     double w_same_finger,
     double w_same_hand,
     double w_row_change,
-    // Rule parameters
-    const std::vector<int>& hand_pref_indices,
+    // Rule parameters - now use character vectors for keys
+    const std::vector<char>& hand_pref_keys,
     const std::vector<int>& hand_pref_targets,
     double hand_pref_weight,
-    const std::vector<int>& row_pref_indices,
+    const std::vector<char>& row_pref_keys,
     const std::vector<int>& row_pref_targets,
     double row_pref_weight,
     double balance_target,
@@ -457,8 +477,8 @@ double calculate_effort_with_rules(
 
   double rule_penalty = calculate_rule_penalties(
     layout_keys, pos_row, pos_col, char_freq, char_list,
-    hand_pref_indices, hand_pref_targets, hand_pref_weight,
-    row_pref_indices, row_pref_targets, row_pref_weight,
+    hand_pref_keys, hand_pref_targets, hand_pref_weight,
+    row_pref_keys, row_pref_targets, row_pref_weight,
     balance_target, balance_weight
   );
 
@@ -761,11 +781,11 @@ List optimize_keyboard_layout_internal(
     double w_row_change = 0.5,
     bool verbose = true,
     std::vector<bool> fixed_positions = std::vector<bool>(),
-    // Rule parameters
-    std::vector<int> hand_pref_indices = std::vector<int>(),
+    // Rule parameters - now use character vectors for keys
+    std::vector<char> hand_pref_keys = std::vector<char>(),
     std::vector<int> hand_pref_targets = std::vector<int>(),
     double hand_pref_weight = 0.0,
-    std::vector<int> row_pref_indices = std::vector<int>(),
+    std::vector<char> row_pref_keys = std::vector<char>(),
     std::vector<int> row_pref_targets = std::vector<int>(),
     double row_pref_weight = 0.0,
     double balance_target = 0.5,
@@ -836,8 +856,8 @@ List optimize_keyboard_layout_internal(
         population[i], pos_x, pos_y, pos_row, pos_col,
         combined_text, char_freq, char_list,
         w_base, w_same_finger, w_same_hand, w_row_change,
-        hand_pref_indices, hand_pref_targets, hand_pref_weight,
-        row_pref_indices, row_pref_targets, row_pref_weight,
+        hand_pref_keys, hand_pref_targets, hand_pref_weight,
+        row_pref_keys, row_pref_targets, row_pref_weight,
         balance_target, balance_weight
       );
     } else {
@@ -913,8 +933,8 @@ List optimize_keyboard_layout_internal(
           child, pos_x, pos_y, pos_row, pos_col,
           combined_text, char_freq, char_list,
           w_base, w_same_finger, w_same_hand, w_row_change,
-          hand_pref_indices, hand_pref_targets, hand_pref_weight,
-          row_pref_indices, row_pref_targets, row_pref_weight,
+          hand_pref_keys, hand_pref_targets, hand_pref_weight,
+          row_pref_keys, row_pref_targets, row_pref_weight,
           balance_target, balance_weight
         );
       } else {
@@ -1160,10 +1180,10 @@ List optimize_keyboard_layout(
     double w_row_change = 0.5,
     bool verbose = true,
     LogicalVector fixed_positions = LogicalVector(),
-    IntegerVector hand_pref_indices = IntegerVector(),
+    CharacterVector hand_pref_keys = CharacterVector(),
     IntegerVector hand_pref_targets = IntegerVector(),
     double hand_pref_weight = 0.0,
-    IntegerVector row_pref_indices = IntegerVector(),
+    CharacterVector row_pref_keys = CharacterVector(),
     IntegerVector row_pref_targets = IntegerVector(),
     double row_pref_weight = 0.0,
     double balance_target = 0.5,
@@ -1206,10 +1226,18 @@ List optimize_keyboard_layout(
     }
   }
   
-  // Convert rule parameters
-  std::vector<int> hpi = Rcpp::as<std::vector<int>>(hand_pref_indices);
+  // Convert rule parameters - now keys are CharacterVectors
+  std::vector<char> hpk(hand_pref_keys.size());
+  for (int i = 0; i < hand_pref_keys.size(); i++) {
+    std::string s = Rcpp::as<std::string>(hand_pref_keys[i]);
+    hpk[i] = s.empty() ? ' ' : std::tolower(s[0]);
+  }
   std::vector<int> hpt = Rcpp::as<std::vector<int>>(hand_pref_targets);
-  std::vector<int> rpi = Rcpp::as<std::vector<int>>(row_pref_indices);
+  std::vector<char> rpk(row_pref_keys.size());
+  for (int i = 0; i < row_pref_keys.size(); i++) {
+    std::string s = Rcpp::as<std::string>(row_pref_keys[i]);
+    rpk[i] = s.empty() ? ' ' : std::tolower(s[0]);
+  }
   std::vector<int> rpt = Rcpp::as<std::vector<int>>(row_pref_targets);
   
   return optimize_keyboard_layout_internal(
@@ -1218,11 +1246,13 @@ List optimize_keyboard_layout(
     population_size, generations, mutation_rate, crossover_rate,
     tournament_size, elite_count, w_base, w_same_finger, w_same_hand,
     w_row_change, verbose, fixed,
-    hpi, hpt, hand_pref_weight,
-    rpi, rpt, row_pref_weight,
+    hpk, hpt, hand_pref_weight,
+    rpk, rpt, row_pref_weight,
     balance_target, balance_weight
   );
 }
+
+
 
 // Generate random layout
 // [[Rcpp::export]]

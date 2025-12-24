@@ -43,8 +43,19 @@ print_layout <- function(layout, uppercase = TRUE) {
     keys <- as.character(layout)
   }
 
-  if (length(keys) != 26) {
-    stop("Layout must have exactly 26 keys (letters a-z)")
+  # Support both 26-key (standard) and 30-key (extended with accents) layouts
+  if (length(keys) == 26) {
+    # Standard layout: 10 + 9 + 7
+    top_count <- 10
+    home_count <- 9
+    bottom_count <- 7
+  } else if (length(keys) == 30) {
+    # Extended layout with accents: 11 + 10 + 9
+    top_count <- 11
+    home_count <- 10
+    bottom_count <- 9
+  } else {
+    stop("Layout must have 26 keys (standard) or 30 keys (extended with accents)")
   }
 
   if (uppercase) {
@@ -52,23 +63,23 @@ print_layout <- function(layout, uppercase = TRUE) {
   }
 
   # Split into rows
-  top_row <- keys[1:10]
-  home_row <- keys[11:19]
-  bottom_row <- keys[20:26]
+  top_row <- keys[1:top_count]
+  home_row <- keys[(top_count + 1):(top_count + home_count)]
+  bottom_row <- keys[(top_count + home_count + 1):length(keys)]
 
   # Build ASCII keyboard
-  # Top row (10 keys)
-  cat("\u250c", paste(rep("\u2500\u2500\u2500\u252c", 9), collapse = ""), "\u2500\u2500\u2500\u2510\n", sep = "")
+  # Top row
+  cat("\u250c", paste(rep("\u2500\u2500\u2500\u252c", top_count - 1), collapse = ""), "\u2500\u2500\u2500\u2510\n", sep = "")
   cat("\u2502", paste(" ", top_row, " \u2502", sep = "", collapse = ""), "\n", sep = "")
 
-  # Home row (9 keys) - offset slightly
-  cat("\u251c", paste(rep("\u2500\u2500\u2500\u253c", 8), collapse = ""), "\u2500\u2500\u2500\u2518\n", sep = "")
+  # Home row - offset slightly
+  cat("\u251c", paste(rep("\u2500\u2500\u2500\u253c", home_count - 1), collapse = ""), "\u2500\u2500\u2500\u2518\n", sep = "")
   cat("\u2502", paste(" ", home_row, " \u2502", sep = "", collapse = ""), "\n", sep = "")
 
-  # Bottom row (7 keys) - offset more
-  cat("\u251c", paste(rep("\u2500\u2500\u2500\u253c", 6), collapse = ""), "\u2500\u2500\u2500\u2518\n", sep = "")
+  # Bottom row - offset more
+  cat("\u251c", paste(rep("\u2500\u2500\u2500\u253c", bottom_count - 1), collapse = ""), "\u2500\u2500\u2500\u2518\n", sep = "")
   cat("\u2502", paste(" ", bottom_row, " \u2502", sep = "", collapse = ""), "\n", sep = "")
-  cat("\u2514", paste(rep("\u2500\u2500\u2500\u2534", 6), collapse = ""), "\u2500\u2500\u2500\u2518\n", sep = "")
+  cat("\u2514", paste(rep("\u2500\u2500\u2500\u2534", bottom_count - 1), collapse = ""), "\u2500\u2500\u2500\u2518\n", sep = "")
 
   invisible(keys)
 }
@@ -111,17 +122,25 @@ plot_layout <- function(layout, base_keyboard = sixty_percent, ...) {
       layout_df <- layout$layout
     } else {
       # Character vector result - need to create data frame
-      layout_df <- create_default_keyboard()
-      layout_df$key <- as.character(layout$layout)
-      layout_df$key_label <- toupper(layout_df$key)
+      keys <- as.character(layout$layout)
+      if (length(keys) == 30) {
+        layout_df <- create_extended_keyboard()
+      } else {
+        layout_df <- create_default_keyboard()
+      }
+      layout_df$key <- keys
+      layout_df$key_label <- toupper(keys)
     }
   } else {
     # Character vector input
     keys <- as.character(layout)
-    if (length(keys) != 26) {
-      stop("Layout must have exactly 26 keys (letters a-z)")
+    if (length(keys) == 30) {
+      layout_df <- create_extended_keyboard()
+    } else if (length(keys) == 26) {
+      layout_df <- create_default_keyboard()
+    } else {
+      stop("Layout must have 26 keys (standard) or 30 keys (extended)")
     }
-    layout_df <- create_default_keyboard()
     layout_df$key <- keys
     layout_df$key_label <- toupper(keys)
   }

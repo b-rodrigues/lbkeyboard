@@ -40,7 +40,8 @@ test_that("compile_rules handles prefer_hand correctly", {
   result <- compile_rules(rules, qwerty, NULL)
 
   expect_equal(result$hand_pref_weight, 2.0)
-  expect_equal(length(result$hand_pref_indices), 2)
+  expect_equal(length(result$hand_pref_keys), 2)
+  expect_true(all(c("a", "e") %in% result$hand_pref_keys))
   # All targets should be 0 (left hand)
   expect_true(all(result$hand_pref_targets == 0))
 })
@@ -72,6 +73,7 @@ test_that("compile_rules handles multiple rules", {
   expect_true(result$fixed_positions[20])  # z
   expect_true(result$fixed_positions[21])  # x
   expect_equal(result$hand_pref_weight, 1.0)
+  expect_true(all(c("a", "e") %in% result$hand_pref_keys))
   expect_true(all(result$hand_pref_targets == 1))  # right hand
   expect_equal(result$balance_weight, 2.0)
 })

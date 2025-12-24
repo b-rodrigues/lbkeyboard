@@ -8,7 +8,7 @@ calculate_layout_effort(
   keyboard,
   text_samples,
   keys_to_evaluate = letters,
-  effort_weights = list(base = 1, same_finger = 3, same_hand = 1, row_change = 0.5),
+  effort_weights = list(base = 3, same_finger = 3, same_hand = 0.5, row_change = 0.5),
   breakdown = FALSE
 )
 }
