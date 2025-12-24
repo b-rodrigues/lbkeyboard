@@ -247,7 +247,8 @@ double calculate_effort(
     double w_base = 1.0,
     double w_same_finger = 3.0,
     double w_same_hand = 1.0,
-    double w_row_change = 0.5
+    double w_row_change = 0.5,
+    double w_trigram = 0.3
 ) {
   int n = layout_keys.size();
 
@@ -294,7 +295,8 @@ double calculate_effort(
     }
   }
 
-  // Bigram effort (process text for consecutive pairs)
+  // Bigram and trigram effort (process text for consecutive pairs and triples)
+  int prev_prev_pos = -1;
   int prev_pos = -1;
   for (size_t i = 0; i < text.length(); i++) {
     char c = std::tolower(text[i]);
@@ -303,6 +305,7 @@ double calculate_effort(
 
     int curr_pos = it->second;
 
+    // Process bigrams
     if (prev_pos >= 0) {
       int finger1 = fingers[prev_pos];
       int finger2 = fingers[curr_pos];
@@ -330,6 +333,25 @@ double calculate_effort(
       // Hand alternation (preferred - no penalty)
     }
 
+    // Process trigrams (three consecutive keys on same hand)
+    if (prev_prev_pos >= 0 && prev_pos >= 0) {
+      int finger0 = fingers[prev_prev_pos];
+      int finger1 = fingers[prev_pos];
+      int finger2 = fingers[curr_pos];
+      int hand0 = hands[prev_prev_pos];
+      int hand1 = hands[prev_pos];
+      int hand2 = hands[curr_pos];
+
+      // Only penalize if all three keys are on the same hand
+      if (hand0 == hand1 && hand1 == hand2) {
+        bool is_left = (hand0 == 0);
+        total_effort += w_trigram * same_hand_trigram_penalty(
+          finger0, finger1, finger2, is_left
+        );
+      }
+    }
+
+    prev_prev_pos = prev_pos;
     prev_pos = curr_pos;
   }
 
@@ -459,6 +481,7 @@ double calculate_effort_with_rules(
     double w_same_finger,
     double w_same_hand,
     double w_row_change,
+    double w_trigram,
     // Rule parameters - now use character vectors for keys
     const std::vector<char>& hand_pref_keys,
     const std::vector<int>& hand_pref_targets,
@@ -472,7 +495,7 @@ double calculate_effort_with_rules(
   double base_effort = calculate_effort(
     layout_keys, pos_x, pos_y, pos_row, pos_col,
     text, char_freq, char_list,
-    w_base, w_same_finger, w_same_hand, w_row_change
+    w_base, w_same_finger, w_same_hand, w_row_change, w_trigram
   );
 
   double rule_penalty = calculate_rule_penalties(
@@ -779,6 +802,7 @@ List optimize_keyboard_layout_internal(
     double w_same_finger = 3.0,
     double w_same_hand = 1.0,
     double w_row_change = 0.5,
+    double w_trigram = 0.3,
     bool verbose = true,
     std::vector<bool> fixed_positions = std::vector<bool>(),
     // Rule parameters - now use character vectors for keys
@@ -855,7 +879,7 @@ List optimize_keyboard_layout_internal(
       fitness[i] = calculate_effort_with_rules(
         population[i], pos_x, pos_y, pos_row, pos_col,
         combined_text, char_freq, char_list,
-        w_base, w_same_finger, w_same_hand, w_row_change,
+        w_base, w_same_finger, w_same_hand, w_row_change, w_trigram,
         hand_pref_keys, hand_pref_targets, hand_pref_weight,
         row_pref_keys, row_pref_targets, row_pref_weight,
         balance_target, balance_weight
@@ -864,7 +888,7 @@ List optimize_keyboard_layout_internal(
       fitness[i] = calculate_effort(
         population[i], pos_x, pos_y, pos_row, pos_col,
         combined_text, char_freq, char_list,
-        w_base, w_same_finger, w_same_hand, w_row_change
+        w_base, w_same_finger, w_same_hand, w_row_change, w_trigram
       );
     }
   }
@@ -932,7 +956,7 @@ List optimize_keyboard_layout_internal(
         new_fitness[i] = calculate_effort_with_rules(
           child, pos_x, pos_y, pos_row, pos_col,
           combined_text, char_freq, char_list,
-          w_base, w_same_finger, w_same_hand, w_row_change,
+          w_base, w_same_finger, w_same_hand, w_row_change, w_trigram,
           hand_pref_keys, hand_pref_targets, hand_pref_weight,
           row_pref_keys, row_pref_targets, row_pref_weight,
           balance_target, balance_weight
@@ -941,7 +965,7 @@ List optimize_keyboard_layout_internal(
         new_fitness[i] = calculate_effort(
           child, pos_x, pos_y, pos_row, pos_col,
           combined_text, char_freq, char_list,
-          w_base, w_same_finger, w_same_hand, w_row_change
+          w_base, w_same_finger, w_same_hand, w_row_change, w_trigram
         );
       }
     }
@@ -1009,7 +1033,8 @@ double layout_effort(
     double w_base = 1.0,
     double w_same_finger = 3.0,
     double w_same_hand = 1.0,
-    double w_row_change = 0.5
+    double w_row_change = 0.5,
+    double w_trigram = 0.3
 ) {
   int n = layout.size();
   std::vector<char> layout_keys(n);
@@ -1038,7 +1063,7 @@ double layout_effort(
   return calculate_effort(
     layout_keys, px, py, pr, pc,
     combined_text, cf, cl,
-    w_base, w_same_finger, w_same_hand, w_row_change
+    w_base, w_same_finger, w_same_hand, w_row_change, w_trigram
   );
 }
 
@@ -1098,9 +1123,11 @@ List effort_breakdown(
   double same_finger_effort = 0.0;
   double same_hand_effort = 0.0;
   double row_change_effort = 0.0;
+  double trigram_effort = 0.0;
   int same_finger_count = 0;
   int same_hand_count = 0;
   int hand_alternation_count = 0;
+  int trigram_count = 0;
 
   // Base effort
   for (size_t i = 0; i < cl.size(); i++) {
@@ -1115,7 +1142,8 @@ List effort_breakdown(
     }
   }
 
-  // Bigram analysis
+  // Bigram and trigram analysis
+  int prev_prev_pos = -1;
   int prev_pos = -1;
   for (size_t i = 0; i < combined_text.length(); i++) {
     char c = std::tolower(combined_text[i]);
@@ -1124,6 +1152,7 @@ List effort_breakdown(
 
     int curr_pos = it->second;
 
+    // Bigram analysis
     if (prev_pos >= 0) {
       if (fingers[prev_pos] == fingers[curr_pos] && prev_pos != curr_pos) {
         same_finger_count++;
@@ -1141,6 +1170,23 @@ List effort_breakdown(
         hand_alternation_count++;
       }
     }
+
+    // Trigram analysis
+    if (prev_prev_pos >= 0 && prev_pos >= 0) {
+      int hand0 = hands[prev_prev_pos];
+      int hand1 = hands[prev_pos];
+      int hand2 = hands[curr_pos];
+
+      if (hand0 == hand1 && hand1 == hand2) {
+        trigram_count++;
+        bool is_left = (hand0 == 0);
+        trigram_effort += same_hand_trigram_penalty(
+          fingers[prev_prev_pos], fingers[prev_pos], fingers[curr_pos], is_left
+        );
+      }
+    }
+
+    prev_prev_pos = prev_pos;
     prev_pos = curr_pos;
   }
 
@@ -1149,11 +1195,14 @@ List effort_breakdown(
     Named("same_finger_effort") = same_finger_effort,
     Named("same_hand_effort") = same_hand_effort,
     Named("row_change_effort") = row_change_effort,
+    Named("trigram_effort") = trigram_effort,
     Named("total_effort") = base_effort + 3.0 * same_finger_effort +
-                            same_hand_effort + 0.5 * row_change_effort,
+                            same_hand_effort + 0.5 * row_change_effort +
+                            0.3 * trigram_effort,
     Named("same_finger_bigrams") = same_finger_count,
     Named("same_hand_bigrams") = same_hand_count,
-    Named("hand_alternations") = hand_alternation_count
+    Named("hand_alternations") = hand_alternation_count,
+    Named("same_hand_trigrams") = trigram_count
   );
 }
 
@@ -1178,6 +1227,7 @@ List optimize_keyboard_layout(
     double w_same_finger = 3.0,
     double w_same_hand = 1.0,
     double w_row_change = 0.5,
+    double w_trigram = 0.3,
     bool verbose = true,
     LogicalVector fixed_positions = LogicalVector(),
     CharacterVector hand_pref_keys = CharacterVector(),
@@ -1245,7 +1295,7 @@ List optimize_keyboard_layout(
     texts, cf, cl,
     population_size, generations, mutation_rate, crossover_rate,
     tournament_size, elite_count, w_base, w_same_finger, w_same_hand,
-    w_row_change, verbose, fixed,
+    w_row_change, w_trigram, verbose, fixed,
     hpk, hpt, hand_pref_weight,
     rpk, rpt, row_pref_weight,
     balance_target, balance_weight

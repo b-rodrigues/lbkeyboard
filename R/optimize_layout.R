@@ -29,6 +29,7 @@
 #'     \item \code{same_finger}: Weight for same-finger bigram penalty (default 3.0)
 #'     \item \code{same_hand}: Weight for same-hand bigram penalty (default 1.0)
 #'     \item \code{row_change}: Weight for row change penalty (default 0.5)
+#'     \item \code{trigram}: Weight for same-hand trigram penalty (default 0.3)
 #'   }
 #' @param verbose Logical. Print progress every 50 generations? Default TRUE.
 #'
@@ -59,6 +60,8 @@
 #'   \item \strong{Same-hand sequences}: Moderate penalty, with inward rolls
 #'     (e.g., index to pinky) penalized less than outward rolls
 #'   \item \strong{Row changes}: Penalty for reaching between rows on same hand
+#'   \item \strong{Same-hand trigrams}: Penalty for three consecutive keys on
+#'     the same hand, with higher penalty for direction-changing sequences
 #' }
 #'
 #' The genetic algorithm uses:
@@ -135,7 +138,8 @@ optimize_layout <- function(
       base = 3.0,
       same_finger = 3.0,
       same_hand = 0.5,
-      row_change = 0.5
+      row_change = 0.5,
+      trigram = 0.3
     ),
     verbose = TRUE
 ) {
@@ -211,7 +215,8 @@ optimize_layout <- function(
     w_base = effort_weights$base,
     w_same_finger = effort_weights$same_finger,
     w_same_hand = effort_weights$same_hand,
-    w_row_change = effort_weights$row_change
+    w_row_change = effort_weights$row_change,
+    w_trigram = effort_weights$trigram
   )
 
   # Handle fixed keys (from fixed_keys parameter)
@@ -351,7 +356,8 @@ optimize_layout <- function(
       w_base = effort_weights$base,
       w_same_finger = effort_weights$same_finger,
       w_same_hand = effort_weights$same_hand,
-      w_row_change = effort_weights$row_change
+      w_row_change = effort_weights$row_change,
+      w_trigram = effort_weights$trigram
     )
     
     # Add penalties for SOFT rule violations (not fixed keys)
@@ -511,7 +517,8 @@ optimize_layout <- function(
     w_base = effort_weights$base,
     w_same_finger = effort_weights$same_finger,
     w_same_hand = effort_weights$same_hand,
-    w_row_change = effort_weights$row_change
+    w_row_change = effort_weights$row_change,
+    w_trigram = effort_weights$trigram
   )
   
   # Build history from GA summary
@@ -621,7 +628,8 @@ calculate_layout_effort <- function(
       base = 3.0,
       same_finger = 3.0,
       same_hand = 0.5,
-      row_change = 0.5
+      row_change = 0.5,
+      trigram = 0.3
     ),
     breakdown = FALSE
 ) {
@@ -676,7 +684,8 @@ calculate_layout_effort <- function(
       w_base = effort_weights$base,
       w_same_finger = effort_weights$same_finger,
       w_same_hand = effort_weights$same_hand,
-      w_row_change = effort_weights$row_change
+      w_row_change = effort_weights$row_change,
+      w_trigram = effort_weights$trigram
     )
   }
 }
@@ -722,7 +731,8 @@ compare_layouts <- function(
       base = 1.0,
       same_finger = 3.0,
       same_hand = 1.0,
-      row_change = 0.5
+      row_change = 0.5,
+      trigram = 0.3
     )
 ) {
   if (!is.list(keyboards) || is.null(names(keyboards))) {
