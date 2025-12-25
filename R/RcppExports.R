@@ -9,10 +9,6 @@ effort_breakdown <- function(layout, pos_x, pos_y, pos_row, pos_col, text_sample
     .Call(`_lbkeyboard_effort_breakdown`, layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list)
 }
 
-optimize_keyboard_layout <- function(initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size = 100L, generations = 500L, mutation_rate = 0.1, crossover_rate = 0.8, tournament_size = 5L, elite_count = 2L, w_base = 1.0, w_same_finger = 3.0, w_same_hand = 1.0, w_row_change = 0.5, w_trigram = 0.3, verbose = TRUE, fixed_positions = logical(), hand_pref_keys = character(), hand_pref_targets = integer(), hand_pref_weight = 0.0, row_pref_keys = character(), row_pref_targets = integer(), row_pref_weight = 0.0, balance_target = 0.5, balance_weight = 0.0) {
-    .Call(`_lbkeyboard_optimize_keyboard_layout`, initial_layout, pos_x, pos_y, pos_row, pos_col, text_samples, char_freq, char_list, population_size, generations, mutation_rate, crossover_rate, tournament_size, elite_count, w_base, w_same_finger, w_same_hand, w_row_change, w_trigram, verbose, fixed_positions, hand_pref_keys, hand_pref_targets, hand_pref_weight, row_pref_keys, row_pref_targets, row_pref_weight, balance_target, balance_weight)
-}
-
 random_layout <- function(keys) {
     .Call(`_lbkeyboard_random_layout`, keys)
 }
