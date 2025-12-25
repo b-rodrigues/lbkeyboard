@@ -181,28 +181,34 @@ for any layout:</p>
 <span></span>
 <span><span class="va">effort</span></span>
 <span><span class="co">#&gt; $base_effort</span></span>
-<span><span class="co">#&gt; [1] 2.923971</span></span>
+<span><span class="co">#&gt; [1] 19294.56</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $same_finger_effort</span></span>
-<span><span class="co">#&gt; [1] 7054.919</span></span>
+<span><span class="co">#&gt; [1] 4883.69</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $same_hand_effort</span></span>
-<span><span class="co">#&gt; [1] 1759.7</span></span>
+<span><span class="co">#&gt; [1] 1999.5</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $row_change_effort</span></span>
-<span><span class="co">#&gt; [1] 945.6</span></span>
+<span><span class="co">#&gt; [1] 967.8</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $trigram_effort</span></span>
+<span><span class="co">#&gt; [1] 3456</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $total_effort</span></span>
-<span><span class="co">#&gt; [1] 23400.18</span></span>
+<span><span class="co">#&gt; [1] 37465.83</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $same_finger_bigrams</span></span>
-<span><span class="co">#&gt; [1] 1219</span></span>
+<span><span class="co">#&gt; [1] 866</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $same_hand_bigrams</span></span>
-<span><span class="co">#&gt; [1] 2293</span></span>
+<span><span class="co">#&gt; [1] 2690</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $hand_alternations</span></span>
-<span><span class="co">#&gt; [1] 3590</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 3546</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $same_hand_trigrams</span></span>
+<span><span class="co">#&gt; [1] 1833</span></span></code></pre></div>
 <p>The effort components are:</p>
 <ul>
 <li>
@@ -234,9 +240,9 @@ within hand</li>
 <span></span>
 <span><span class="va">comparison</span></span>
 <span><span class="co">#&gt;   layout   effort rank relative</span></span>
-<span><span class="co">#&gt; 1   BEPO 49182.74    1 100.0000</span></span>
-<span><span class="co">#&gt; 2 QWERTZ 51534.63    2 104.7819</span></span>
-<span><span class="co">#&gt; 3 AZERTY 52813.74    3 107.3827</span></span></code></pre></div>
+<span><span class="co">#&gt; 1   BEPO 17949.71    1 100.0000</span></span>
+<span><span class="co">#&gt; 2 AZERTY 37377.11    2 208.2324</span></span>
+<span><span class="co">#&gt; 3 QWERTZ 37465.83    3 208.7267</span></span></code></pre></div>
 <p>Lower effort is better. The <code>relative</code> column shows effort
 as a percentage of the best layout.</p>
 </div>
@@ -254,18 +260,18 @@ as a percentage of the best layout.</p>
 <p>View the results:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Improvement:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">improvement</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Improvement: 26.09 %</span></span>
+<span><span class="co">#&gt; Improvement: 26.14 %</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Final effort:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">effort</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Final effort: 131997.2</span></span>
+<span><span class="co">#&gt; Final effort: 147060.5</span></span>
 <span></span>
 <span><span class="co"># View the optimized layout</span></span>
 <span><span class="fu"><a href="../reference/print_layout.html">print_layout</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
-<span><span class="co">#&gt; │ D │ F │ T │ K │ O │ M │ W │ A │ R │ V │</span></span>
+<span><span class="co">#&gt; │ O │ Z │ F │ H │ B │ I │ K │ C │ V │ X │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ H │ N │ I │ B │ S │ L │ G │ E │ U │</span></span>
+<span><span class="co">#&gt; │ D │ U │ M │ R │ E │ T │ S │ N │ W │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ Z │ P │ J │ Q │ Y │ X │ C │</span></span>
+<span><span class="co">#&gt; │ J │ L │ P │ A │ Q │ Y │ G │</span></span>
 <span><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -286,11 +292,11 @@ as a percentage of the best layout.</p>
 <span><span class="co">#&gt; Optimized keys: 22</span></span>
 <span><span class="fu"><a href="../reference/print_layout.html">print_layout</a></span><span class="op">(</span><span class="va">result_fixed</span><span class="op">$</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
-<span><span class="co">#&gt; │ J │ Q │ A │ P │ B │ H │ S │ R │ Y │ G │</span></span>
+<span><span class="co">#&gt; │ J │ Q │ L │ H │ O │ M │ P │ B │ Y │ G │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ I │ O │ E │ M │ T │ U │ L │ N │ D │</span></span>
+<span><span class="co">#&gt; │ R │ N │ A │ U │ E │ S │ I │ T │ D │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ Z │ X │ C │ V │ F │ W │ K │</span></span>
+<span><span class="co">#&gt; │ Z │ X │ C │ V │ F │ K │ W │</span></span>
 <span><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span></code></pre></div>
 </div>
 <div class="section level2">

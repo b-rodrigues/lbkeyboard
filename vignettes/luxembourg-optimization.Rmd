@@ -17,278 +17,550 @@ knitr::opts_chunk$set(
   cache = FALSE
 )
 library(lbkeyboard)
+library(dplyr)
 ```
 
 ## Introduction
 
 Luxembourg's multilingual environment requires a keyboard that works efficiently 
 for French, German, Luxembourgish, and English. This vignette demonstrates 
-keyboard optimization with **30-key layouts including accented characters** 
-(é, è, ä, ü) in direct access.
+how to analyze text corpora, evaluate existing keyboard layouts, and optimize 
+new ones using the **lbkeyboard** package's typing effort model.
 
-We present three optimizations:
+We will:
 
-1. **Unconstrained**: Maximum efficiency (30 movable keys)
-2. **Minimal Disruption**: E on home row left index (8 movable keys)
-3. **QWERTZ-Based**: Fixed optimal home row (9 movable keys)
+1. **Introduce the data**: Create a multilingual corpus reflecting Luxembourg's language usage
+2. **Evaluate standard layouts**: Compare QWERTZ, AZERTY, BÉPO, and Dvorak
+3. **Optimize custom layouts**: Create unconstrained and QWERTZ-based optimizations
+4. **Rank all layouts**: Summarize with a final comparison table
 
-## Data Preparation
+---
+
+## 1. The Multilingual Corpus
+
+We create a balanced corpus representing typical language usage in Luxembourg:
+
+- **30% French** - Administrative and business language
+- **30% English** - International communication
+- **20% German** - Media and education
+- **20% Luxembourgish** - Daily life and national identity
 
 ```{r load-data}
+# Load sample texts
 data("french")
 data("german")
 data("english")
 data("luxembourguish")
 
-# Weight by estimated usage in Luxembourg
-all_texts <- c(
-  rep(french, 4),         # 45% French
-  rep(german, 2),         # 25% German
-  rep(luxembourguish, 2), # 20% Luxembourgish
-  english                 # 10% English
+# Create weighted corpus (each rep adds ~10% weight)
+corpus <- list(
+  French = rep(french, 3),         # 30%
+  English = rep(english, 3),       # 30%
+  German = rep(german, 2),         # 20%
+  Luxembourgish = rep(luxembourguish, 2)  # 20%
 )
 
-cat("Total corpus:", format(sum(nchar(all_texts)), big.mark = ","), "characters\n")
+# Display word counts by language
+word_counts <- sapply(corpus, function(texts) {
+  sum(sapply(texts, function(t) length(strsplit(t, "\\s+")[[1]])))
+})
+
+char_counts <- sapply(corpus, function(texts) {
+  sum(nchar(texts))
+})
+
+word_count_df <- data.frame(
+  Language = names(word_counts),
+  Words = format(word_counts, big.mark = ","),
+  Characters = format(char_counts, big.mark = ","),
+  `Percentage` = paste0(c(30, 30, 20, 20), "%"),
+  check.names = FALSE
+)
+
+knitr::kable(word_count_df, caption = "Corpus composition by language")
 ```
 
-```{r freq-analysis}
+### Letter Frequency Analysis
+
+Let's analyze which letters are most frequent in each language:
+
+```{r freq-by-language}
+# Calculate frequencies for each language
+freq_french <- letter_freq(paste(corpus$French, collapse = " "))
+freq_english <- letter_freq(paste(corpus$English, collapse = " "))
+freq_german <- letter_freq(paste(corpus$German, collapse = " "))
+freq_lux <- letter_freq(paste(corpus$Luxembourgish, collapse = " "))
+
+# Top 10 for each language
+top_n <- 10
+
+# Create comparison table
+top_letters <- data.frame(
+  Rank = 1:top_n,
+  French = paste0(head(freq_french$characters, top_n), " (", 
+                  round(head(freq_french$frequencies, top_n) * 100, 1), "%)"),
+  English = paste0(head(freq_english$characters, top_n), " (",
+                   round(head(freq_english$frequencies, top_n) * 100, 1), "%)"),
+  German = paste0(head(freq_german$characters, top_n), " (",
+                  round(head(freq_german$frequencies, top_n) * 100, 1), "%)"),
+  Luxembourgish = paste0(head(freq_lux$characters, top_n), " (",
+                         round(head(freq_lux$frequencies, top_n) * 100, 1), "%)")
+)
+
+knitr::kable(top_letters, caption = "Top 10 most frequent letters by language")
+```
+
+### Combined Corpus Frequencies
+
+Now let's look at the overall frequency distribution across all languages:
+
+```{r freq-all}
+# Combine all texts
+all_texts <- unlist(corpus)
 freq_all <- letter_freq(paste(all_texts, collapse = " "))
+
+cat("Total corpus size:", format(sum(nchar(all_texts)), big.mark = ","), "characters\n")
+cat("Unique characters:", nrow(freq_all), "\n\n")
+
+# Top 15 letters
+freq_top <- head(freq_all, 15)
+freq_top$pct <- paste0(round(freq_top$frequencies * 100, 2), "%")
+
+knitr::kable(
+  freq_top[, c("characters", "total", "pct")],
+  col.names = c("Letter", "Count", "Frequency"),
+  caption = "Top 15 most frequent characters in combined corpus"
+)
 ```
 
-```{r freq-table, echo=FALSE}
-freq_top <- head(freq_all, 10)
-freq_top$pct <- paste0(round(freq_top$frequencies * 100, 1), "%")
-knitr::kable(freq_top[, c("characters", "total", "pct")],
-             col.names = c("Letter", "Count", "Frequency"),
-             caption = "Top 10 most frequent characters")
+Key observations:
+- **E** is the most frequent letter across all languages
+- **N, S, T, R** form the next tier of high-frequency letters
+- Accented characters (é, ä, ü, è) have moderate frequencies
+
+---
+
+## 2. Evaluating Standard Keyboard Layouts
+
+We evaluate four common keyboard layouts using the package's typing effort model.
+The model considers:
+
+- **Base effort**: Ergonomic cost of reaching each key (home row is easiest)
+- **Same-finger effort**: Penalty for consecutive keys using the same finger
+- **Same-hand effort**: Penalty for sequences on the same hand
+- **Row change effort**: Penalty for vertical finger movement
+
+### Defining the Layouts
+
+```{r define-layouts}
+# QWERTZ layout (Swiss/German - common in Luxembourg)
+data("ch_qwertz")
+
+# AZERTY layout (French)
+data("afnor_azerty")
+
+# BÉPO layout (Optimized for French)
+data("afnor_bepo")
+
+# Dvorak layout - map to standard 10-9-7 key positions
+# From the standard Dvorak layout:
+#   Top row (positions 3-9): P Y F G C R L
+#   Home row (positions 0-9): A O E U I D H T N S
+#   Bottom row (positions 1-8): Q J K X B M W V Z
+#
+# For a 10-9-7 structure that matches QWERTZ template for fair comparison,
+# we map letters to their approximate column positions:
+dvorak_kb <- ch_qwertz
+
+# Find letter positions in QWERTZ (should be 26 letters: 10 top, 9 home, 7 bottom)
+letter_mask <- tolower(dvorak_kb$key) %in% letters
+letter_indices <- which(letter_mask)
+
+# Define Dvorak letters in the order they appear on the keyboard by row
+# For positions where Dvorak has punctuation on top row (positions 0-2),
+# we shift to accommodate the 10-9-7 structure
+# Top row (10 keys): apostrophe/comma/period positions get less common letters
+# Standard Dvorak letter positions mapped to QWERTZ structure:
+dvorak_letters <- c(
+  # Top row (10): In Dvorak, positions 0-2 have punctuation, 3-9 have P Y F G C R L
+  # For fair comparison, we use the 7 Dvorak top-row letters + 3 from bottom
+  "q", "j", "k", "p", "y", "f", "g", "c", "r", "l",
+  # Home row (9): Dvorak has 10 (A O E U I D H T N S), we use first 9
+  "a", "o", "e", "u", "i", "d", "h", "t", "n",
+  # Bottom row (7): Remaining letters
+  "s", "x", "b", "m", "w", "v", "z"
+)
+
+# Update the keyboard
+if (length(letter_indices) == length(dvorak_letters)) {
+  dvorak_kb$key[letter_indices] <- dvorak_letters
+  dvorak_kb$key_label[letter_indices] <- toupper(dvorak_letters)
+}
+
+# Create a simplified Dvorak data frame for effort calculation
+# Using the actual Dvorak finger positions (7-10-9 structure)
+dvorak <- data.frame(
+  key = c(
+    "p", "y", "f", "g", "c", "r", "l",                    # top row (7)
+    "a", "o", "e", "u", "i", "d", "h", "t", "n", "s",     # home row (10)
+    "q", "j", "k", "x", "b", "m", "w", "v", "z"           # bottom row (9)
+  ),
+  key_label = toupper(c(
+    "p", "y", "f", "g", "c", "r", "l",
+    "a", "o", "e", "u", "i", "d", "h", "t", "n", "s",
+    "q", "j", "k", "x", "b", "m", "w", "v", "z"
+  )),
+  row = c(rep(1, 7), rep(2, 10), rep(3, 9)),
+  number = c(3:9, 0:9, 1:9),  # Actual column positions in Dvorak
+  stringsAsFactors = FALSE
+)
+
+# Add x_mid and y_mid for effort calculations
+dvorak$x_mid <- dvorak$number + c(0, 0.25, 0.5)[dvorak$row]
+dvorak$y_mid <- dvorak$row
+
 ```
 
-## Optimization Parameters
 
-```{r params}
+### Calculating Effort Scores
+
+```{r evaluate-standard}
+# Calculate effort for each layout
+effort_weights <- list(
+  base = 3.0,
+  same_finger = 3.0,
+  same_hand = 0.5,
+  row_change = 0.5,
+  trigram = 0.3
+)
+
+# Evaluate on combined corpus
+standard_efforts <- list(
+  QWERTZ = calculate_layout_effort(ch_qwertz, all_texts, 
+                                   keys_to_evaluate = letters,
+                                   effort_weights = effort_weights),
+  AZERTY = calculate_layout_effort(afnor_azerty, all_texts,
+                                   keys_to_evaluate = letters,
+                                   effort_weights = effort_weights),
+  BÉPO = calculate_layout_effort(afnor_bepo, all_texts,
+                                 keys_to_evaluate = letters,
+                                 effort_weights = effort_weights),
+  Dvorak = calculate_layout_effort(dvorak, all_texts,
+                                   keys_to_evaluate = letters,
+                                   effort_weights = effort_weights)
+)
+
+# Create comparison table
+standard_df <- data.frame(
+  Layout = names(standard_efforts),
+  Effort = round(unlist(standard_efforts), 2),
+  stringsAsFactors = FALSE
+)
+standard_df <- standard_df %>%
+  mutate(
+    Relative = round(Effort / min(Effort) * 100, 1),
+    Rank = rank(Effort)
+  ) %>%
+  arrange(Effort)
+
+knitr::kable(standard_df, 
+             caption = "Typing effort for standard keyboard layouts",
+             col.names = c("Layout", "Effort Score", "Relative (%)", "Rank"))
+```
+
+The effort scores reveal how well each layout is optimized for our multilingual corpus.
+Lower scores indicate less physical effort required to type the same text.
+
+### Layout Heatmaps
+
+Heatmaps show the frequency distribution of keystrokes. Brighter colors indicate 
+more frequently used keys — ideally these should be on the home row.
+
+```{r heatmap-standard, fig.width=8, fig.height=4, fig.cap="Keyboard layout heatmaps showing letter frequency distribution", warning=FALSE}
+# QWERTZ heatmap
+heatmap_qwertz <- heatmapize(ch_qwertz, freq_all)
+p1 <- ggkeyboard(heatmap_qwertz) + ggplot2::ggtitle("QWERTZ")
+
+# AZERTY heatmap  
+heatmap_azerty <- heatmapize(afnor_azerty, freq_all)
+p2 <- ggkeyboard(heatmap_azerty) + ggplot2::ggtitle("AZERTY")
+
+p1
+```
+
+```{r heatmap-azerty, fig.width=8, fig.height=4, warning=FALSE}
+p2
+```
+
+```{r heatmap-bepo, fig.width=8, fig.height=4, warning=FALSE}
+# BÉPO heatmap
+heatmap_bepo <- heatmapize(afnor_bepo, freq_all)
+p3 <- ggkeyboard(heatmap_bepo) + ggplot2::ggtitle("BÉPO")
+p3
+```
+
+```{r heatmap-dvorak, fig.width=8, fig.height=4, warning=FALSE}
+# Dvorak heatmap - using dvorak_kb created earlier with proper letter mapping
+heatmap_dvorak <- heatmapize(dvorak_kb, freq_all)
+p4 <- ggkeyboard(heatmap_dvorak) + ggplot2::ggtitle("Dvorak")
+p4
+```
+
+
+
+
+---
+
+## 3. Optimizing Custom Layouts
+
+Now we use the genetic algorithm to create optimized layouts tailored to our 
+multilingual corpus.
+
+### Optimization Parameters
+
+```{r opt-params}
 GENERATIONS <- 200
 POPULATION_SIZE <- 80
 ```
 
-## Helper Function: Hand Balance
+### 3.1 Unconstrained Optimization
 
-Calculate what percentage of keystrokes go to each hand:
-
-```{r hand-balance-fn}
-calculate_hand_balance <- function(layout, freq_df) {
-  # Get layout as data frame
-  if (is.list(layout) && "layout" %in% names(layout)) {
-    layout_df <- layout$layout
-  } else {
-    layout_df <- layout
-  }
-  
-  # Determine hand based on column position
-  # Columns 0-4 = left hand, 5+ = right hand
-  left_keys <- layout_df$key[layout_df$number < 5]
-  right_keys <- layout_df$key[layout_df$number >= 5]
-  
-  # Calculate frequency for each hand
-  left_freq <- sum(freq_df$frequencies[freq_df$characters %in% left_keys], na.rm = TRUE)
-  right_freq <- sum(freq_df$frequencies[freq_df$characters %in% right_keys], na.rm = TRUE)
-  
-  # Normalize
-  total <- left_freq + right_freq
-  list(
-    left = round(left_freq / total * 100, 1),
-    right = round(right_freq / total * 100, 1)
-  )
-}
-```
-
----
-
-## 1. Unconstrained 30-Key Optimization
-
-All 30 keys (26 letters + 4 accents) are free to move:
+All 26 letter keys are free to move to find the optimal arrangement:
 
 ```{r opt-unconstrained, results='hide'}
 result_unconstrained <- optimize_layout(
   text_samples = all_texts,
-  include_accents = TRUE,
   generations = GENERATIONS,
   population_size = POPULATION_SIZE,
+  effort_weights = effort_weights,
   verbose = FALSE
 )
 ```
 
 ```{r unconstrained-result}
-cat("Improvement:", round(result_unconstrained$improvement, 1), "%\n")
-```
+cat("Unconstrained Optimization:\n")
+cat("  Initial effort:", round(result_unconstrained$initial_effort, 2), "\n")
+cat("  Final effort:", round(result_unconstrained$effort, 2), "\n")
+cat("  Improvement:", round(result_unconstrained$improvement, 1), "%\n\n")
 
-```{r unconstrained-layout}
 print_layout(result_unconstrained$layout)
 ```
 
-```{r heatmap-unconstrained, echo=FALSE, fig.cap="Unconstrained layout - frequency heatmap", fig.width=8, fig.height=4, warning=FALSE}
-# Create heatmap helper
-make_heatmap <- function(result, freq_df) {
-  data(ch_qwertz, envir = environment())
-  kb <- ch_qwertz
-  letter_rows <- tolower(kb$key) %in% c(letters, "é", "è", "ä", "ü")
-  layout_keys <- result$layout$key
-  n_update <- min(sum(letter_rows), length(layout_keys))
-  kb$key[which(letter_rows)[1:n_update]] <- layout_keys[1:n_update]
-  kb$key_label[which(letter_rows)[1:n_update]] <- toupper(layout_keys[1:n_update])
-  heatmapize(kb, freq_df) |> ggkeyboard()
+```{r heatmap-unconstrained, fig.width=8, fig.height=4, fig.cap="Unconstrained optimized layout heatmap", warning=FALSE}
+# Create heatmap for unconstrained layout using QWERTZ as template
+unconstrained_kb <- ch_qwertz
+letter_mask <- tolower(unconstrained_kb$key) %in% letters
+letter_indices <- which(letter_mask)
+
+# Get the optimized layout keys
+opt_keys <- result_unconstrained$layout$key
+if (length(letter_indices) == length(opt_keys)) {
+  unconstrained_kb$key[letter_indices] <- opt_keys
+  unconstrained_kb$key_label[letter_indices] <- toupper(opt_keys)
 }
 
-make_heatmap(result_unconstrained, freq_all)
+heatmap_unconstrained <- heatmapize(unconstrained_kb, freq_all)
+ggkeyboard(heatmap_unconstrained) + ggplot2::ggtitle("Optimized (Unconstrained)")
 ```
 
----
 
-## 2. Minimal Disruption (E on Index Finger)
 
-E fixed on home row left index, only top 8 letters movable:
+### 3.2 QWERTZ with Optimal Home Row
 
-```{r opt-e-index, results='hide'}
-# Extended layout with E on home row left index
-ext_keys_v2 <- c(
-  "q","w","f","r","t","y","u","i","o","p","è",
-  "a","s","d","e","g","h","j","k","l","é",
-  "z","x","c","v","b","n","m","ä","ü"
-)
-
-top_8 <- as.character(freq_all$characters[2:9])
-fixed_v2 <- setdiff(ext_keys_v2, top_8)
-
-kb_v2 <- data.frame(
-  key = ext_keys_v2,
-  key_label = toupper(ext_keys_v2),
-  row = c(rep(1, 11), rep(2, 10), rep(3, 9)),
-  number = c(0:10, 0:9, 0:8),
-  stringsAsFactors = FALSE
-)
-kb_v2$x_mid <- kb_v2$number + c(0, 0.25, 0.5)[kb_v2$row]
-kb_v2$y_mid <- kb_v2$row
-
-result_e_index <- optimize_layout(
-  text_samples = all_texts,
-  keyboard = kb_v2,
-  keys_to_optimize = ext_keys_v2,
-  rules = list(fix_keys(fixed_v2)),
-  generations = GENERATIONS,
-  population_size = POPULATION_SIZE,
-  verbose = FALSE
-)
-```
-
-```{r e-index-result}
-cat("Keys to relearn:", 8, "\n")
-cat("Improvement:", round(result_e_index$improvement, 1), "%\n")
-```
-
-```{r e-index-layout}
-print_layout(result_e_index$layout)
-```
-
-```{r heatmap-e-index, echo=FALSE, fig.cap="E on Index layout - frequency heatmap", fig.width=8, fig.height=4, warning=FALSE}
-make_heatmap(result_e_index, freq_all)
-```
-
----
-
-## 3. QWERTZ-Based with Optimal Home Row
-
-Starting from QWERTZ, we fix the home row to the most frequent letters:
-**A S D E U N T R L M**
-
-Only the displaced keys (F, G, H, J, K) and accents need optimization:
+This optimization keeps familiar QWERTZ positions (A, S, D, E) while placing
+the next most frequent letters on the home row:
 
 ```{r opt-qwertz-home, results='hide'}
-# QWERTZ-based with optimal home row
-ext_keys_v3 <- c(
-  "q","w","f","g","h","z","j","i","o","p","è",
-  "a","s","d","e","u","n","t","r","l","m",
-  "y","x","c","v","b","k","é","ä","ü"
+# Fixed keys for home row: A, S, D, E (positions 0-3)
+fixed_home <- c("a", "s", "d", "e")
+
+# Get top frequent letters excluding the fixed ones
+freq_letters <- as.character(freq_all$characters)
+top_freq_excluding_fixed <- setdiff(freq_letters, fixed_home)
+
+# Next 6 most frequent letters for home row positions 4-9
+next_6 <- head(top_freq_excluding_fixed, 6)
+
+# Home row: ASDE (fixed) + next 6 frequent letters
+home_row_keys <- c(fixed_home, next_6)
+
+cat("Fixed home row keys (positions 0-3):", paste(fixed_home, collapse = " "), "\n")
+cat("Next 6 frequent letters (positions 4-9):", paste(next_6, collapse = " "), "\n")
+cat("Full home row:", paste(home_row_keys, collapse = " "), "\n")
+
+# Remaining letters for top and bottom rows
+remaining_letters <- setdiff(letters, home_row_keys)
+
+# QWERTZ positions for reference
+qwertz_top_row <- c("q", "w", "e", "r", "t", "z", "u", "i", "o", "p")
+qwertz_bottom_row <- c("y", "x", "c", "v", "b", "n", "m")
+
+# Keep remaining letters in their QWERTZ positions where possible
+top_row_keys <- sapply(qwertz_top_row, function(k) {
+  if (k %in% remaining_letters) k else NA
+})
+bottom_row_keys <- sapply(qwertz_bottom_row, function(k) {
+  if (k %in% remaining_letters) k else NA
+})
+
+# Letters that need new positions (displaced from home row)
+letters_needing_placement <- remaining_letters[!remaining_letters %in% c(top_row_keys, bottom_row_keys)]
+
+# Fill NA positions with displaced letters
+fill_idx <- 1
+for (i in seq_along(top_row_keys)) {
+  if (is.na(top_row_keys[i]) && fill_idx <= length(letters_needing_placement)) {
+    top_row_keys[i] <- letters_needing_placement[fill_idx]
+    fill_idx <- fill_idx + 1
+  }
+}
+for (i in seq_along(bottom_row_keys)) {
+  if (is.na(bottom_row_keys[i]) && fill_idx <= length(letters_needing_placement)) {
+    bottom_row_keys[i] <- letters_needing_placement[fill_idx]
+    fill_idx <- fill_idx + 1
+  }
+}
+
+# Remove NAs
+top_row_keys <- top_row_keys[!is.na(top_row_keys)]
+bottom_row_keys <- bottom_row_keys[!is.na(bottom_row_keys)]
+
+cat("Top row:", paste(top_row_keys, collapse = " "), "\n")
+cat("Bottom row:", paste(bottom_row_keys, collapse = " "), "\n")
+
+# Build the full keyboard layout
+ext_keys_qwertz <- c(top_row_keys, home_row_keys, bottom_row_keys)
+
+# Fixed keys: ASDE (first 4 home row positions) + letters that stayed in QWERTZ positions
+# Movable keys: displaced letters that need optimization
+keys_in_original_position <- c(
+  intersect(top_row_keys, qwertz_top_row),
+  intersect(bottom_row_keys, qwertz_bottom_row)
 )
+fixed_keys_qwertz <- c(fixed_home, keys_in_original_position)
+movable_keys <- setdiff(ext_keys_qwertz, fixed_keys_qwertz)
 
-movable_v3 <- c("f", "g", "h", "j", "k", "é", "è", "ä", "ü")
-fixed_v3 <- setdiff(ext_keys_v3, movable_v3)
+cat("\nFixed keys:", paste(fixed_keys_qwertz, collapse = " "), "\n")
+cat("Movable keys:", paste(movable_keys, collapse = " "), "\n")
 
-kb_v3 <- data.frame(
-  key = ext_keys_v3,
-  key_label = toupper(ext_keys_v3),
-  row = c(rep(1, 11), rep(2, 10), rep(3, 9)),
-  number = c(0:10, 0:9, 0:8),
+# Create keyboard data frame
+kb_qwertz_opt <- data.frame(
+  key = ext_keys_qwertz,
+  key_label = toupper(ext_keys_qwertz),
+  row = c(rep(1, length(top_row_keys)), rep(2, 10), rep(3, length(bottom_row_keys))),
+  number = c(seq_along(top_row_keys) - 1, 0:9, seq_along(bottom_row_keys) - 1),
   stringsAsFactors = FALSE
 )
-kb_v3$x_mid <- kb_v3$number + c(0, 0.25, 0.5)[kb_v3$row]
-kb_v3$y_mid <- kb_v3$row
+kb_qwertz_opt$x_mid <- kb_qwertz_opt$number + c(0, 0.25, 0.5)[kb_qwertz_opt$row]
+kb_qwertz_opt$y_mid <- kb_qwertz_opt$row
 
 result_qwertz_home <- optimize_layout(
   text_samples = all_texts,
-  keyboard = kb_v3,
-  keys_to_optimize = ext_keys_v3,
-  rules = list(fix_keys(fixed_v3)),
+  keyboard = kb_qwertz_opt,
+  keys_to_optimize = ext_keys_qwertz,
+  rules = list(fix_keys(fixed_keys_qwertz)),
   generations = GENERATIONS,
   population_size = POPULATION_SIZE,
+  effort_weights = effort_weights,
   verbose = FALSE
 )
 ```
 
-```{r qwertz-home-result}
-cat("Keys to relearn:", length(movable_v3), "\n")
-cat("Improvement:", round(result_qwertz_home$improvement, 1), "%\n")
-```
 
-```{r qwertz-home-layout}
+```{r qwertz-home-result}
+cat("QWERTZ Optimal Home Row:\n")
+cat("  Keys to relearn:", length(movable_keys), "\n")
+cat("  Initial effort:", round(result_qwertz_home$initial_effort, 2), "\n")
+cat("  Final effort:", round(result_qwertz_home$effort, 2), "\n")
+cat("  Improvement:", round(result_qwertz_home$improvement, 1), "%\n\n")
+
 print_layout(result_qwertz_home$layout)
 ```
 
-```{r heatmap-qwertz-home, echo=FALSE, fig.cap="QWERTZ Home Row layout - frequency heatmap", fig.width=8, fig.height=4, warning=FALSE}
-make_heatmap(result_qwertz_home, freq_all)
+```{r heatmap-qwertz-home, fig.width=8, fig.height=4, fig.cap="QWERTZ optimal home row layout heatmap", warning=FALSE}
+# Create heatmap for QWERTZ home layout using QWERTZ as template
+qwertz_home_kb <- ch_qwertz
+letter_mask <- tolower(qwertz_home_kb$key) %in% letters
+letter_indices <- which(letter_mask)
+
+# Get the optimized layout keys
+opt_keys <- result_qwertz_home$layout$key
+if (length(letter_indices) == length(opt_keys)) {
+  qwertz_home_kb$key[letter_indices] <- opt_keys
+  qwertz_home_kb$key_label[letter_indices] <- toupper(opt_keys)
+}
+
+heatmap_qwertz_home <- heatmapize(qwertz_home_kb, freq_all)
+ggkeyboard(heatmap_qwertz_home) + ggplot2::ggtitle("Optimized (QWERTZ Home)")
 ```
+
 
 ---
 
-## Comparison
 
-```{r comparison-table, echo=FALSE}
-# Calculate hand balance for each layout
-hb1 <- calculate_hand_balance(result_unconstrained, freq_all)
-hb2 <- calculate_hand_balance(result_e_index, freq_all)
-hb3 <- calculate_hand_balance(result_qwertz_home, freq_all)
+## 4. Summary: Layout Rankings
 
-comparison <- data.frame(
-  Layout = c("Unconstrained", "E on Index", "QWERTZ Home Row"),
-  `Keys to Learn` = c(30, 8, 9),
-  `Improvement` = c(
-    paste0(round(result_unconstrained$improvement, 1), "%"),
-    paste0(round(result_e_index$improvement, 1), "%"),
-    paste0(round(result_qwertz_home$improvement, 1), "%")
+Here is the final comparison of all evaluated layouts, ranked by typing effort:
+
+```{r summary-table}
+# Combine all results
+all_results <- data.frame(
+  Layout = c(names(standard_efforts), 
+             "Optimized (Unconstrained)", 
+             "Optimized (QWERTZ Home)"),
+  Effort = c(
+    unlist(standard_efforts),
+    result_unconstrained$effort,
+    result_qwertz_home$effort
   ),
-  `Left Hand` = c(
-    paste0(hb1$left, "%"),
-    paste0(hb2$left, "%"),
-    paste0(hb3$left, "%")
-  ),
-  `Right Hand` = c(
-    paste0(hb1$right, "%"),
-    paste0(hb2$right, "%"),
-    paste0(hb3$right, "%")
-  ),
-  check.names = FALSE
+  Type = c(rep("Standard", 4), rep("Custom", 2)),
+  stringsAsFactors = FALSE
 )
 
-knitr::kable(comparison, caption = "Layout comparison with hand balance")
+# Calculate metrics
+all_results <- all_results %>%
+  arrange(Effort) %>%
+  mutate(
+    Rank = row_number(),
+    Relative = round(Effort / min(Effort) * 100, 1),
+    `vs QWERTZ` = paste0(round((1 - Effort / standard_efforts$QWERTZ) * 100, 1), "%")
+  ) %>%
+  select(Rank, Layout, Type, Effort, Relative, `vs QWERTZ`)
+
+all_results$Effort <- round(all_results$Effort, 2)
+
+knitr::kable(
+  all_results,
+  caption = "Final layout rankings - Lower effort is better",
+  col.names = c("Rank", "Layout", "Type", "Effort", "Relative (%)", "vs QWERTZ"),
+  align = c("c", "l", "l", "r", "r", "r")
+)
 ```
 
-## Recommendations
+### Key Findings
 
-| Use Case | Recommended Layout | Improvement |
-|----------|-------------------|-------------|
-| Maximum efficiency | Unconstrained | ~`r round(result_unconstrained$improvement, 0)`% |
-| Minimal relearning | E on Index | ~`r round(result_e_index$improvement, 0)`% |
-| QWERTZ familiarity | QWERTZ Home Row | ~`r round(result_qwertz_home$improvement, 0)`% |
+```{r key-findings, echo=FALSE}
+best_standard <- standard_df$Layout[1]
+best_overall <- all_results$Layout[1]
+qwertz_effort <- standard_efforts$QWERTZ
+best_effort <- min(all_results$Effort)
+improvement_over_qwertz <- round((1 - best_effort / qwertz_effort) * 100, 1)
+```
 
-All layouts include **É, È, Ä, Ü in direct access** — no dead keys or AltGr needed.
+1. **Best Standard Layout**: `r best_standard` performs best among existing layouts
+2. **Best Overall**: `r best_overall` achieves the lowest effort score
+3. **QWERTZ Improvement**: The optimized layouts reduce effort by up to `r improvement_over_qwertz`% compared to QWERTZ
+
+### Recommendations
+
+| Use Case | Recommended Layout | Notes |
+|----------|-------------------|-------|
+| Maximum efficiency | Optimized (Unconstrained) | Requires learning new layout |
+| Gradual transition | Optimized (QWERTZ Home) | Familiar structure, optimized home row |
+| Standard compatibility | `r best_standard` | No learning curve |
+| French focus | BÉPO | Already optimized for French |
+
+---
 
 ## Session Info
 

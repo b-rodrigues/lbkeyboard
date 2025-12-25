@@ -245,15 +245,15 @@ rules to <code><a href="../reference/optimize_layout.html">optimize_layout()</a>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/print_layout.html">print_layout</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
-<span><span class="co">#&gt; │ O │ F │ D │ H │ W │ Q │ R │ M │ B │ K │</span></span>
+<span><span class="co">#&gt; │ U │ J │ Y │ G │ F │ S │ D │ K │ P │ H │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ I │ E │ A │ U │ T │ N │ L │ S │ P │</span></span>
+<span><span class="co">#&gt; │ A │ O │ B │ I │ E │ N │ R │ T │ L │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ Z │ X │ C │ V │ Y │ J │ G │</span></span>
+<span><span class="co">#&gt; │ Z │ X │ C │ V │ M │ W │ Q │</span></span>
 <span><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nImprovement:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">improvement</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"%\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Improvement: 29.38 %</span></span></code></pre></div>
+<span><span class="co">#&gt; Improvement: 30.49 %</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="choosing-weights">Choosing Weights<a class="anchor" aria-label="anchor" href="#choosing-weights"></a>
@@ -317,11 +317,11 @@ preference influences the optimization. Here are some guidelines:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/print_layout.html">print_layout</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
-<span><span class="co">#&gt; │ Q │ V │ U │ O │ H │ C │ M │ L │ F │ K │</span></span>
+<span><span class="co">#&gt; │ Z │ H │ K │ O │ V │ L │ C │ X │ G │ D │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ E │ T │ I │ A │ S │ D │ P │ N │ R │</span></span>
+<span><span class="co">#&gt; │ U │ I │ E │ A │ N │ R │ T │ S │ B │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ Y │ Z │ J │ W │ X │ G │ B │</span></span>
+<span><span class="co">#&gt; │ W │ F │ Y │ P │ J │ Q │ M │</span></span>
 <span><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -344,9 +344,9 @@ preference influences the optimization. Here are some guidelines:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/print_layout.html">print_layout</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
-<span><span class="co">#&gt; │ Q │ A │ K │ D │ J │ F │ G │ W │ H │ Y │</span></span>
+<span><span class="co">#&gt; │ W │ H │ G │ K │ O │ L │ P │ F │ J │ Y │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ T │ O │ U │ P │ S │ L │ R │ E │ I │</span></span>
+<span><span class="co">#&gt; │ R │ T │ Q │ A │ E │ D │ U │ S │ I │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
 <span><span class="co">#&gt; │ Z │ X │ C │ V │ B │ N │ M │</span></span>
 <span><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span>
@@ -376,11 +376,11 @@ preference influences the optimization. Here are some guidelines:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/print_layout.html">print_layout</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
-<span><span class="co">#&gt; │ F │ K │ A │ S │ G │ B │ R │ I │ J │ Y │</span></span>
+<span><span class="co">#&gt; │ Q │ J │ G │ L │ Y │ K │ D │ U │ B │ P │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ P │ T │ O │ M │ D │ N │ L │ U │ E │</span></span>
+<span><span class="co">#&gt; │ M │ T │ N │ R │ E │ S │ A │ I │ O │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ Z │ X │ C │ V │ W │ Q │ H │</span></span>
+<span><span class="co">#&gt; │ Z │ X │ C │ V │ W │ H │ F │</span></span>
 <span><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span></code></pre></div>
 </div>
 </div>
@@ -408,26 +408,26 @@ preference influences the optimization. Here are some guidelines:</p>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"Without rules - Effort:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">result_plain</span><span class="op">$</span><span class="va">effort</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Without rules - Effort: 32723.6</span></span>
+<span><span class="co">#&gt; Without rules - Effort: 35300</span></span>
 <span><span class="fu"><a href="../reference/print_layout.html">print_layout</a></span><span class="op">(</span><span class="va">result_plain</span><span class="op">$</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
-<span><span class="co">#&gt; │ B │ P │ A │ R │ Q │ Z │ L │ D │ U │ Y │</span></span>
+<span><span class="co">#&gt; │ Z │ Y │ F │ D │ R │ I │ U │ C │ V │ J │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ T │ I │ E │ N │ J │ M │ S │ O │ C │</span></span>
+<span><span class="co">#&gt; │ P │ T │ S │ L │ M │ E │ A │ O │ N │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ V │ W │ X │ F │ H │ K │ G │</span></span>
+<span><span class="co">#&gt; │ W │ B │ Q │ K │ X │ H │ G │</span></span>
 <span><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="st">"\nWith rules - Effort:"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">result_rules</span><span class="op">$</span><span class="va">effort</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; With rules - Effort: 36684.61</span></span>
+<span><span class="co">#&gt; With rules - Effort: 41836.22</span></span>
 <span><span class="fu"><a href="../reference/print_layout.html">print_layout</a></span><span class="op">(</span><span class="va">result_rules</span><span class="op">$</span><span class="va">layout</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
-<span><span class="co">#&gt; │ O │ A │ U │ G │ M │ N │ H │ P │ L │ W │</span></span>
+<span><span class="co">#&gt; │ A │ G │ O │ Q │ R │ D │ L │ W │ K │ F │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ F │ E │ I │ T │ B │ R │ K │ D │ S │</span></span>
+<span><span class="co">#&gt; │ U │ E │ I │ J │ Y │ S │ M │ N │ T │</span></span>
 <span><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
-<span><span class="co">#&gt; │ Z │ X │ C │ V │ Y │ Q │ J │</span></span>
+<span><span class="co">#&gt; │ Z │ X │ C │ V │ P │ B │ H │</span></span>
 <span><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span></code></pre></div>
 <p>The layout with rules might have slightly higher effort, but it
 respects your preferences and constraints.</p>
