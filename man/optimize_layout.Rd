@@ -7,16 +7,18 @@
 optimize_layout(
   text_samples,
   keyboard = NULL,
-  keys_to_optimize = letters,
+  keys_to_optimize = NULL,
   fixed_keys = NULL,
   rules = NULL,
+  include_accents = FALSE,
   population_size = 100,
   generations = 500,
   mutation_rate = 0.1,
   crossover_rate = 0.8,
   tournament_size = 5,
   elite_count = 2,
-  effort_weights = list(base = 3, same_finger = 3, same_hand = 0.5, row_change = 0.5),
+  effort_weights = list(base = 3, same_finger = 3, same_hand = 0.5, row_change = 0.5,
+    trigram = 0.3),
   verbose = TRUE
 )
 }
@@ -55,6 +57,7 @@ to keep the left home row keys in place while optimizing all others.}
 \item \code{same_finger}: Weight for same-finger bigram penalty (default 3.0)
 \item \code{same_hand}: Weight for same-hand bigram penalty (default 1.0)
 \item \code{row_change}: Weight for row change penalty (default 0.5)
+\item \code{trigram}: Weight for same-hand trigram penalty (default 0.3)
 }}
 
 \item{verbose}{Logical. Print progress every 50 generations? Default TRUE.}
@@ -93,6 +96,8 @@ keys use the same finger (causes finger movement delays)
 \item \strong{Same-hand sequences}: Moderate penalty, with inward rolls
 (e.g., index to pinky) penalized less than outward rolls
 \item \strong{Row changes}: Penalty for reaching between rows on same hand
+\item \strong{Same-hand trigrams}: Penalty for three consecutive keys on
+the same hand, with higher penalty for direction-changing sequences
 }
 
 The genetic algorithm uses:

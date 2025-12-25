@@ -8,7 +8,8 @@ compare_layouts(
   keyboards,
   text_samples,
   keys_to_evaluate = letters,
-  effort_weights = list(base = 1, same_finger = 3, same_hand = 1, row_change = 0.5)
+  effort_weights = list(base = 1, same_finger = 3, same_hand = 1, row_change = 0.5,
+    trigram = 0.3)
 )
 }
 \arguments{

@@ -43,7 +43,7 @@ print_layout <- function(layout, uppercase = TRUE) {
     keys <- as.character(layout)
   }
 
-  # Support both 26-key (standard) and 30-key (extended with accents) layouts
+  # Support 26-key (standard), 30-key (extended), and 31-key (extended with 5 accents) layouts
   if (length(keys) == 26) {
     # Standard layout: 10 + 9 + 7
     top_count <- 10
@@ -54,8 +54,13 @@ print_layout <- function(layout, uppercase = TRUE) {
     top_count <- 11
     home_count <- 10
     bottom_count <- 9
+  } else if (length(keys) == 31) {
+    # Extended layout with 5 accents: 11 + 11 + 9
+    top_count <- 11
+    home_count <- 11
+    bottom_count <- 9
   } else {
-    stop("Layout must have 26 keys (standard) or 30 keys (extended with accents)")
+    stop("Layout must have 26 keys (standard), 30 keys (extended), or 31 keys (extended with 5 accents)")
   }
 
   if (uppercase) {

@@ -495,6 +495,105 @@ ggkeyboard(heatmap_qwertz_home) + ggplot2::ggtitle("Optimized (QWERTZ Home)")
 ```
 
 
+### 3.3 QWERTZ with Accented Characters (é, ç, à, ü, ö)
+
+For Luxembourg's multilingual environment, we also want direct access to commonly used
+accented characters without dead key combinations. This layout extends the QWERTZ
+optimal home row by adding é, ç, à, ü, and ö as first-class keys.
+
+```{r opt-qwertz-accents, results='hide'}
+# Define the accented characters we want directly accessible
+accent_chars <- c("é", "ç", "à", "ü", "ö")
+
+# Create an extended keyboard with 31 keys (26 letters + 5 accents)
+# We'll place accents on the right side of each row for easy pinky access
+# Row 1: 11 keys (Q W E R T Z U I O P + ö)
+# Row 2: 11 keys (home row with A S D E... + é ü)  
+# Row 3: 9 keys (Y X C V B N M + ç à)
+
+# Start with the optimized QWERTZ home row layout
+# Get the optimized letter positions from result_qwertz_home
+opt_letters <- result_qwertz_home$layout$key
+
+# Build extended layout with accent positions
+# Row 1: first 10 letters + ö
+ext_row1 <- c(opt_letters[1:10], "ö")
+# Row 2: home row letters (positions 11-19) + é, ü  
+ext_row2 <- c(opt_letters[11:19], "é", "ü")
+# Row 3: bottom row letters (positions 20-26) + ç, à
+ext_row3 <- c(opt_letters[20:26], "ç", "à")
+
+ext_keys_accents <- c(ext_row1, ext_row2, ext_row3)
+
+# Create keyboard data frame for extended layout
+kb_qwertz_accents <- data.frame(
+  key = ext_keys_accents,
+  key_label = toupper(ext_keys_accents),
+  row = c(rep(1, 11), rep(2, 11), rep(3, 9)),
+  number = c(0:10, 0:10, 0:8),
+  stringsAsFactors = FALSE
+)
+kb_qwertz_accents$x_mid <- kb_qwertz_accents$number + c(0, 0.25, 0.5)[kb_qwertz_accents$row]
+kb_qwertz_accents$y_mid <- kb_qwertz_accents$row
+
+# Keys to optimize: all letters and accents
+all_extended_keys <- ext_keys_accents
+
+# Fixed keys: keep the home row structure (ASDE + next 6 frequent) and accent positions
+fixed_keys_accents <- c(fixed_home, next_6, accent_chars)
+
+cat("Extended layout with accents:\n")
+cat("  Row 1:", paste(ext_row1, collapse = " "), "\n")
+cat("  Row 2:", paste(ext_row2, collapse = " "), "\n")
+cat("  Row 3:", paste(ext_row3, collapse = " "), "\n")
+cat("  Total keys:", length(ext_keys_accents), "\n")
+
+# Optimize the remaining movable keys
+movable_keys_accents <- setdiff(all_extended_keys, fixed_keys_accents)
+
+result_qwertz_accents <- optimize_layout(
+  text_samples = all_texts,
+  keyboard = kb_qwertz_accents,
+  keys_to_optimize = all_extended_keys,
+  rules = list(fix_keys(fixed_keys_accents)),
+  generations = GENERATIONS,
+  population_size = POPULATION_SIZE,
+  effort_weights = effort_weights,
+  verbose = FALSE
+)
+```
+
+```{r qwertz-accents-result}
+cat("QWERTZ with Accented Characters (é, ç, à, ü, ö):\n")
+cat("  Total keys:", length(all_extended_keys), "(26 letters + 5 accents)\n")
+cat("  Keys to relearn:", length(movable_keys_accents), "\n")
+cat("  Initial effort:", round(result_qwertz_accents$initial_effort, 2), "\n")
+cat("  Final effort:", round(result_qwertz_accents$effort, 2), "\n")
+cat("  Improvement:", round(result_qwertz_accents$improvement, 1), "%\n\n")
+
+print_layout(result_qwertz_accents$layout)
+```
+
+```{r heatmap-qwertz-accents, fig.width=8, fig.height=4, fig.cap="QWERTZ with accented characters layout heatmap", warning=FALSE}
+# For the extended layout with accents, we'll create a simple visualization
+# using the optimized layout with just print_layout, since ggkeyboard 
+# expects specific keyboard structure columns
+
+# Print the layout visually
+cat("Optimized QWERTZ + Accents Layout:\n")
+print_layout(result_qwertz_accents$layout)
+```
+
+**Benefits of this layout:**
+
+- Direct access to **é** (most frequent French accent) on home row right pinky
+- **ü** and **ö** readily accessible for German words
+- **ç** for French words like "français", "reçu"
+- **à** for common French preposition "à"
+- Maintains the optimized home row positions for high-frequency letters
+- No dead key combinations needed for these common accents
+
+
 ---
 
 
@@ -503,17 +602,73 @@ ggkeyboard(heatmap_qwertz_home) + ggplot2::ggtitle("Optimized (QWERTZ Home)")
 Here is the final comparison of all evaluated layouts, ranked by typing effort:
 
 ```{r summary-table}
+# Helper function to calculate hand balance for a layout
+calculate_hand_balance <- function(kb, freq_df) {
+  # Match keys to their frequencies
+  kb_lower <- tolower(kb$key)
+  freq_lower <- tolower(freq_df$characters)
+  
+  # Calculate total frequency for left and right hand
+  left_freq <- 0
+  right_freq <- 0
+  
+  for (i in seq_len(nrow(kb))) {
+    key <- kb_lower[i]
+    col <- kb$number[i]
+    
+    # Find frequency for this key
+    freq_idx <- which(freq_lower == key)
+    if (length(freq_idx) > 0) {
+      key_freq <- freq_df$frequencies[freq_idx[1]]
+      if (col < 5) {
+        left_freq <- left_freq + key_freq
+      } else {
+        right_freq <- right_freq + key_freq
+      }
+    }
+  }
+  
+  total <- left_freq + right_freq
+  if (total > 0) {
+    left_pct <- round(left_freq / total * 100, 1)
+    right_pct <- round(right_freq / total * 100, 1)
+  } else {
+    left_pct <- 50
+    right_pct <- 50
+  }
+  
+  paste0(left_pct, "/", right_pct)
+}
+
+# Calculate hand balance for each layout
+# Standard layouts
+balance_qwertz <- calculate_hand_balance(ch_qwertz, freq_all)
+balance_azerty <- calculate_hand_balance(afnor_azerty, freq_all)
+balance_bepo <- calculate_hand_balance(afnor_bepo, freq_all)
+balance_dvorak <- calculate_hand_balance(dvorak, freq_all)
+
+# Custom layouts
+balance_unconstrained <- calculate_hand_balance(result_unconstrained$layout, freq_all)
+balance_qwertz_home <- calculate_hand_balance(result_qwertz_home$layout, freq_all)
+balance_qwertz_accents <- calculate_hand_balance(result_qwertz_accents$layout, freq_all)
+
 # Combine all results
 all_results <- data.frame(
   Layout = c(names(standard_efforts), 
              "Optimized (Unconstrained)", 
-             "Optimized (QWERTZ Home)"),
+             "Optimized (QWERTZ Home)",
+             "Optimized (QWERTZ + Accents)"),
   Effort = c(
     unlist(standard_efforts),
     result_unconstrained$effort,
-    result_qwertz_home$effort
+    result_qwertz_home$effort,
+    result_qwertz_accents$effort
   ),
-  Type = c(rep("Standard", 4), rep("Custom", 2)),
+  Type = c(rep("Standard", 4), rep("Custom", 3)),
+  HandBalance = c(
+    balance_qwertz, balance_azerty, balance_bepo, balance_dvorak,
+    balance_unconstrained, balance_qwertz_home, balance_qwertz_accents
+  ),
   stringsAsFactors = FALSE
 )
 
@@ -525,15 +680,15 @@ all_results <- all_results %>%
     Relative = round(Effort / min(Effort) * 100, 1),
     `vs QWERTZ` = paste0(round((1 - Effort / standard_efforts$QWERTZ) * 100, 1), "%")
   ) %>%
-  select(Rank, Layout, Type, Effort, Relative, `vs QWERTZ`)
+  select(Rank, Layout, Type, Effort, Relative, `vs QWERTZ`, HandBalance)
 
 all_results$Effort <- round(all_results$Effort, 2)
 
 knitr::kable(
   all_results,
-  caption = "Final layout rankings - Lower effort is better",
-  col.names = c("Rank", "Layout", "Type", "Effort", "Relative (%)", "vs QWERTZ"),
-  align = c("c", "l", "l", "r", "r", "r")
+  caption = "Final layout rankings - Lower effort is better. Hand balance shows Left/Right percentage.",
+  col.names = c("Rank", "Layout", "Type", "Effort", "Relative (%)", "vs QWERTZ", "L/R Balance"),
+  align = c("c", "l", "l", "r", "r", "r", "c")
 )
 ```
 
@@ -556,6 +711,7 @@ improvement_over_qwertz <- round((1 - best_effort / qwertz_effort) * 100, 1)
 | Use Case | Recommended Layout | Notes |
 |----------|-------------------|-------|
 | Maximum efficiency | Optimized (Unconstrained) | Requires learning new layout |
+| Multilingual (FR/DE/LB) | Optimized (QWERTZ + Accents) | Direct access to é, ç, à, ü, ö |
 | Gradual transition | Optimized (QWERTZ Home) | Familiar structure, optimized home row |
 | Standard compatibility | `r best_standard` | No learning curve |
 | French focus | BÉPO | Already optimized for French |
