@@ -23,7 +23,7 @@ data(afnor_azerty)
 # Create a simple QWERTY-like layout for testing
 qwerty <- create_default_keyboard()
 
-cat("Using English text sample (", nchar(english), " characters)\n", sep="")
+cat("Using English text sample (", nchar(paste(english, collapse=" ")), " characters)\n", sep="")
 cat("Layout: QWERTY (default)\n\n")
 
 # Default weights
