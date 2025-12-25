@@ -23,12 +23,8 @@ Imports:
     ggplot2,
     magrittr,
     purrr,
-    Rcpp,
     scales,
     stringr
-LinkingTo:
-    Rcpp
-SystemRequirements: C++11
 Suggests:
     knitr,
     rmarkdown,
