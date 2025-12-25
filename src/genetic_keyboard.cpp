@@ -32,31 +32,31 @@ struct KeyPosition {
 
 // Default finger assignments for standard ISO layout columns
 // This maps column position to finger (for rows 1-3: top, home, bottom letter rows)
-// NOTE: This is a fallback for when x_mid is not available
+// Follows Carpalx methodology: column numbers directly map to physical keys
+//
+// Physical layout (QWERTY shown, but applies to all layouts):
+//   Top row:    Q(0) W(1) E(2) R(3) T(4) | Y(5) U(6) I(7) O(8) P(9)
+//   Home row:   A(0) S(1) D(2) F(3) G(4) | H(5) J(6) K(7) L(8)
+//   Bottom row: Z(0) X(1) C(2) V(3) B(4) | N(5) M(6)
+//
+// Finger mapping (0-indexed):
+//   0 = left pinky, 1 = left ring, 2 = left middle, 3 = left index
+//   6 = right index, 7 = right middle, 8 = right ring, 9 = right pinky
 int get_finger_for_column(int col) {
-  // Left hand: 0-4
-  // 0: Pinky (Q, A, Z)
-  // 1: Ring (W, S, X)
-  // 2: Middle (E, D, C)
-  // 3: Index (R, F, V)
-  // 4: Index (T, G, B)
+  // Left hand
+  if (col == 0) return 0;                // left pinky (Q-A-Z)
+  if (col == 1) return 1;                // left ring (W-S-X)
+  if (col == 2) return 2;                // left middle (E-D-C)
+  if (col == 3 || col == 4) return 3;    // left index (R-F-V, T-G-B)
 
-  // Right hand: 5-9+
-  // 5: Index (Y, H, N)
-  // 6: Index (U, J, M)
-  // 7: Middle (I, K)
-  // 8: Ring (O, L)
-  // 9+: Pinky (P)
+  // Right hand
+  if (col == 5 || col == 6) return 6;    // right index (Y-H-N, U-J-M)
+  if (col == 7) return 7;                // right middle (I-K)
+  if (col == 8) return 8;                // right ring (O-L)
+  if (col >= 9) return 9;                // right pinky (P and beyond)
 
-  if (col == 0) return 0;       // left pinky
-  if (col == 1) return 1;       // left ring
-  if (col == 2) return 2;       // left middle
-  if (col <= 4) return 3;       // left index (cols 3, 4)
-
-  if (col <= 6) return 6;       // right index (cols 5, 6)
-  if (col == 7) return 7;       // right middle
-  if (col == 8) return 8;       // right ring
-  return 9;                     // right pinky
+  // Fallback (should never reach here)
+  return (col <= 4) ? 0 : 9;             // default to pinkies
 }
 
 // BETTER: Calculate finger based on x_mid position (works for any layout)
@@ -126,23 +126,32 @@ double finger_penalty(int finger) {
   return 1.5; // Fallback
 }
 
-// Distance from home position penalty (LEGACY - column-based)
-// Kept for compatibility but should use x-position version
+// Distance from home position penalty (column-based)
+// Follows Carpalx methodology: each finger has a home column on the home row
+// Penalty increases with lateral distance from home position
+//
+// Home positions (column numbers on home row):
+//   Left hand:  pinky(0), ring(1), middle(2), index(3)
+//   Right hand: index(6), middle(7), ring(8), pinky(9)
+//
+// For index fingers: home is at inner column (3 for left, 6 for right)
+// Keys at col 4 (T-G-B) have slight penalty for left index
+// Keys at col 5 (Y-H-N) have slight penalty for right index
 double home_distance_penalty(int col, int finger) {
   int home_col;
   switch(finger) {
-    case 0: home_col = 0; break;
-    case 1: home_col = 1; break;
-    case 2: home_col = 2; break;
-    case 3: home_col = 3; break;
-    case 6: home_col = 6; break;
-    case 7: home_col = 7; break;
-    case 8: home_col = 8; break;
-    case 9: home_col = 9; break;
-    default: home_col = col;
+    case 0: home_col = 0; break;  // left pinky home at col 0
+    case 1: home_col = 1; break;  // left ring home at col 1
+    case 2: home_col = 2; break;  // left middle home at col 2
+    case 3: home_col = 3; break;  // left index home at col 3 (F key)
+    case 6: home_col = 6; break;  // right index home at col 6 (J key)
+    case 7: home_col = 7; break;  // right middle home at col 7
+    case 8: home_col = 8; break;  // right ring home at col 8
+    case 9: home_col = 9; break;  // right pinky home at col 9
+    default: home_col = col;      // fallback: no penalty
   }
   double dist = std::abs(col - home_col);
-  return 1.0 + 0.3 * dist;
+  return 1.0 + 0.3 * dist;  // base penalty 1.0, increases by 0.3 per column
 }
 
 // Distance from home position penalty (x-position based - layout independent!)
@@ -177,12 +186,14 @@ double home_distance_penalty_x(double x_mid, int finger, double min_x, double ma
   return 1.0 + 0.3 * normalized_dist;  // 30% penalty per zone away from home
 }
 
-// Base effort for a single key (LEGACY - column-based)
+// Base effort for a single key (column-based - Carpalx methodology)
+// Combines row difficulty, finger strength, and distance from home position
 double base_key_effort(int row, int col, int finger) {
   return row_penalty(row) * finger_penalty(finger) * home_distance_penalty(col, finger);
 }
 
-// Base effort for a single key (x-position based - USE THIS!)
+// Base effort for a single key (x-position based - alternative approach)
+// Note: Column-based is simpler and equally effective for standard keyboards
 double base_key_effort_x(int row, double x_mid, int finger, double min_x, double max_x) {
   return row_penalty(row) * finger_penalty(finger) * home_distance_penalty_x(x_mid, finger, min_x, max_x);
 }
@@ -323,16 +334,12 @@ double calculate_effort(
     }
   }
 
-  // Calculate finger assignments based on x position (works for any layout!)
-  // Find min/max x to determine keyboard bounds
-  double min_x = *std::min_element(pos_x.begin(), pos_x.end());
-  double max_x = *std::max_element(pos_x.begin(), pos_x.end());
-
+  // Calculate finger assignments based on column position (Carpalx methodology)
+  // Column numbers represent physical key positions, same for all layouts (QWERTY, BEPO, etc.)
   std::vector<int> fingers(n);
   std::vector<int> hands(n);
   for (int i = 0; i < n; i++) {
-    // Use x position for layout-independent finger assignment
-    fingers[i] = get_finger_for_x_position(pos_x[i], min_x, max_x);
+    fingers[i] = get_finger_for_column(pos_col[i]);
     hands[i] = get_hand_for_finger(fingers[i]);
   }
 
@@ -355,8 +362,8 @@ double calculate_effort(
     }
     if (it != char_to_pos.end()) {
       int pos = it->second;
-      // Use x-position-based effort (layout-independent!)
-      double base = base_key_effort_x(pos_row[pos], pos_x[pos], fingers[pos], min_x, max_x);
+      // Use column-based effort (Carpalx methodology)
+      double base = base_key_effort(pos_row[pos], pos_col[pos], fingers[pos]);
       // Multiply by text_len to scale properly
       total_effort += w_base * base * char_freq[i] * text_len;
     }
@@ -1179,13 +1186,10 @@ List effort_breakdown(
     }
   }
 
-  // Calculate fingers based on x position (layout-independent)
-  double min_x = *std::min_element(px.begin(), px.end());
-  double max_x = *std::max_element(px.begin(), px.end());
-
+  // Calculate fingers based on column position (Carpalx methodology)
   std::vector<int> fingers(n), hands(n);
   for (int i = 0; i < n; i++) {
-    fingers[i] = get_finger_for_x_position(px[i], min_x, max_x);
+    fingers[i] = get_finger_for_column(pc[i]);
     hands[i] = get_hand_for_finger(fingers[i]);
   }
 
@@ -1212,8 +1216,8 @@ List effort_breakdown(
     if (it != char_to_pos.end()) {
       int pos = it->second;
       // CRITICAL: Must scale by text_len to match calculate_effort()
-      // Use x-position-based effort (layout-independent!)
-      base_effort += base_key_effort_x(pr[pos], px[pos], fingers[pos], min_x, max_x) * cf[i] * text_len;
+      // Use column-based effort (Carpalx methodology)
+      base_effort += base_key_effort(pr[pos], pc[pos], fingers[pos]) * cf[i] * text_len;
     }
   }
 
