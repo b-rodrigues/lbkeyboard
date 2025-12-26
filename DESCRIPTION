@@ -11,7 +11,7 @@ Description: Tools for analyzing and optimizing keyboard layouts for
     is inspired by Carpalx and considers finger travel distance, same-finger
     bigrams, hand alternation, and row changes.
 License: GPL (>= 3)
-URL: https://b-rodrigues.github.io/lbkeyboard
+URL: https://b-rodrigues.github.io/lbkeyboard, https://b-rodrigues.github.io/lbkeyboard/
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

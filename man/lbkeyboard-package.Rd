@@ -41,7 +41,15 @@ rules system for customizing optimization constraints.
 }
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://b-rodrigues.github.io/lbkeyboard}
+  \item \url{https://b-rodrigues.github.io/lbkeyboard/}
+}
+
+}
 \author{
-\strong{Maintainer}: Bruno Rodrigues \email{bruno@brodrigues.co} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: Bruno Rodrigues \email{bruno@brodrigues.co} (\href{https://orcid.org/0000-0002-3211-3689}{ORCID})
 
 }

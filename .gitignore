@@ -2,3 +2,4 @@
 /Meta/
 src/*.o
 src/*.so
+docs
