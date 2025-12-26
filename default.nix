@@ -5,7 +5,7 @@ let
   lbkeyboard = pkgs.rPackages.buildRPackage {
     name = "lbkeyboard";
     src = fetchTarball {
-      url = "https://github.com/b-rodrigues/lbkeyboard/archive/4d6eb48cc0558312e0099500f213a8f3a159b547.tar.gz";
+      url = "https://github.com/b-rodrigues/lbkeyboard/archive/5413c60c304e81e89824cd5136932f28ecdb1575.tar.gz";
     };
     propagatedBuildInputs = builtins.attrValues {
       inherit (pkgs.rPackages)
