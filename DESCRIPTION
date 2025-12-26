@@ -3,7 +3,7 @@ Title: Analysis and Optimization of Keyboard Layouts for Luxembourgish
 Version: 0.1.0
 Authors@R:
     person("Bruno", "Rodrigues", , "bruno@brodrigues.co", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0000-0002-3211-3689"))
 Description: Tools for analyzing and optimizing keyboard layouts for
     Luxembourgish and other languages. Includes visualization of keyboard
     layouts, letter frequency analysis, and a genetic algorithm for
@@ -11,6 +11,7 @@ Description: Tools for analyzing and optimizing keyboard layouts for
     is inspired by Carpalx and considers finger travel distance, same-finger
     bigrams, hand alternation, and row changes.
 License: GPL (>= 3)
+URL: https://b-rodrigues.github.io/lbkeyboard
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
