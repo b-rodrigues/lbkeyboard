@@ -1,2 +1,4 @@
 /doc/
 /Meta/
+src/*.o
+src/*.so
