@@ -1,0 +1,220 @@
+# Optimize keyboard layout using genetic algorithm
+
+Uses a genetic algorithm with a Carpalx-inspired effort model to find an
+optimal keyboard layout for the given text samples. The algorithm
+minimizes typing effort by considering finger travel distance,
+same-finger bigrams, hand alternation, and row changes.
+
+## Usage
+
+``` r
+optimize_layout(
+  text_samples,
+  keyboard = NULL,
+  keys_to_optimize = NULL,
+  fixed_keys = NULL,
+  rules = NULL,
+  include_accents = FALSE,
+  population_size = 100,
+  generations = 500,
+  mutation_rate = 0.1,
+  crossover_rate = 0.8,
+  tournament_size = 5,
+  elite_count = 2,
+  effort_weights = list(base = 3, same_finger = 3, same_hand = 0.5, row_change = 0.5,
+    trigram = 0.3),
+  verbose = TRUE
+)
+```
+
+## Arguments
+
+- text_samples:
+
+  Character vector of text samples to optimize for. The algorithm will
+  use character frequencies and bigram patterns from these texts to
+  evaluate layouts.
+
+- keyboard:
+
+  A keyboard data frame with columns `key`, `row`, `number` (column
+  position), and optionally `x_mid`, `y_mid` for coordinates. If NULL,
+  uses a default 30-key layout.
+
+- keys_to_optimize:
+
+  Character vector of keys to include in optimization. Default is
+  lowercase letters a-z. Only these keys will be permuted.
+
+- fixed_keys:
+
+  Character vector of keys that should remain in their original
+  positions. These keys will not be moved during optimization. Default
+  is NULL (no fixed keys). For example, use
+  `fixed_keys = c("a", "s", "d", "f")` to keep the left home row keys in
+  place while optimizing all others.
+
+- population_size:
+
+  Number of individuals in the population. Default 100.
+
+- generations:
+
+  Number of generations to evolve. Default 500.
+
+- mutation_rate:
+
+  Probability of mutation per individual. Default 0.1.
+
+- crossover_rate:
+
+  Probability of crossover. Default 0.8.
+
+- tournament_size:
+
+  Size of tournament for selection. Default 5.
+
+- elite_count:
+
+  Number of best individuals to preserve each generation. Default 2.
+
+- effort_weights:
+
+  Named list of effort component weights:
+
+  - `base`: Weight for base key effort (default 1.0)
+
+  - `same_finger`: Weight for same-finger bigram penalty (default 3.0)
+
+  - `same_hand`: Weight for same-hand bigram penalty (default 1.0)
+
+  - `row_change`: Weight for row change penalty (default 0.5)
+
+  - `trigram`: Weight for same-hand trigram penalty (default 0.3)
+
+- verbose:
+
+  Logical. Print progress every 50 generations? Default TRUE.
+
+## Value
+
+A list with the following components:
+
+- layout:
+
+  Data frame with optimized layout including key positions and
+  coordinates
+
+- effort:
+
+  Final effort score of the optimized layout
+
+- initial_effort:
+
+  Effort score of the starting layout
+
+- improvement:
+
+  Percentage improvement over starting layout
+
+- history:
+
+  Data frame with best and mean effort per generation
+
+- parameters:
+
+  List of algorithm parameters used
+
+- fixed_keys:
+
+  Character vector of keys that were held fixed
+
+- n_fixed:
+
+  Number of fixed keys
+
+- n_optimized:
+
+  Number of keys that were optimized
+
+## Details
+
+The effort model is inspired by Carpalx and considers:
+
+- **Base effort**: Each key has a base effort based on:
+
+  - Row penalty (home row easiest, number row hardest)
+
+  - Finger strength (middle finger strongest, pinky weakest)
+
+  - Distance from home position
+
+- **Same-finger bigrams**: Very high penalty when consecutive keys use
+  the same finger (causes finger movement delays)
+
+- **Same-hand sequences**: Moderate penalty, with inward rolls (e.g.,
+  index to pinky) penalized less than outward rolls
+
+- **Row changes**: Penalty for reaching between rows on same hand
+
+- **Same-hand trigrams**: Penalty for three consecutive keys on the same
+  hand, with higher penalty for direction-changing sequences
+
+The genetic algorithm uses:
+
+- Order Crossover (OX) for recombination
+
+- Swap, scramble, and inversion mutations
+
+- Tournament selection
+
+- Elitism to preserve best solutions
+
+When `fixed_keys` is specified, those keys remain in their original
+positions and only the remaining keys are permuted during optimization.
+This is useful for keeping commonly-used keys (like punctuation or
+frequently-used letters) in familiar positions.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+# Load sample texts
+data(french)
+data(luxembourguish)
+
+# Optimize for multiple languages
+result <- optimize_layout(
+  text_samples = c(french, luxembourguish),
+  generations = 200,
+  verbose = TRUE
+)
+
+# View the optimized layout
+print(result$layout)
+
+# Check improvement
+cat("Improvement:", result$improvement, "%\n")
+
+# Optimize while keeping home row keys fixed
+result_fixed <- optimize_layout(
+  text_samples = french,
+  fixed_keys = c("a", "s", "d", "f", "j", "k", "l"),
+  generations = 200
+)
+
+# Optimize with soft preference rules
+result_rules <- optimize_layout(
+  text_samples = french,
+  rules = list(
+    prefer_hand(c("a", "e", "i", "o", "u"), "left", weight = 2.0),
+    balance_hands(0.5, weight = 1.0)
+  ),
+  generations = 200
+)
+
+# Plot convergence
+plot(result$history$generation, result$history$best,
+     type = "l", xlab = "Generation", ylab = "Effort")
+} # }
+```
