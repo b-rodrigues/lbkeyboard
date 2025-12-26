@@ -23,6 +23,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Create this folder to silence warning
         run: mkdir -p ~/.nix-defexpr/channels
 
