@@ -5,6 +5,7 @@
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/articles/getting-started.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/articles/index.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/articles/luxembourg-optimization.html</loc></url>
+<url><loc>https://b-rodrigues.github.io/lbkeyboard/articles/qwertz-comparison.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/articles/rules-system.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/authors.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/index.html</loc></url>
@@ -17,6 +18,7 @@
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/compile_rules.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/create_default_keyboard.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/create_extended_keyboard.html</loc></url>
+<url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/create_qwertz_lux_keyboard.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/english.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/fix_keys.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/french.html</loc></url>
@@ -42,5 +44,7 @@
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/prefer_row.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/print.layout_rule.html</loc></url>
 <url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/print_layout.html</loc></url>
+<url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/qwertz_accent_layers.html</loc></url>
+<url><loc>https://b-rodrigues.github.io/lbkeyboard/reference/qwertz_lux_accent_layers.html</loc></url>
 </urlset>
 

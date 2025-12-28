@@ -18,6 +18,8 @@
   : Create a default keyboard layout for optimization
 - [`create_extended_keyboard()`](https://b-rodrigues.github.io/lbkeyboard/reference/create_extended_keyboard.md)
   : Create an extended keyboard layout with accented characters
+- [`create_qwertz_lux_keyboard()`](https://b-rodrigues.github.io/lbkeyboard/reference/create_qwertz_lux_keyboard.md)
+  : Create QWERTZ-LUX keyboard layout
 - [`english`](https://b-rodrigues.github.io/lbkeyboard/reference/english.md)
   : Sample of english text
 - [`fix_keys()`](https://b-rodrigues.github.io/lbkeyboard/reference/fix_keys.md)
@@ -66,3 +68,7 @@
   : Print method for layout rules
 - [`print_layout()`](https://b-rodrigues.github.io/lbkeyboard/reference/print_layout.md)
   : Print keyboard layout in ASCII format
+- [`qwertz_accent_layers`](https://b-rodrigues.github.io/lbkeyboard/reference/qwertz_accent_layers.md)
+  : Standard QWERTZ accent layer map
+- [`qwertz_lux_accent_layers`](https://b-rodrigues.github.io/lbkeyboard/reference/qwertz_lux_accent_layers.md)
+  : QWERTZ-LUX accent layer map

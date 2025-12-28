@@ -22,6 +22,7 @@ using a Carpalx-inspired effort model."></head><body>
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started with lbkeyboard</a></li>
     <li><a class="dropdown-item" href="../articles/luxembourg-optimization.html">Optimizing Keyboard Layouts for Luxembourg</a></li>
+    <li><a class="dropdown-item" href="../articles/qwertz-comparison.html">UNKNOWN TITLE</a></li>
     <li><a class="dropdown-item" href="../articles/rules-system.html">Composable Rules System</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -52,7 +53,11 @@ using a Carpalx-inspired effort model.</p>
 <span>  keys_to_evaluate <span class="op">=</span> <span class="va">letters</span>,</span>
 <span>  effort_weights <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>base <span class="op">=</span> <span class="fl">3</span>, same_finger <span class="op">=</span> <span class="fl">3</span>, same_hand <span class="op">=</span> <span class="fl">0.5</span>, row_change <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>    trigram <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span>,</span>
-<span>  breakdown <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  breakdown <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  layer_map <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  altgr_penalty <span class="op">=</span> <span class="fl">1.2</span>,</span>
+<span>  shift_penalty <span class="op">=</span> <span class="fl">1.05</span>,</span>
+<span>  deadkey_penalty <span class="op">=</span> <span class="fl">1.4</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -78,6 +83,29 @@ using a Carpalx-inspired effort model.</p>
 
 <dt id="arg-breakdown">breakdown<a class="anchor" aria-label="anchor" href="#arg-breakdown"></a></dt>
 <dd><p>Logical. Return detailed breakdown of effort components? Default FALSE.</p></dd>
+
+
+<dt id="arg-layer-map">layer_map<a class="anchor" aria-label="anchor" href="#arg-layer-map"></a></dt>
+<dd><p>Named numeric vector mapping characters to their layer.
+Layer 0 = direct access (no penalty), Layer 1 = Shift, Layer 2 = AltGr,
+Layer 3 = Dead key (2 keystrokes, e.g., dead trema + o = ö).
+Characters not in layer_map are assumed to be on layer 0.
+Example: <code>c("è" = 2, "ï" = 3)</code> means è is on AltGr, ï via dead key.</p></dd>
+
+
+<dt id="arg-altgr-penalty">altgr_penalty<a class="anchor" aria-label="anchor" href="#arg-altgr-penalty"></a></dt>
+<dd><p>Numeric. Effort multiplier for characters on AltGr layer (layer 2).
+Default 1.2 (20% extra effort).</p></dd>
+
+
+<dt id="arg-shift-penalty">shift_penalty<a class="anchor" aria-label="anchor" href="#arg-shift-penalty"></a></dt>
+<dd><p>Numeric. Effort multiplier for characters on Shift layer (layer 1).
+Default 1.05 (5% extra effort).</p></dd>
+
+
+<dt id="arg-deadkey-penalty">deadkey_penalty<a class="anchor" aria-label="anchor" href="#arg-deadkey-penalty"></a></dt>
+<dd><p>Numeric. Effort multiplier for dead key combinations (layer 3).
+Default 1.4 (40% extra effort for 2 keystrokes).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -107,6 +135,9 @@ If <code>breakdown = TRUE</code>, a list with effort components:</p><dl><dt>tota
 <dt>hand_alternations</dt>
 <dd><p>Count of hand alternations</p></dd>
 
+<dt>layer_effort</dt>
+<dd><p>Additional effort from layer penalties (if layer_map provided)</p></dd>
+
 
 </dl></div>
 
@@ -119,6 +150,10 @@ If <code>breakdown = TRUE</code>, a list with effort components:</p><dl><dt>tota
 <span class="r-in"><span><span class="co"># Calculate effort for BEPO layout</span></span></span>
 <span class="r-in"><span><span class="va">effort</span> <span class="op">&lt;-</span> <span class="fu">calculate_layout_effort</span><span class="op">(</span><span class="va">afnor_bepo</span>, <span class="va">french</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">effort</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Calculate with layer penalties for accents on different layers</span></span></span>
+<span class="r-in"><span><span class="va">layer_map</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"è"</span> <span class="op">=</span> <span class="fl">2</span>, <span class="st">"ü"</span> <span class="op">=</span> <span class="fl">2</span>, <span class="st">"ö"</span> <span class="op">=</span> <span class="fl">2</span>, <span class="st">"à"</span> <span class="op">=</span> <span class="fl">2</span>, <span class="st">"ï"</span> <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>  <span class="co"># ï via dead key</span></span></span>
+<span class="r-in"><span><span class="va">effort</span> <span class="op">&lt;-</span> <span class="fu">calculate_layout_effort</span><span class="op">(</span><span class="va">afnor_bepo</span>, <span class="va">french</span>, layer_map <span class="op">=</span> <span class="va">layer_map</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get detailed breakdown</span></span></span>
 <span class="r-in"><span><span class="va">breakdown</span> <span class="op">&lt;-</span> <span class="fu">calculate_layout_effort</span><span class="op">(</span><span class="va">afnor_bepo</span>, <span class="va">french</span>, breakdown <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
