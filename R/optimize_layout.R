@@ -612,6 +612,17 @@ optimize_layout <- function(
 #' @param keys_to_evaluate Character vector of keys to include. Default is lowercase letters.
 #' @param effort_weights Named list of effort weights (see \code{\link{optimize_layout}}).
 #' @param breakdown Logical. Return detailed breakdown of effort components? Default FALSE.
+#' @param layer_map Named numeric vector mapping characters to their layer.
+#'   Layer 0 = direct access (no penalty), Layer 1 = Shift, Layer 2 = AltGr,
+#'   Layer 3 = Dead key (2 keystrokes, e.g., dead trema + o = ö).
+#'   Characters not in layer_map are assumed to be on layer 0.
+#'   Example: \code{c("è" = 2, "ï" = 3)} means è is on AltGr, ï via dead key.
+#' @param altgr_penalty Numeric. Effort multiplier for characters on AltGr layer (layer 2).
+#'   Default 1.2 (20% extra effort).
+#' @param shift_penalty Numeric. Effort multiplier for characters on Shift layer (layer 1).
+#'   Default 1.05 (5% extra effort).
+#' @param deadkey_penalty Numeric. Effort multiplier for dead key combinations (layer 3).
+#'   Default 1.4 (40% extra effort for 2 keystrokes).
 #'
 #' @return If \code{breakdown = FALSE}, a single numeric value (total effort).
 #'   If \code{breakdown = TRUE}, a list with effort components:
@@ -624,6 +635,7 @@ optimize_layout <- function(
 #'     \item{same_finger_bigrams}{Count of same-finger bigrams}
 #'     \item{same_hand_bigrams}{Count of same-hand bigrams}
 #'     \item{hand_alternations}{Count of hand alternations}
+#'     \item{layer_effort}{Additional effort from layer penalties (if layer_map provided)}
 #'   }
 #'
 #' @importFrom dplyr filter mutate
@@ -638,6 +650,10 @@ optimize_layout <- function(
 #' # Calculate effort for BEPO layout
 #' effort <- calculate_layout_effort(afnor_bepo, french)
 #' print(effort)
+#'
+#' # Calculate with layer penalties for accents on different layers
+#' layer_map <- c("è" = 2, "ü" = 2, "ö" = 2, "à" = 2, "ï" = 3)  # ï via dead key
+#' effort <- calculate_layout_effort(afnor_bepo, french, layer_map = layer_map)
 #'
 #' # Get detailed breakdown
 #' breakdown <- calculate_layout_effort(afnor_bepo, french, breakdown = TRUE)
@@ -654,7 +670,11 @@ calculate_layout_effort <- function(
       row_change = 0.5,
       trigram = 0.3
     ),
-    breakdown = FALSE
+    breakdown = FALSE,
+    layer_map = NULL,
+    altgr_penalty = 1.2,
+    shift_penalty = 1.05,
+    deadkey_penalty = 1.4
 ) {
   # Filter keyboard to keys we're evaluating
   keyboard_eval <- keyboard %>%
@@ -706,8 +726,47 @@ calculate_layout_effort <- function(
   char_list <- as.character(freq_df$characters)
   char_freq <- as.numeric(freq_df$frequencies)
 
+  # Calculate layer penalty effort
+  layer_effort <- 0
+  if (!is.null(layer_map) && length(layer_map) > 0) {
+    # Get frequencies for all characters in the text
+    all_freq <- letter_freq(combined_text)
+    
+    for (char in names(layer_map)) {
+      layer <- layer_map[[char]]
+      if (layer > 0) {
+        # Find frequency of this character
+        char_lower <- tolower(char)
+        freq_idx <- which(tolower(all_freq$characters) == char_lower)
+        if (length(freq_idx) > 0) {
+          char_frequency <- all_freq$frequencies[freq_idx[1]]
+          char_count <- all_freq$total[freq_idx[1]]
+          
+          # Calculate penalty based on layer
+          if (layer == 1) {
+            # Shift layer: 5% penalty
+            penalty_multiplier <- shift_penalty - 1.0  # e.g., 0.05
+          } else if (layer == 2) {
+            # AltGr layer: 20% penalty
+            penalty_multiplier <- altgr_penalty - 1.0  # e.g., 0.20
+          } else if (layer == 3) {
+            # Dead key: 40% penalty (2 keystrokes)
+            penalty_multiplier <- deadkey_penalty - 1.0  # e.g., 0.40
+          } else {
+            penalty_multiplier <- 0
+          }
+          
+          # Add layer penalty proportional to frequency and text length
+          # Scale similar to base effort calculation
+          layer_effort <- layer_effort + 
+            penalty_multiplier * char_frequency * nchar(combined_text) * effort_weights$base
+        }
+      }
+    }
+  }
+
   if (breakdown) {
-    effort_breakdown(
+    result <- effort_breakdown(
       layout = layout,
       pos_x = pos_x,
       pos_y = pos_y,
@@ -717,8 +776,12 @@ calculate_layout_effort <- function(
       char_freq = char_freq,
       char_list = char_list
     )
+    # Add layer effort to breakdown
+    result$layer_effort <- layer_effort
+    result$total_effort <- result$total_effort + layer_effort
+    result
   } else {
-    layout_effort(
+    base_result <- layout_effort(
       layout = layout,
       pos_x = pos_x,
       pos_y = pos_y,
@@ -733,6 +796,8 @@ calculate_layout_effort <- function(
       w_row_change = effort_weights$row_change,
       w_trigram = effort_weights$trigram
     )
+    # Add layer effort to total
+    base_result + layer_effort
   }
 }
 

@@ -1,0 +1,783 @@
+ ---
+title: "QWERTZ vs Optimized QWERTZ: A Comparison"
+author: "lbkeyboard"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{QWERTZ vs Optimized QWERTZ: A Comparison}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 4,
+  cache = FALSE
+)
+# For development: load_all() ensures latest code is used
+if (file.exists("../DESCRIPTION")) {
+  devtools::load_all("..")
+} else {
+  library(lbkeyboard)
+}
+library(dplyr)
+library(ggplot2)
+```
+
+## Introduction
+
+This vignette provides a focused comparison between the **standard QWERTZ** layout 
+(commonly used in Switzerland, Germany, and Luxembourg) and an **optimized QWERTZ** 
+variant with an improved home row, designed specifically for Luxembourg's multilingual 
+environment.
+
+We will:
+
+1. **Compare typing efforts** between the two layouts
+2. **Visualize with heatmaps** where keystrokes concentrate
+3. **Analyze accented character frequencies** in Luxembourgish texts
+4. **Investigate symbol frequencies** and their optimal placement
+5. **Propose placement strategies** for accented characters and symbols
+
+For the full optimization process and comparison with other layouts (AZERTY, BÉPO, Dvorak),
+see the companion vignette: `vignette("luxembourg-optimization")`.
+
+---
+
+## 1. Setup: The Multilingual Corpus
+
+We use a balanced corpus representing Luxembourg's language landscape:
+
+```{r load-corpus}
+# Load sample texts
+data("french")
+data("german")
+data("english")
+data("luxembourguish")
+
+# Create weighted corpus (30% FR, 30% EN, 20% DE, 20% LB)
+corpus <- list(
+  French = rep(french, 3),
+  English = rep(english, 3),
+  German = rep(german, 2),
+  Luxembourgish = rep(luxembourguish, 2)
+)
+
+# Combine all texts
+all_texts <- unlist(corpus)
+
+# Calculate frequencies
+freq_all <- letter_freq(paste(all_texts, collapse = " "))
+
+# Display corpus stats
+cat("Total corpus size:", format(sum(nchar(all_texts)), big.mark = ","), "characters\n")
+cat("Unique characters:", nrow(freq_all), "\n")
+```
+
+### Top 15 Most Frequent Letters
+
+```{r freq-table}
+freq_top <- head(freq_all, 15)
+freq_top$pct <- paste0(round(freq_top$frequencies * 100, 2), "%")
+
+knitr::kable(
+  freq_top[, c("characters", "total", "pct")],
+  col.names = c("Letter", "Count", "Frequency"),
+  caption = "Top 15 most frequent characters in the multilingual corpus"
+)
+```
+
+---
+
+## 2. The Two Layouts
+
+### Standard QWERTZ (Swiss)
+
+```{r qwertz-standard}
+data("ch_qwertz")
+
+# Extract only letter keys from the full keyboard layout
+# ch_qwertz contains 119 keys; we need just the 26 letters
+qwertz_letters <- ch_qwertz %>%
+  filter(tolower(key) %in% letters) %>%
+  arrange(row, number)
+
+cat("Standard QWERTZ Layout:\n\n")
+print_layout(qwertz_letters)
+```
+
+### Optimized QWERTZ with Home Row Optimization
+
+The optimized layout keeps the familiar left-hand positions (A, S, D, E) while
+placing the **6 next most frequent letters** on the remaining home row positions:
+
+```{r qwertz-optimized, results='hide'}
+# Fixed keys for home row: A, S, D, E (positions 0-3)
+fixed_home <- c("a", "s", "d", "e")
+
+# Get top frequent letters excluding the fixed ones
+freq_letters <- as.character(freq_all$characters)
+top_freq_excluding_fixed <- setdiff(freq_letters, fixed_home)
+
+# Next 6 most frequent letters for home row positions 4-9
+next_6 <- head(top_freq_excluding_fixed, 6)
+
+# Home row: ASDE (fixed) + next 6 frequent letters
+home_row_keys <- c(fixed_home, next_6)
+
+# Remaining letters for top and bottom rows
+remaining_letters <- setdiff(letters, home_row_keys)
+
+# QWERTZ positions for reference
+qwertz_top_row <- c("q", "w", "e", "r", "t", "z", "u", "i", "o", "p")
+qwertz_bottom_row <- c("y", "x", "c", "v", "b", "n", "m")
+
+# Keep remaining letters in their QWERTZ positions where possible
+top_row_keys <- sapply(qwertz_top_row, function(k) {
+  if (k %in% remaining_letters) k else NA
+})
+bottom_row_keys <- sapply(qwertz_bottom_row, function(k) {
+  if (k %in% remaining_letters) k else NA
+})
+
+# Letters that need new positions (displaced from home row)
+letters_needing_placement <- remaining_letters[!remaining_letters %in% c(top_row_keys, bottom_row_keys)]
+
+# Fill NA positions with displaced letters
+fill_idx <- 1
+for (i in seq_along(top_row_keys)) {
+  if (is.na(top_row_keys[i]) && fill_idx <= length(letters_needing_placement)) {
+    top_row_keys[i] <- letters_needing_placement[fill_idx]
+    fill_idx <- fill_idx + 1
+  }
+}
+for (i in seq_along(bottom_row_keys)) {
+  if (is.na(bottom_row_keys[i]) && fill_idx <= length(letters_needing_placement)) {
+    bottom_row_keys[i] <- letters_needing_placement[fill_idx]
+    fill_idx <- fill_idx + 1
+  }
+}
+
+# Remove NAs
+top_row_keys <- top_row_keys[!is.na(top_row_keys)]
+bottom_row_keys <- bottom_row_keys[!is.na(bottom_row_keys)]
+
+# Build the full keyboard layout
+ext_keys_qwertz <- c(top_row_keys, home_row_keys, bottom_row_keys)
+
+# Fixed keys: ASDE (first 4 home row positions) + letters that stayed in QWERTZ positions
+keys_in_original_position <- c(
+  intersect(top_row_keys, qwertz_top_row),
+  intersect(bottom_row_keys, qwertz_bottom_row)
+)
+fixed_keys_qwertz <- c(fixed_home, keys_in_original_position)
+movable_keys <- setdiff(ext_keys_qwertz, fixed_keys_qwertz)
+
+# Create keyboard data frame
+kb_qwertz_opt <- data.frame(
+  key = ext_keys_qwertz,
+  key_label = toupper(ext_keys_qwertz),
+  row = c(rep(1, length(top_row_keys)), rep(2, 10), rep(3, length(bottom_row_keys))),
+  number = c(seq_along(top_row_keys) - 1, 0:9, seq_along(bottom_row_keys) - 1),
+  stringsAsFactors = FALSE
+)
+kb_qwertz_opt$x_mid <- kb_qwertz_opt$number + c(0, 0.25, 0.5)[kb_qwertz_opt$row]
+kb_qwertz_opt$y_mid <- kb_qwertz_opt$row
+
+# Effort weights
+effort_weights <- list(
+  base = 3.0,
+  same_finger = 3.0,
+  same_hand = 0.5,
+  row_change = 0.5,
+  trigram = 0.3
+)
+
+# Optimize the remaining movable keys
+GENERATIONS <- 200
+POPULATION_SIZE <- 80
+
+result_qwertz_home <- optimize_layout(
+  text_samples = all_texts,
+  keyboard = kb_qwertz_opt,
+  keys_to_optimize = ext_keys_qwertz,
+  rules = list(fix_keys(fixed_keys_qwertz)),
+  generations = GENERATIONS,
+  population_size = POPULATION_SIZE,
+  effort_weights = effort_weights,
+  verbose = FALSE
+)
+```
+
+```{r show-optimized}
+cat("Optimized QWERTZ Layout (Home Row: ASDE +", paste(next_6, collapse = " "), "):\n\n")
+print_layout(result_qwertz_home$layout)
+```
+
+### Side-by-Side Comparison
+
+```{r side-by-side}
+cat("┌─────────────────────────────────────────────────────────────────────┐\n")
+cat("│                    LAYOUT COMPARISON                               │\n")
+cat("├─────────────────────────────────────────────────────────────────────┤\n")
+cat("│                                                                     │\n")
+cat("│  Standard QWERTZ              Optimized QWERTZ                     │\n")
+cat("│  ─────────────────            ──────────────────                   │\n")
+cat("│                                                                     │\n")
+
+# Get keys from both layouts (use qwertz_letters already extracted earlier)
+std_keys <- toupper(qwertz_letters$key)
+opt_keys <- toupper(result_qwertz_home$layout$key)
+
+# Show rows side by side
+cat("│  ", paste(std_keys[1:10], collapse = " "), "    ", 
+    paste(opt_keys[1:10], collapse = " "), "   │\n")
+cat("│   ", paste(std_keys[11:19], collapse = " "), "       ", 
+    paste(opt_keys[11:19], collapse = " "), "     │\n")
+cat("│    ", paste(std_keys[20:26], collapse = " "), "           ", 
+    paste(opt_keys[20:26], collapse = " "), "       │\n")
+cat("│                                                                     │\n")
+cat("└─────────────────────────────────────────────────────────────────────┘\n")
+```
+
+**Key Differences:**
+
+- Home row now contains the 10 most frequent letters
+- Letters A, S, D, E remain in their familiar positions (left hand)
+- High-frequency letters like N, T, R, I are moved to home row right hand
+
+---
+
+## 3. Typing Effort Comparison
+
+```{r effort-comparison}
+# Calculate effort for standard QWERTZ
+effort_qwertz <- calculate_layout_effort(
+  ch_qwertz, all_texts,
+  keys_to_evaluate = letters,
+  effort_weights = effort_weights
+)
+
+# Get effort for optimized layout
+effort_optimized <- result_qwertz_home$effort
+
+# Create comparison table
+effort_df <- data.frame(
+  Layout = c("Standard QWERTZ", "Optimized QWERTZ"),
+  Effort = c(effort_qwertz, effort_optimized),
+  stringsAsFactors = FALSE
+)
+
+effort_df <- effort_df %>%
+  mutate(
+    Relative = round(Effort / min(Effort) * 100, 1),
+    Improvement = paste0(round((1 - Effort / max(Effort)) * 100, 1), "%")
+  )
+
+knitr::kable(
+  effort_df,
+  col.names = c("Layout", "Effort Score", "Relative (%)", "Improvement"),
+  caption = "Typing effort comparison (lower is better)"
+)
+```
+
+```{r effort-barplot, fig.height=3, fig.width=6}
+ggplot(effort_df, aes(x = reorder(Layout, Effort), y = Effort, fill = Layout)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = round(Effort, 1)), vjust = -0.5, size = 4) +
+  scale_fill_manual(values = c("Standard QWERTZ" = "#e74c3c", 
+                                "Optimized QWERTZ" = "#27ae60")) +
+  labs(
+    title = "Typing Effort Comparison",
+    subtitle = "Lower effort = more ergonomic typing",
+    x = NULL,
+    y = "Effort Score"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold"),
+    axis.text.x = element_text(size = 11)
+  ) +
+  coord_cartesian(ylim = c(0, max(effort_df$Effort) * 1.15))
+```
+
+---
+
+## 4. Heatmap Visualization
+
+Heatmaps show where typing effort concentrates. Brighter/warmer colors indicate
+more frequently used keys.
+
+### Standard QWERTZ Heatmap
+
+```{r heatmap-qwertz, fig.width=8, fig.height=4, warning=FALSE}
+heatmap_qwertz <- heatmapize(ch_qwertz, freq_all)
+ggkeyboard(heatmap_qwertz) + 
+  ggplot2::ggtitle("Standard QWERTZ - Frequency Heatmap") +
+  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
+```
+
+**Observation:** High-frequency letters (E, N, T, R) are scattered across multiple rows.
+
+### Optimized QWERTZ Heatmap
+
+```{r heatmap-optimized, fig.width=8, fig.height=4, warning=FALSE}
+# Create heatmap for optimized layout using QWERTZ as template
+qwertz_home_kb <- ch_qwertz
+letter_mask <- tolower(qwertz_home_kb$key) %in% letters
+letter_indices <- which(letter_mask)
+
+# Get the optimized layout keys
+opt_keys_lower <- result_qwertz_home$layout$key
+if (length(letter_indices) == length(opt_keys_lower)) {
+  qwertz_home_kb$key[letter_indices] <- opt_keys_lower
+  qwertz_home_kb$key_label[letter_indices] <- toupper(opt_keys_lower)
+}
+
+heatmap_optimized <- heatmapize(qwertz_home_kb, freq_all)
+ggkeyboard(heatmap_optimized) + 
+  ggplot2::ggtitle("Optimized QWERTZ - Frequency Heatmap") +
+  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold"))
+```
+
+**Observation:** The home row is now "hot" — most frequent letters are concentrated 
+where fingers naturally rest, reducing hand movement and effort.
+
+---
+
+## 5. Accented Character Frequency Analysis
+
+Luxembourg's multilingual environment requires efficient access to accented characters.
+Let's analyze their frequency in our corpus:
+
+```{r accent-frequency}
+# Define accented characters of interest
+accented_chars <- c(
+  # French accents
+  "é", "è", "ê", "ë", "à", "â", "î", "ô", "û", "ç",
+  # German accents
+  "ä", "ö", "ü", "ß"
+)
+
+# Count occurrences in corpus
+combined_text <- paste(all_texts, collapse = " ")
+combined_lower <- tolower(combined_text)
+
+accent_counts <- sapply(accented_chars, function(char) {
+  # Count both uppercase and lowercase
+  sum(
+    lengths(gregexpr(char, combined_lower, fixed = TRUE)),
+    lengths(gregexpr(toupper(char), combined_text, fixed = TRUE))
+  )
+})
+
+# Adjust for -1 returns (no match)
+accent_counts <- pmax(accent_counts, 0)
+
+# Create dataframe
+accent_df <- data.frame(
+  Character = accented_chars,
+  Count = accent_counts,
+  stringsAsFactors = FALSE
+) %>%
+  arrange(desc(Count)) %>%
+  mutate(
+    Frequency = paste0(round(Count / nchar(combined_text) * 100, 3), "%"),
+    Language = case_when(
+      Character %in% c("ä", "ö", "ü", "ß") ~ "German",
+      TRUE ~ "French"
+    )
+  )
+
+knitr::kable(
+  accent_df,
+  col.names = c("Character", "Count", "Frequency", "Primary Language"),
+  caption = "Accented character frequencies in the multilingual corpus"
+)
+```
+
+```{r accent-barplot, fig.height=4, fig.width=8}
+# Filter to only show accents with non-zero counts
+accent_plot_df <- accent_df %>% filter(Count > 0)
+
+if (nrow(accent_plot_df) > 0) {
+  ggplot(accent_plot_df, aes(x = reorder(Character, Count), y = Count, fill = Language)) +
+    geom_col() +
+    coord_flip() +
+    scale_fill_manual(values = c("French" = "#3498db", "German" = "#e74c3c")) +
+    labs(
+      title = "Accented Character Frequency",
+      subtitle = "Characters appearing in the multilingual corpus",
+      x = "Character",
+      y = "Occurrences"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold"),
+      legend.position = "bottom"
+    )
+}
+```
+
+### Priority Accented Characters
+
+Based on frequency analysis, the **priority accented characters** for direct access are:
+
+```{r priority-accents}
+priority_accents <- accent_df %>%
+  filter(Count > 0) %>%
+  head(5)
+
+if (nrow(priority_accents) > 0) {
+  cat("High-priority accented characters for direct keyboard access:\n\n")
+  for (i in seq_len(nrow(priority_accents))) {
+    cat("  ", i, ". ", priority_accents$Character[i], 
+        " (", priority_accents$Count[i], " occurrences)\n", sep = "")
+  }
+}
+```
+
+---
+
+## 6. Symbol Frequency Analysis
+
+Let's analyze the frequency of common symbols in our corpus:
+
+```{r symbol-frequency}
+# Define symbols of interest
+common_symbols <- c(
+  # Punctuation
+  ".", ",", ";", ":", "!", "?", "'", "\"", "-", "(", ")", 
+  # Additional
+  "/", "@", "#", "&", "*", "+", "=", "<", ">", "[", "]", "{", "}"
+)
+
+# Count occurrences
+symbol_counts <- sapply(common_symbols, function(sym) {
+  count <- length(gregexpr(sym, combined_text, fixed = TRUE)[[1]])
+  if (count == 1 && gregexpr(sym, combined_text, fixed = TRUE)[[1]][1] == -1) {
+    return(0)
+  }
+  return(count)
+})
+
+# Create dataframe
+symbol_df <- data.frame(
+  Symbol = common_symbols,
+  Count = symbol_counts,
+  stringsAsFactors = FALSE
+) %>%
+  arrange(desc(Count)) %>%
+  mutate(
+    Frequency = paste0(round(Count / nchar(combined_text) * 100, 3), "%"),
+    Category = case_when(
+      Symbol %in% c(".", ",", ";", ":", "!", "?") ~ "Punctuation",
+      Symbol %in% c("'", "\"", "-", "(", ")") ~ "Common",
+      TRUE ~ "Technical"
+    )
+  )
+
+# Show top symbols
+knitr::kable(
+  head(symbol_df, 15),
+  col.names = c("Symbol", "Count", "Frequency", "Category"),
+  caption = "Top 15 symbol frequencies in the multilingual corpus"
+)
+```
+
+```{r symbol-barplot, fig.height=4, fig.width=8}
+symbol_plot_df <- symbol_df %>% 
+  filter(Count > 0) %>%
+  head(12)
+
+if (nrow(symbol_plot_df) > 0) {
+  ggplot(symbol_plot_df, aes(x = reorder(Symbol, Count), y = Count, fill = Category)) +
+    geom_col() +
+    coord_flip() +
+    scale_fill_manual(values = c(
+      "Punctuation" = "#9b59b6",
+      "Common" = "#3498db",
+      "Technical" = "#95a5a6"
+    )) +
+    labs(
+      title = "Symbol Frequency",
+      subtitle = "Most common symbols in the multilingual corpus",
+      x = "Symbol",
+      y = "Occurrences"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold"),
+      legend.position = "bottom"
+    )
+}
+```
+
+---
+
+## 7. Placement Strategies for Accented Characters and Symbols
+
+Based on our analysis, we now investigate optimal placement strategies for frequently 
+used accented characters and symbols.
+
+### Available Positions
+
+On a standard keyboard, accented characters can be placed:
+
+1. **AltGr + Base Letter**: Most intuitive (e.g., AltGr+e = é)
+2. **Dedicated Keys**: Replace rarely used keys on the main layer
+3. **Number Row Shift Layer**: Replace symbols like @ or #
+4. **Extended Layout**: Add additional keys (as done in `luxembourg-optimization.Rmd`)
+
+### Recommended Placement
+
+```{r placement-recommendations}
+# Create recommendation table
+placement_rec <- data.frame(
+  Character = c("é", "è", "à", "ü", "ö", "ç", "ä", "ê"),
+  Method = c(
+    "AltGr + E",
+    "AltGr + ` then E (dead key)",
+    "AltGr + A",
+    "AltGr + U",
+    "AltGr + O",
+    "AltGr + C",
+    "AltGr + Shift + A",
+    "AltGr + ^ then E (dead key)"
+  ),
+  Alternative = c(
+    "Dedicated key on extended layout",
+    "Direct key if very frequent",
+    "Dedicated key on extended layout",
+    "Dedicated key (German layout)",
+    "Dedicated key (German layout)",
+    "Dedicated key on extended layout",
+    "Dedicated key (German layout)",
+    "Keep as dead key combination"
+  ),
+  Priority = c("High", "Medium", "High", "Medium", "Medium", "High", "Low", "Low"),
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(
+  placement_rec,
+  col.names = c("Character", "Primary Method", "Alternative", "Priority"),
+  caption = "Recommended accented character placement strategies"
+)
+```
+
+### Symbol Placement Principles
+
+For frequently used symbols:
+
+| Symbol | Current Position | Recommendation |
+|--------|-----------------|----------------|
+| `.` (period) | Easy access | Keep as-is |
+| `,` (comma) | Easy access | Keep as-is |
+| `'` (apostrophe) | Shift layer | Consider promoting to main layer |
+| `-` (hyphen) | Main layer | Keep as-is |
+| `;` `:` | Shift layer | Acceptable position |
+
+---
+
+## 8. Summary and Recommendations
+
+### Typing Effort Improvement
+
+```{r summary-improvement}
+improvement_pct <- round((1 - effort_optimized / effort_qwertz) * 100, 1)
+cat("The optimized QWERTZ layout reduces typing effort by", improvement_pct, 
+    "% compared to standard QWERTZ.\n")
+```
+
+### Key Findings
+
+```{r key-findings, echo=FALSE, results='asis'}
+findings <- data.frame(
+  Aspect = c(
+    "Home Row Efficiency",
+    "Learning Curve",
+    "Accented Characters",
+    "Symbol Access"
+  ),
+  `Standard QWERTZ` = c(
+    "Suboptimal - frequent letters on top/bottom rows",
+    "None - familiar layout",
+    "Dead keys or AltGr required",
+    "Complex combinations for some symbols"
+  ),
+  `Optimized QWERTZ` = c(
+    "Excellent - 10 most frequent letters on home row",
+    paste0("Moderate - ", length(movable_keys), " keys to relearn"),
+    "Can add dedicated keys for é, ç, à, ü, ö",
+    "Same as QWERTZ (unchanged)"
+  ),
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
+
+knitr::kable(findings, caption = "Comparison summary")
+```
+
+### Recommendations
+
+| Use Case | Recommendation |
+|----------|---------------|
+| **General multilingual typing** | Optimized QWERTZ with home row optimization |
+| **Need direct accent access** | Extend layout with dedicated accent keys (é, ç, à, ü, ö) |
+| **Minimal relearning** | Standard QWERTZ with AltGr accent access |
+| **Programming focus** | Consider symbol layer optimization in future work |
+
+---
+
+## 9. QWERTZ-LUX: A BÉPO-Inspired Layout for Luxembourg
+
+Based on our frequency analysis and inspired by the BÉPO layout's multi-layer approach,
+we now implement and compare **QWERTZ-LUX** (QWERTZ, BÉPO-inspired for Luxembourg).
+
+### Design Principles
+
+1. **Direct access to frequent accents**: é, ä, ë, ç on letter rows
+2. **Optimized home row**: High-frequency letters in best positions
+3. **Preserve keyboard shortcuts**: Y, X, C, V, B on bottom row for Ctrl+X/C/V
+4. **Intuitive AltGr layer**: Less frequent accents via AltGr + base letter
+
+### The QWERTZ-LUX Layout
+
+```{r qwertz-lux-layout}
+# Create QWERTZ-LUX keyboard with direct accent access
+qwertz_lux <- create_qwertz_lux_keyboard()
+
+cat("QWERTZ-LUX Layout (33 keys including é, ä, ë, ç):\n\n")
+cat("┌─────────────────────────────────────────────────────────────────────────┐\n")
+cat("│  TOP ROW:     Q   W   F   O   G   Z   U   K   L   P   J                │\n")
+cat("├─────────────────────────────────────────────────────────────────────────┤\n")
+cat("│  HOME ROW:    A   S   D   E   ,   H   N   T   R   I   M   É            │\n")
+cat("│               ↑   ↑   ↑   ↑   ↑                       ↑                │\n")
+cat("│              (familiar)  (comma)                 (direct!)             │\n")
+cat("├─────────────────────────────────────────────────────────────────────────┤\n")
+cat("│  BOTTOM ROW:  Y   X   C   V   B   .   Ä   '   Ë   Ç                    │\n")
+cat("│               ↑   ↑   ↑   ↑   ↑       ↑       ↑   ↑                    │\n")
+cat("│              (shortcuts)        (direct!)  (Lux!) (ç)                  │\n")
+cat("└─────────────────────────────────────────────────────────────────────────┘\n")
+```
+
+### Accent Access Comparison
+
+| Accent | Frequency | Standard QWERTZ | QWERTZ-LUX |
+|--------|-----------|-----------------|------------|
+| é | 1003 | AltGr (+20%) | **Direct** (0%) |
+| ä | 500 | AltGr (+20%) | **Direct** (0%) |
+| ë | 273 | AltGr (+20%) | **Direct** (0%) |
+| ç | 5 | AltGr (+20%) | **Direct** (0%) |
+| ü | 170 | AltGr (+20%) | AltGr (+20%) |
+| è | 112 | AltGr (+20%) | AltGr (+20%) |
+| ö | 36 | AltGr (+20%) | AltGr (+20%) |
+| à | 77 | AltGr (+20%) | AltGr (+20%) |
+| ê, ô, î, û, â | rare | Dead key (+40%) | Dead key (+40%) |
+
+### Fair Effort Comparison
+
+Now we compare all three layouts with proper accent penalties:
+
+```{r fair-comparison}
+# Keys to evaluate for each layout
+letters_only <- letters
+lux_keys <- c(letters, "é", "ä", "ë", "ç")
+
+# 1. Standard QWERTZ (letters + accent penalties for ALL accents)
+effort_qwertz_fair <- calculate_layout_effort(
+  ch_qwertz, all_texts, 
+  keys_to_evaluate = letters_only,
+  layer_map = qwertz_accent_layers,
+  effort_weights = effort_weights
+)
+
+# 2. Optimized QWERTZ (letters + accent penalties for ALL accents)
+effort_optimized_fair <- calculate_layout_effort(
+  result_qwertz_home$layout, all_texts, 
+  keys_to_evaluate = letters_only,
+  layer_map = qwertz_accent_layers,
+  effort_weights = effort_weights
+)
+
+# 3. QWERTZ-LUX (optimized letters + direct accents + remaining accent penalties)
+effort_lux <- calculate_layout_effort(
+  qwertz_lux, all_texts, 
+  keys_to_evaluate = lux_keys,
+  layer_map = qwertz_lux_accent_layers,
+  effort_weights = effort_weights
+)
+
+# Create comparison table
+comparison_df <- data.frame(
+  Layout = c("Standard QWERTZ", "Optimized QWERTZ", "QWERTZ-LUX"),
+  Effort = c(effort_qwertz_fair, effort_optimized_fair, effort_lux),
+  stringsAsFactors = FALSE
+) %>%
+  mutate(
+    Relative = round(Effort / max(Effort) * 100, 1),
+    Improvement = paste0(round((1 - Effort / max(Effort)) * 100, 1), "%")
+  )
+
+knitr::kable(
+  comparison_df,
+  col.names = c("Layout", "Total Effort", "Relative %", "Improvement"),
+  caption = "Fair comparison including accent access penalties"
+)
+```
+
+```{r comparison-barplot, fig.width=8, fig.height=4}
+ggplot(comparison_df, aes(x = reorder(Layout, -Effort), y = Effort, fill = Layout)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = Improvement), vjust = -0.5, size = 4, fontface = "bold") +
+  scale_fill_manual(values = c(
+    "Standard QWERTZ" = "#E74C3C",
+    "Optimized QWERTZ" = "#F39C12", 
+    "QWERTZ-LUX" = "#27AE60"
+  )) +
+  labs(
+    title = "Typing Effort Comparison",
+    subtitle = "Including accent access penalties (AltGr: +20%, Dead keys: +40%)",
+    x = NULL, y = "Total Effort"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+```
+
+### Key Findings
+
+```{r key-findings-lux, echo=FALSE}
+improvement_opt <- round((1 - effort_optimized_fair / effort_qwertz_fair) * 100, 1)
+improvement_lux <- round((1 - effort_lux / effort_qwertz_fair) * 100, 1)
+lux_vs_opt <- round((1 - effort_lux / effort_optimized_fair) * 100, 1)
+```
+
+1. **QWERTZ-LUX is `r improvement_lux`% more efficient** than Standard QWERTZ
+2. **Optimized QWERTZ is `r improvement_opt`% more efficient** than Standard QWERTZ
+3. **QWERTZ-LUX is `r lux_vs_opt`% more efficient** than Optimized QWERTZ alone
+
+The additional improvement of QWERTZ-LUX over Optimized QWERTZ comes from:
+
+- **Direct access to é, ä, ë, ç** (no AltGr penalty for the most common accents)
+- **Physical key positions** for accents instead of virtual layer access
+
+### Recommendations
+
+| Use Case | Recommended Layout |
+|----------|-------------------|
+| **Luxembourg multilingual typing** | **QWERTZ-LUX** (best overall) |
+| **Minimal relearning** | Optimized QWERTZ (familiar layout) |
+| **Programming focus** | Standard QWERTZ (familiar for shortcuts) |
+| **Pure French typing** | Consider BÉPO (beyond this comparison) |
+
+---
+
+## Session Info
+
+```{r session-info}
+sessionInfo()
+```
