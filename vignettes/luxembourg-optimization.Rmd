@@ -16,8 +16,14 @@ knitr::opts_chunk$set(
   fig.height = 4,
   cache = FALSE
 )
-library(lbkeyboard)
+# For development: load_all() ensures latest code is used
+if (file.exists("../DESCRIPTION")) {
+  devtools::load_all("..")
+} else {
+  library(lbkeyboard)
+}
 library(dplyr)
+library(ggplot2)
 ```
 
 ## Introduction
