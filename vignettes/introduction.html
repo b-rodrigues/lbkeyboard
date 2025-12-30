@@ -442,37 +442,14 @@ want on your home row.</p>
 <p>Using the <strong>lbkeyboard</strong> package’s effort model (which
 accounts for finger travel, same-finger penalties, and ergonomic
 factors), here’s how the layouts compare:</p>
-<table>
-<caption>Typing effort comparison (lower is better)</caption>
-<thead>
-<tr class="header">
-<th align="left">Layout</th>
-<th align="right">Effort Score</th>
-<th align="right">Relative (%)</th>
-<th align="right">Improvement vs QWERTZ</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">BÉPO</td>
-<td align="right">633624.9</td>
-<td align="right">100.0</td>
-<td align="right">42.1%</td>
-</tr>
-<tr class="even">
-<td align="left">QWERTZ-LUX</td>
-<td align="right">642547.9</td>
-<td align="right">101.4</td>
-<td align="right">41.3%</td>
-</tr>
-<tr class="odd">
-<td align="left">QWERTZ (Swiss)</td>
-<td align="right">1094468.2</td>
-<td align="right">172.7</td>
-<td align="right">0%</td>
-</tr>
-</tbody>
-</table>
+<pre><code>#&gt;           Layout Effort Score Hand Balance (L/R %) Relative (%)
+#&gt; 1           BÉPO     633624.9            43.5/56.5        100.0
+#&gt; 2     QWERTZ-LUX     642547.9            45.8/54.2        101.4
+#&gt; 3 QWERTZ (Swiss)    1094468.2            48.1/51.9        172.7
+#&gt;   Improvement vs QWERTZ
+#&gt; 1                 42.1%
+#&gt; 2                 41.3%
+#&gt; 3                    0%</code></pre>
 </div>
 <div id="visualizing-the-difference-heatmaps" class="section level2">
 <h2>Visualizing the Difference: Heatmaps</h2>
@@ -548,17 +525,17 @@ not a casual typist!</p></li>
 <li>Quantify improvements with the effort model</li>
 </ul>
 <p>Want to try it? Install the package and dive in:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Install from GitHub</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co"># remotes::install_github(&quot;b-rodrigues/lbkeyboard&quot;)</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">library</span>(lbkeyboard)</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co"># Explore the layout</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>qwertz_lux <span class="ot">&lt;-</span> <span class="fu">parse_layout_ini</span>(<span class="st">&quot;layouts/qwertz-lux/layout.ini&quot;</span>)</span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="fu">print</span>(qwertz_lux)</span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co"># Visualize it</span></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="fu">plot_layout_ini</span>(<span class="st">&quot;layouts/qwertz-lux/layout.ini&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Install from GitHub</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># remotes::install_github(&quot;b-rodrigues/lbkeyboard&quot;)</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">library</span>(lbkeyboard)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co"># Explore the layout</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>qwertz_lux <span class="ot">&lt;-</span> <span class="fu">parse_layout_ini</span>(<span class="st">&quot;layouts/qwertz-lux/layout.ini&quot;</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="fu">print</span>(qwertz_lux)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co"># Visualize it</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="fu">plot_layout_ini</span>(<span class="st">&quot;layouts/qwertz-lux/layout.ini&quot;</span>)</span></code></pre></div>
 <hr />
 </div>
 <div id="discussion" class="section level2">
@@ -581,48 +558,48 @@ model is documented.</p>
 </div>
 <div id="session-info" class="section level2">
 <h2>Session Info</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; Platform: aarch64-unknown-linux-gnu</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; Running under: NixOS 25.11 (Xantusia)</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; BLAS/LAPACK: /nix/store/cwrm47paw5z4kxgmf1gdjzm65djz0swd-blas-3/lib/libblas.so.3;  LAPACK version 3.12.0</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt;  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt;  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt;  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="co">#&gt;  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 </span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#&gt; [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       </span></span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; time zone: Europe/Luxembourg</span></span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; tzcode source: system (glibc)</span></span>
-<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
-<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
-<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
-<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="co">#&gt; [1] ggplot2_4.0.1    dplyr_1.1.4      lbkeyboard_0.1.0 testthat_3.3.1  </span></span>
-<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="co">#&gt;  [1] sass_0.4.10        generics_0.1.4     prismatic_1.1.2    GA_3.2.4          </span></span>
-<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="co">#&gt;  [5] stringi_1.8.7      digest_0.6.39      magrittr_2.0.4     evaluate_1.0.5    </span></span>
-<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="co">#&gt;  [9] grid_4.5.2         RColorBrewer_1.1-3 iterators_1.0.14   pkgload_1.4.1     </span></span>
-<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="co">#&gt; [13] fastmap_1.2.0      foreach_1.5.2      rprojroot_2.1.1    jsonlite_2.0.0    </span></span>
-<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="co">#&gt; [17] pkgbuild_1.4.8     sessioninfo_1.2.3  brio_1.1.5         purrr_1.2.0       </span></span>
-<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co">#&gt; [21] scales_1.4.0       tweenr_2.0.3       codetools_0.2-20   jquerylib_0.1.4   </span></span>
-<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co">#&gt; [25] cli_3.6.5          rlang_1.1.6        crayon_1.5.3       polyclip_1.10-7   </span></span>
-<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt; [29] ellipsis_0.3.2     withr_3.0.2        remotes_2.5.0      cachem_1.1.0      </span></span>
-<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt; [33] yaml_2.3.12        devtools_2.4.6     otel_0.2.0         tools_4.5.2       </span></span>
-<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt; [37] memoise_2.0.1      vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4   </span></span>
-<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a><span class="co">#&gt; [41] stringr_1.6.0      fs_1.6.6           MASS_7.3-65        usethis_3.2.1     </span></span>
-<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a><span class="co">#&gt; [45] pkgconfig_2.0.3    desc_1.4.3         pillar_1.11.1      bslib_0.9.0       </span></span>
-<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a><span class="co">#&gt; [49] gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0         ggforce_0.5.0     </span></span>
-<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a><span class="co">#&gt; [53] xfun_0.55          tibble_3.3.0       tidyselect_1.2.1   rstudioapi_0.17.1 </span></span>
-<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a><span class="co">#&gt; [57] knitr_1.51         farver_2.1.2       htmltools_0.5.9    labeling_0.4.3    </span></span>
-<span id="cb3-42"><a href="#cb3-42" tabindex="-1"></a><span class="co">#&gt; [61] rmarkdown_2.30     compiler_4.5.2     S7_0.2.1</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Platform: aarch64-unknown-linux-gnu</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; Running under: NixOS 25.11 (Xantusia)</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; BLAS/LAPACK: /nix/store/cwrm47paw5z4kxgmf1gdjzm65djz0swd-blas-3/lib/libblas.so.3;  LAPACK version 3.12.0</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              </span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt;  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    </span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   </span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt;  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 </span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       </span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; time zone: Europe/Luxembourg</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
+<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
+<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; [1] ggplot2_4.0.1    dplyr_1.1.4      lbkeyboard_0.1.0 testthat_3.3.1  </span></span>
+<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt;  [1] sass_0.4.10        generics_0.1.4     prismatic_1.1.2    GA_3.2.4          </span></span>
+<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co">#&gt;  [5] stringi_1.8.7      digest_0.6.39      magrittr_2.0.4     evaluate_1.0.5    </span></span>
+<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt;  [9] grid_4.5.2         RColorBrewer_1.1-3 iterators_1.0.14   pkgload_1.4.1     </span></span>
+<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; [13] fastmap_1.2.0      foreach_1.5.2      rprojroot_2.1.1    jsonlite_2.0.0    </span></span>
+<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt; [17] pkgbuild_1.4.8     sessioninfo_1.2.3  brio_1.1.5         purrr_1.2.0       </span></span>
+<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt; [21] scales_1.4.0       tweenr_2.0.3       codetools_0.2-20   jquerylib_0.1.4   </span></span>
+<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt; [25] cli_3.6.5          rlang_1.1.6        crayon_1.5.3       polyclip_1.10-7   </span></span>
+<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="co">#&gt; [29] ellipsis_0.3.2     withr_3.0.2        remotes_2.5.0      cachem_1.1.0      </span></span>
+<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a><span class="co">#&gt; [33] yaml_2.3.12        devtools_2.4.6     otel_0.2.0         tools_4.5.2       </span></span>
+<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a><span class="co">#&gt; [37] memoise_2.0.1      vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4   </span></span>
+<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="co">#&gt; [41] stringr_1.6.0      fs_1.6.6           MASS_7.3-65        usethis_3.2.1     </span></span>
+<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a><span class="co">#&gt; [45] pkgconfig_2.0.3    desc_1.4.3         pillar_1.11.1      bslib_0.9.0       </span></span>
+<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a><span class="co">#&gt; [49] gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0         ggforce_0.5.0     </span></span>
+<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a><span class="co">#&gt; [53] xfun_0.55          tibble_3.3.0       tidyselect_1.2.1   rstudioapi_0.17.1 </span></span>
+<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a><span class="co">#&gt; [57] knitr_1.51         farver_2.1.2       htmltools_0.5.9    labeling_0.4.3    </span></span>
+<span id="cb4-42"><a href="#cb4-42" tabindex="-1"></a><span class="co">#&gt; [61] rmarkdown_2.30     compiler_4.5.2     S7_0.2.1</span></span></code></pre></div>
 </div>
 
 

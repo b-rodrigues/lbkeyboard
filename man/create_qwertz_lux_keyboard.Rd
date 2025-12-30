@@ -7,8 +7,12 @@
 create_qwertz_lux_keyboard()
 }
 \value{
-A data frame with 34 keys (26 letters + 4 accents + comma + period + apostrophe + É)
-and columns: key, key_label, row, number, x_mid, y_mid
+A list with class "qwertz_lux_layout" containing:
+\itemize{
+\item base: Data frame of base layer keys (compatible with heatmapize/ggkeyboard)
+\item altgr: Data frame of AltGr layer keys
+\item metadata: List with layout name and info
+}
 }
 \description{
 Creates the QWERTZ-LUX keyboard layout optimized for Luxembourg's multilingual
@@ -39,5 +43,7 @@ Additional accents via AltGr or dead keys (use layer_map):
 }
 \examples{
 kb <- create_qwertz_lux_keyboard()
-nrow(kb)  # 33
+# Use base layer for heatmap
+# heatmap <- heatmapize(kb$base, letter_freq_df)
+# ggkeyboard(heatmap)
 }

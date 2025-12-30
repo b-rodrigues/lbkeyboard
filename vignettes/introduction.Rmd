@@ -163,10 +163,18 @@ effort_qwertz_lux <- calculate_layout_effort(qwertz_lux$base, all_texts,
                                              keys_to_evaluate = qwertz_lux_keys,
                                              effort_weights = effort_weights)
 
+# Calculate hand balance for each layout
+# Using the package function lbkeyboard::calculate_hand_balance()
+balance_qwertz <- calculate_hand_balance(ch_qwertz, freq_all)
+balance_bepo <- calculate_hand_balance(afnor_bepo, freq_all)
+balance_qwertz_lux <- calculate_hand_balance(qwertz_lux$base, freq_all)
+
+# Create comparison table
 # Create comparison table
 comparison_df <- data.frame(
   Layout = c("QWERTZ (Swiss)", "BÉPO", "QWERTZ-LUX"),
   Effort = c(effort_qwertz, effort_bepo, effort_qwertz_lux),
+  `Hand Balance` = c(balance_qwertz, balance_bepo, balance_qwertz_lux),
   stringsAsFactors = FALSE
 ) %>%
   mutate(
@@ -177,12 +185,10 @@ comparison_df <- data.frame(
 
 comparison_df$Effort <- round(comparison_df$Effort, 2)
 
-knitr::kable(
-  comparison_df,
-  caption = "Typing effort comparison (lower is better)",
-  col.names = c("Layout", "Effort Score", "Relative (%)", "Improvement vs QWERTZ"),
-  align = c("l", "r", "r", "r")
-)
+# Rename columns for final display
+colnames(comparison_df) <- c("Layout", "Effort Score", "Hand Balance (L/R %)", "Relative (%)", "Improvement vs QWERTZ")
+
+comparison_df
 ```
 
 ## Visualizing the Difference: Heatmaps

@@ -603,43 +603,8 @@ print_layout(result_qwertz_accents$layout)
 Here is the final comparison of all evaluated layouts, ranked by typing effort:
 
 ```{r summary-table}
-# Helper function to calculate hand balance for a layout
-calculate_hand_balance <- function(kb, freq_df) {
-  # Match keys to their frequencies
-  kb_lower <- tolower(kb$key)
-  freq_lower <- tolower(freq_df$characters)
-  
-  # Calculate total frequency for left and right hand
-  left_freq <- 0
-  right_freq <- 0
-  
-  for (i in seq_len(nrow(kb))) {
-    key <- kb_lower[i]
-    col <- kb$number[i]
-    
-    # Find frequency for this key
-    freq_idx <- which(freq_lower == key)
-    if (length(freq_idx) > 0) {
-      key_freq <- freq_df$frequencies[freq_idx[1]]
-      if (col < 5) {
-        left_freq <- left_freq + key_freq
-      } else {
-        right_freq <- right_freq + key_freq
-      }
-    }
-  }
-  
-  total <- left_freq + right_freq
-  if (total > 0) {
-    left_pct <- round(left_freq / total * 100, 1)
-    right_pct <- round(right_freq / total * 100, 1)
-  } else {
-    left_pct <- 50
-    right_pct <- 50
-  }
-  
-  paste0(left_pct, "/", right_pct)
-}
+# Calculate hand balance using the package function
+# (Logic moved to lbkeyboard::calculate_hand_balance)
 
 # Calculate hand balance for each layout
 # Standard layouts
