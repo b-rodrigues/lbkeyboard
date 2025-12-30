@@ -3,3 +3,5 @@
 src/*.o
 src/*.so
 docs
+.direnv/
+result
