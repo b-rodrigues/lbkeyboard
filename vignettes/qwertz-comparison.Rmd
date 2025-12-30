@@ -706,7 +706,7 @@ effort_optimized_fair <- calculate_layout_effort(
 
 # 3. QWERTZ-LUX (optimized letters + direct accents + remaining accent penalties)
 effort_lux <- calculate_layout_effort(
-  qwertz_lux, all_texts, 
+  qwertz_lux$base, all_texts, 
   keys_to_evaluate = lux_keys,
   layer_map = qwertz_lux_accent_layers,
   effort_weights = effort_weights

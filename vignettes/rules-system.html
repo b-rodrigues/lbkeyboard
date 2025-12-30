@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Composable Rules System</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Composable Rules System</h1>
+
+
+
+<p>The lbkeyboard package includes a <strong>composable rules
+system</strong> that lets you customize the keyboard optimization with
+constraints and preferences. Rules can be combined freely to express
+complex requirements.</p>
+<div id="setup" class="section level2">
+<h2>Setup</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(lbkeyboard)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;french&quot;</span>)</span></code></pre></div>
+</div>
+<div id="types-of-rules" class="section level2">
+<h2>Types of Rules</h2>
+<p>There are two types of rules:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Hard constraints</strong></td>
+<td>Keys cannot move from their position</td>
+</tr>
+<tr class="even">
+<td><strong>Soft preferences</strong></td>
+<td>Penalty added when preference is violated</td>
+</tr>
+</tbody>
+</table>
+<div id="hard-constraints" class="section level3">
+<h3>Hard Constraints</h3>
+<div id="fix_keys---lock-keys-in-place" class="section level4">
+<h4><code>fix_keys()</code> - Lock Keys in Place</h4>
+<p>Use <code>fix_keys()</code> to prevent certain keys from moving
+during optimization. This is useful for preserving keyboard
+shortcuts:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Keep Ctrl+Z, Ctrl+X, Ctrl+C, Ctrl+V shortcuts</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>rule <span class="ot">&lt;-</span> <span class="fu">fix_keys</span>(<span class="fu">c</span>(<span class="st">&quot;z&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;v&quot;</span>))</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">print</span>(rule)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; Layout Rule: fix </span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt;   Fixed keys: z, x, c, v</span></span></code></pre></div>
+<p>Keys are matched case-insensitively:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># These are equivalent</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">fix_keys</span>(<span class="fu">c</span>(<span class="st">&quot;A&quot;</span>, <span class="st">&quot;B&quot;</span>))</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; Layout Rule: fix </span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt;   Fixed keys: a, b</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="fu">fix_keys</span>(<span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;b&quot;</span>))</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; Layout Rule: fix </span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;   Fixed keys: a, b</span></span></code></pre></div>
+</div>
+</div>
+<div id="soft-preferences" class="section level3">
+<h3>Soft Preferences</h3>
+<p>Soft preferences add a penalty to the effort score when not
+satisfied. The <strong>weight</strong> parameter controls how strongly
+the preference is enforced.</p>
+<div id="prefer_hand---hand-placement-preference" class="section level4">
+<h4><code>prefer_hand()</code> - Hand Placement Preference</h4>
+<p>Specify which keys should go on which hand:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># Put vowels on the left hand</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>rule <span class="ot">&lt;-</span> <span class="fu">prefer_hand</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">keys =</span> <span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;e&quot;</span>, <span class="st">&quot;i&quot;</span>, <span class="st">&quot;o&quot;</span>, <span class="st">&quot;u&quot;</span>),</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">hand =</span> <span class="st">&quot;left&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">weight =</span> <span class="fl">2.0</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="fu">print</span>(rule)</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; Layout Rule: prefer_hand </span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;   Keys: a, e, i, o, u -&gt;  left hand (weight: 2 )</span></span></code></pre></div>
+<p>This adds a penalty of 2.0 for each vowel that ends up on the right
+hand.</p>
+</div>
+<div id="prefer_row---row-placement-preference" class="section level4">
+<h4><code>prefer_row()</code> - Row Placement Preference</h4>
+<p>Specify which row keys should be placed on:</p>
+<ul>
+<li>Row 1 = Top row (QWERTY row)</li>
+<li>Row 2 = Home row (ASDF row)</li>
+<li>Row 3 = Bottom row (ZXCV row)</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Put the most common English letters on home row</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>common_letters <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;e&quot;</span>, <span class="st">&quot;t&quot;</span>, <span class="st">&quot;a&quot;</span>, <span class="st">&quot;o&quot;</span>, <span class="st">&quot;i&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;s&quot;</span>, <span class="st">&quot;r&quot;</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>rule <span class="ot">&lt;-</span> <span class="fu">prefer_row</span>(common_letters, <span class="at">row =</span> <span class="dv">2</span>, <span class="at">weight =</span> <span class="fl">1.5</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="fu">print</span>(rule)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; Layout Rule: prefer_row </span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;   Keys: e, t, a, o, i, n, s, r -&gt; row 2 (weight: 1.5 )</span></span></code></pre></div>
+<p>The penalty is proportional to the distance from the target row.</p>
+</div>
+<div id="balance_hands---hand-usage-balance" class="section level4">
+<h4><code>balance_hands()</code> - Hand Usage Balance</h4>
+<p>Aim for balanced typing load between hands:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Target 50% left, 50% right</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>rule <span class="ot">&lt;-</span> <span class="fu">balance_hands</span>(<span class="at">target =</span> <span class="fl">0.5</span>, <span class="at">weight =</span> <span class="fl">1.0</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="fu">print</span>(rule)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; Layout Rule: balance_hands </span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;   Target: 50 % left hand (weight: 1 )</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co"># Or slight preference for right hand (40% left, 60% right)</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>rule_right <span class="ot">&lt;-</span> <span class="fu">balance_hands</span>(<span class="at">target =</span> <span class="fl">0.4</span>, <span class="at">weight =</span> <span class="fl">1.0</span>)</span></code></pre></div>
+<p>The penalty increases quadratically as the actual balance deviates
+from target.</p>
+</div>
+<div id="keep_like---match-reference-layout" class="section level4">
+<h4><code>keep_like()</code> - Match Reference Layout</h4>
+<p>Keep specified keys in similar positions to a reference layout:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Keep bottom row like QWERTY</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>rule <span class="ot">&lt;-</span> <span class="fu">keep_like</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">reference =</span> <span class="st">&quot;qwerty&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">keys =</span> <span class="fu">c</span>(<span class="st">&quot;z&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;v&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;m&quot;</span>),</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">weight =</span> <span class="fl">3.0</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>)</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="fu">print</span>(rule)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; Layout Rule: keep_like </span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt;   Match reference for: z, x, c, v, b, n, m (weight: 3 )</span></span></code></pre></div>
+</div>
+</div>
+</div>
+<div id="combining-rules" class="section level2">
+<h2>Combining Rules</h2>
+<p>The real power comes from combining multiple rules. Pass a list of
+rules to <code>optimize_layout()</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">optimize_layout</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">text_samples =</span> french,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">rules =</span> <span class="fu">list</span>(</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>    <span class="co"># Hard: keep shortcut keys fixed</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>    <span class="fu">fix_keys</span>(<span class="fu">c</span>(<span class="st">&quot;z&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;v&quot;</span>)),</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>    </span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>    <span class="co"># Soft: vowels on left hand</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>    <span class="fu">prefer_hand</span>(<span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;e&quot;</span>, <span class="st">&quot;i&quot;</span>, <span class="st">&quot;o&quot;</span>, <span class="st">&quot;u&quot;</span>), <span class="st">&quot;left&quot;</span>, <span class="at">weight =</span> <span class="fl">2.0</span>),</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>    </span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>    <span class="co"># Soft: common letters on home row</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>    <span class="fu">prefer_row</span>(<span class="fu">c</span>(<span class="st">&quot;e&quot;</span>, <span class="st">&quot;t&quot;</span>, <span class="st">&quot;a&quot;</span>, <span class="st">&quot;o&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;i&quot;</span>, <span class="st">&quot;s&quot;</span>, <span class="st">&quot;r&quot;</span>), <span class="dv">2</span>, <span class="at">weight =</span> <span class="fl">1.0</span>),</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>    </span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>    <span class="co"># Soft: aim for balanced hands</span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>    <span class="fu">balance_hands</span>(<span class="fl">0.5</span>, <span class="at">weight =</span> <span class="fl">0.5</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  ),</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  <span class="at">generations =</span> <span class="dv">50</span>,</span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>)</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; Warning: input string &#39;é&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; Warning: input string &#39;è&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-23"><a href="#cb8-23" tabindex="-1"></a><span class="co">#&gt; Warning: input string &#39;ä&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-24"><a href="#cb8-24" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-25"><a href="#cb8-25" tabindex="-1"></a><span class="co">#&gt; Warning: input string &#39;ü&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-26"><a href="#cb8-26" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-27"><a href="#cb8-27" tabindex="-1"></a><span class="co">#&gt; Warning: input string &#39;é&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-28"><a href="#cb8-28" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-29"><a href="#cb8-29" tabindex="-1"></a><span class="co">#&gt; Warning: input string &#39;è&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-30"><a href="#cb8-30" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-31"><a href="#cb8-31" tabindex="-1"></a><span class="co">#&gt; Warning: input string &#39;ä&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-32"><a href="#cb8-32" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-33"><a href="#cb8-33" tabindex="-1"></a><span class="co">#&gt; Warning: input string &#39;ü&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-34"><a href="#cb8-34" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-35"><a href="#cb8-35" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-36"><a href="#cb8-36" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Au commencement, Dieu créa les cieux et la terre.&#39; cannot be</span></span>
+<span id="cb8-37"><a href="#cb8-37" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-38"><a href="#cb8-38" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-39"><a href="#cb8-39" tabindex="-1"></a><span class="co">#&gt; : input string &#39;La terre était informe et vide: il y avait des ténèbres à la</span></span>
+<span id="cb8-40"><a href="#cb8-40" tabindex="-1"></a><span class="co">#&gt; surface de l&#39;abîme, et l&#39;esprit de Dieu se mouvait au-dessus des eaux.&#39; cannot</span></span>
+<span id="cb8-41"><a href="#cb8-41" tabindex="-1"></a><span class="co">#&gt; be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-42"><a href="#cb8-42" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-43"><a href="#cb8-43" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu dit: Que la lumière soit! Et la lumière fut.&#39; cannot be</span></span>
+<span id="cb8-44"><a href="#cb8-44" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-45"><a href="#cb8-45" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-46"><a href="#cb8-46" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu vit que la lumière était bonne; et Dieu sépara la lumière</span></span>
+<span id="cb8-47"><a href="#cb8-47" tabindex="-1"></a><span class="co">#&gt; d&#39;avec les ténèbres.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but</span></span>
+<span id="cb8-48"><a href="#cb8-48" tabindex="-1"></a><span class="co">#&gt; is valid UTF-8</span></span>
+<span id="cb8-49"><a href="#cb8-49" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-50"><a href="#cb8-50" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu appela la lumière jour, et il appela les ténèbres nuit.</span></span>
+<span id="cb8-51"><a href="#cb8-51" tabindex="-1"></a><span class="co">#&gt; Ainsi, il y eut un soir, et il y eut un matin: ce fut le premier jour.&#39; cannot</span></span>
+<span id="cb8-52"><a href="#cb8-52" tabindex="-1"></a><span class="co">#&gt; be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-53"><a href="#cb8-53" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-54"><a href="#cb8-54" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu dit: Qu&#39;il y ait une étendue entre les eaux, et qu&#39;elle</span></span>
+<span id="cb8-55"><a href="#cb8-55" tabindex="-1"></a><span class="co">#&gt; sépare les eaux d&#39;avec les eaux.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to</span></span>
+<span id="cb8-56"><a href="#cb8-56" tabindex="-1"></a><span class="co">#&gt; UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-57"><a href="#cb8-57" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-58"><a href="#cb8-58" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Et Dieu fit l&#39;étendue, et il sépara les eaux qui sont</span></span>
+<span id="cb8-59"><a href="#cb8-59" tabindex="-1"></a><span class="co">#&gt; au-dessous de l&#39;étendue d&#39;avec les eaux qui sont au-dessus de l&#39;étendue. Et</span></span>
+<span id="cb8-60"><a href="#cb8-60" tabindex="-1"></a><span class="co">#&gt; cela fut ainsi.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is</span></span>
+<span id="cb8-61"><a href="#cb8-61" tabindex="-1"></a><span class="co">#&gt; valid UTF-8</span></span>
+<span id="cb8-62"><a href="#cb8-62" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-63"><a href="#cb8-63" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu appela l&#39;étendue ciel. Ainsi, il y eut un soir, et il y</span></span>
+<span id="cb8-64"><a href="#cb8-64" tabindex="-1"></a><span class="co">#&gt; eut un matin: ce fut le second jour.&#39; cannot be translated from</span></span>
+<span id="cb8-65"><a href="#cb8-65" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-66"><a href="#cb8-66" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-67"><a href="#cb8-67" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu appela le sec terre, et il appela l&#39;amas des eaux mers.</span></span>
+<span id="cb8-68"><a href="#cb8-68" tabindex="-1"></a><span class="co">#&gt; Dieu vit que cela était bon.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to</span></span>
+<span id="cb8-69"><a href="#cb8-69" tabindex="-1"></a><span class="co">#&gt; UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-70"><a href="#cb8-70" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-71"><a href="#cb8-71" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Puis Dieu dit: Que la terre produise de la verdure, de l&#39;herbe</span></span>
+<span id="cb8-72"><a href="#cb8-72" tabindex="-1"></a><span class="co">#&gt; portant de la semence, des arbres fruitiers donnant du fruit selon leur espèce</span></span>
+<span id="cb8-73"><a href="#cb8-73" tabindex="-1"></a><span class="co">#&gt; et ayant en eux leur semence sur la terre. Et cela fut ainsi.&#39; cannot be</span></span>
+<span id="cb8-74"><a href="#cb8-74" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-75"><a href="#cb8-75" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-76"><a href="#cb8-76" tabindex="-1"></a><span class="co">#&gt; : input string &#39;La terre produisit de la verdure, de l&#39;herbe portant de la</span></span>
+<span id="cb8-77"><a href="#cb8-77" tabindex="-1"></a><span class="co">#&gt; semence selon son espèce, et des arbres donnant du fruit et ayant en eux leur</span></span>
+<span id="cb8-78"><a href="#cb8-78" tabindex="-1"></a><span class="co">#&gt; semence selon leur espèce. Dieu vit que cela était bon.&#39; cannot be translated</span></span>
+<span id="cb8-79"><a href="#cb8-79" tabindex="-1"></a><span class="co">#&gt; from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-80"><a href="#cb8-80" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-81"><a href="#cb8-81" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Ainsi, il y eut un soir, et il y eut un matin: ce fut le</span></span>
+<span id="cb8-82"><a href="#cb8-82" tabindex="-1"></a><span class="co">#&gt; troisième jour.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is</span></span>
+<span id="cb8-83"><a href="#cb8-83" tabindex="-1"></a><span class="co">#&gt; valid UTF-8</span></span>
+<span id="cb8-84"><a href="#cb8-84" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-85"><a href="#cb8-85" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu dit: Qu&#39;il y ait des luminaires dans l&#39;étendue du ciel,</span></span>
+<span id="cb8-86"><a href="#cb8-86" tabindex="-1"></a><span class="co">#&gt; pour séparer le jour d&#39;avec la nuit; que ce soient des signes pour marquer les</span></span>
+<span id="cb8-87"><a href="#cb8-87" tabindex="-1"></a><span class="co">#&gt; époques, les jours et les années;&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39;</span></span>
+<span id="cb8-88"><a href="#cb8-88" tabindex="-1"></a><span class="co">#&gt; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-89"><a href="#cb8-89" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-90"><a href="#cb8-90" tabindex="-1"></a><span class="co">#&gt; : input string &#39;et qu&#39;ils servent de luminaires dans l&#39;étendue du ciel, pour</span></span>
+<span id="cb8-91"><a href="#cb8-91" tabindex="-1"></a><span class="co">#&gt; éclairer la terre. Et cela fut ainsi.&#39; cannot be translated from</span></span>
+<span id="cb8-92"><a href="#cb8-92" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-93"><a href="#cb8-93" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-94"><a href="#cb8-94" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu fit les deux grands luminaires, le plus grand luminaire</span></span>
+<span id="cb8-95"><a href="#cb8-95" tabindex="-1"></a><span class="co">#&gt; pour présider au jour, et le plus petit luminaire pour présider à la nuit; il</span></span>
+<span id="cb8-96"><a href="#cb8-96" tabindex="-1"></a><span class="co">#&gt; fit aussi les étoiles.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-97"><a href="#cb8-97" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-98"><a href="#cb8-98" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-99"><a href="#cb8-99" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu les plaça dans l&#39;étendue du ciel, pour éclairer la terre,&#39;</span></span>
+<span id="cb8-100"><a href="#cb8-100" tabindex="-1"></a><span class="co">#&gt; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-101"><a href="#cb8-101" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-102"><a href="#cb8-102" tabindex="-1"></a><span class="co">#&gt; : input string &#39;pour présider au jour et à la nuit, et pour séparer la lumière</span></span>
+<span id="cb8-103"><a href="#cb8-103" tabindex="-1"></a><span class="co">#&gt; d&#39;avec les ténèbres. Dieu vit que cela était bon.&#39; cannot be translated from</span></span>
+<span id="cb8-104"><a href="#cb8-104" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-105"><a href="#cb8-105" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-106"><a href="#cb8-106" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Ainsi, il y eut un soir, et il y eut un matin: ce fut le</span></span>
+<span id="cb8-107"><a href="#cb8-107" tabindex="-1"></a><span class="co">#&gt; quatrième jour.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is</span></span>
+<span id="cb8-108"><a href="#cb8-108" tabindex="-1"></a><span class="co">#&gt; valid UTF-8</span></span>
+<span id="cb8-109"><a href="#cb8-109" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-110"><a href="#cb8-110" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu dit: Que les eaux produisent en abondance des animaux</span></span>
+<span id="cb8-111"><a href="#cb8-111" tabindex="-1"></a><span class="co">#&gt; vivants, et que des oiseaux volent sur la terre vers l&#39;étendue du ciel.&#39; cannot</span></span>
+<span id="cb8-112"><a href="#cb8-112" tabindex="-1"></a><span class="co">#&gt; be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-113"><a href="#cb8-113" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-114"><a href="#cb8-114" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu créa les grands poissons et tous les animaux vivants qui</span></span>
+<span id="cb8-115"><a href="#cb8-115" tabindex="-1"></a><span class="co">#&gt; se meuvent, et que les eaux produisirent en abondance selon leur espèce; il</span></span>
+<span id="cb8-116"><a href="#cb8-116" tabindex="-1"></a><span class="co">#&gt; créa aussi tout oiseau ailé selon son espèce. Dieu vit que cela était bon.&#39;</span></span>
+<span id="cb8-117"><a href="#cb8-117" tabindex="-1"></a><span class="co">#&gt; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-118"><a href="#cb8-118" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-119"><a href="#cb8-119" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu les bénit, en disant: Soyez féconds, multipliez, et</span></span>
+<span id="cb8-120"><a href="#cb8-120" tabindex="-1"></a><span class="co">#&gt; remplissez les eaux des mers; et que les oiseaux multiplient sur la terre.&#39;</span></span>
+<span id="cb8-121"><a href="#cb8-121" tabindex="-1"></a><span class="co">#&gt; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-122"><a href="#cb8-122" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-123"><a href="#cb8-123" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Ainsi, il y eut un soir, et il y eut un matin: ce fut le</span></span>
+<span id="cb8-124"><a href="#cb8-124" tabindex="-1"></a><span class="co">#&gt; cinquième jour.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is</span></span>
+<span id="cb8-125"><a href="#cb8-125" tabindex="-1"></a><span class="co">#&gt; valid UTF-8</span></span>
+<span id="cb8-126"><a href="#cb8-126" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-127"><a href="#cb8-127" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu dit: Que la terre produise des animaux vivants selon leur</span></span>
+<span id="cb8-128"><a href="#cb8-128" tabindex="-1"></a><span class="co">#&gt; espèce, du bétail, des reptiles et des animaux terrestres, selon leur espèce.</span></span>
+<span id="cb8-129"><a href="#cb8-129" tabindex="-1"></a><span class="co">#&gt; Et cela fut ainsi.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is</span></span>
+<span id="cb8-130"><a href="#cb8-130" tabindex="-1"></a><span class="co">#&gt; valid UTF-8</span></span>
+<span id="cb8-131"><a href="#cb8-131" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-132"><a href="#cb8-132" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu fit les animaux de la terre selon leur espèce, le bétail</span></span>
+<span id="cb8-133"><a href="#cb8-133" tabindex="-1"></a><span class="co">#&gt; selon son espèce, et tous les reptiles de la terre selon leur espèce. Dieu vit</span></span>
+<span id="cb8-134"><a href="#cb8-134" tabindex="-1"></a><span class="co">#&gt; que cela était bon.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but</span></span>
+<span id="cb8-135"><a href="#cb8-135" tabindex="-1"></a><span class="co">#&gt; is valid UTF-8</span></span>
+<span id="cb8-136"><a href="#cb8-136" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-137"><a href="#cb8-137" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Puis Dieu dit: Faisons l&#39;homme à notre image, selon notre</span></span>
+<span id="cb8-138"><a href="#cb8-138" tabindex="-1"></a><span class="co">#&gt; ressemblance, et qu&#39;il domine sur les poissons de la mer, sur les oiseaux du</span></span>
+<span id="cb8-139"><a href="#cb8-139" tabindex="-1"></a><span class="co">#&gt; ciel, sur le bétail, sur toute la terre, et sur tous les reptiles qui rampent</span></span>
+<span id="cb8-140"><a href="#cb8-140" tabindex="-1"></a><span class="co">#&gt; sur la terre.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is</span></span>
+<span id="cb8-141"><a href="#cb8-141" tabindex="-1"></a><span class="co">#&gt; valid UTF-8</span></span>
+<span id="cb8-142"><a href="#cb8-142" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-143"><a href="#cb8-143" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu créa l&#39;homme à son image, il le créa à l&#39;image de Dieu, il</span></span>
+<span id="cb8-144"><a href="#cb8-144" tabindex="-1"></a><span class="co">#&gt; créa l&#39;homme et la femme.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-145"><a href="#cb8-145" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-146"><a href="#cb8-146" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-147"><a href="#cb8-147" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu les bénit, et Dieu leur dit: Soyez féconds, multipliez,</span></span>
+<span id="cb8-148"><a href="#cb8-148" tabindex="-1"></a><span class="co">#&gt; remplissez la terre, et l&#39;assujettissez; et dominez sur les poissons de la mer,</span></span>
+<span id="cb8-149"><a href="#cb8-149" tabindex="-1"></a><span class="co">#&gt; sur les oiseaux du ciel, et sur tout animal qui se meut sur la terre.&#39; cannot</span></span>
+<span id="cb8-150"><a href="#cb8-150" tabindex="-1"></a><span class="co">#&gt; be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-151"><a href="#cb8-151" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-152"><a href="#cb8-152" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Et Dieu dit: Voici, je vous donne toute herbe portant de la</span></span>
+<span id="cb8-153"><a href="#cb8-153" tabindex="-1"></a><span class="co">#&gt; semence et qui est à la surface de toute la terre, et tout arbre ayant en lui</span></span>
+<span id="cb8-154"><a href="#cb8-154" tabindex="-1"></a><span class="co">#&gt; du fruit d&#39;arbre et portant de la semence: ce sera votre nourriture.&#39; cannot be</span></span>
+<span id="cb8-155"><a href="#cb8-155" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-156"><a href="#cb8-156" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-157"><a href="#cb8-157" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Et à tout animal de la terre, à tout oiseau du ciel, et à tout</span></span>
+<span id="cb8-158"><a href="#cb8-158" tabindex="-1"></a><span class="co">#&gt; ce qui se meut sur la terre, ayant en soi un souffle de vie, je donne toute</span></span>
+<span id="cb8-159"><a href="#cb8-159" tabindex="-1"></a><span class="co">#&gt; herbe verte pour nourriture. Et cela fut ainsi.&#39; cannot be translated from</span></span>
+<span id="cb8-160"><a href="#cb8-160" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-161"><a href="#cb8-161" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-162"><a href="#cb8-162" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Dieu vit tout ce qu&#39;il avait fait et voici, cela était très</span></span>
+<span id="cb8-163"><a href="#cb8-163" tabindex="-1"></a><span class="co">#&gt; bon. Ainsi, il y eut un soir, et il y eut un matin: ce fut le sixième jour.&#39;</span></span>
+<span id="cb8-164"><a href="#cb8-164" tabindex="-1"></a><span class="co">#&gt; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-165"><a href="#cb8-165" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-166"><a href="#cb8-166" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Joe Paterno, né le 21 décembre 1926 à Brooklyn et mort le 22</span></span>
+<span id="cb8-167"><a href="#cb8-167" tabindex="-1"></a><span class="co">#&gt; janvier 2012 à State College, est un joueur et entraîneur américain de football</span></span>
+<span id="cb8-168"><a href="#cb8-168" tabindex="-1"></a><span class="co">#&gt; américain universitaire. Figure historique et emblématique des Nittany Lions de</span></span>
+<span id="cb8-169"><a href="#cb8-169" tabindex="-1"></a><span class="co">#&gt; Penn State entre 1966 et 2011, il est l&#39;entraîneur le plus victorieux de</span></span>
+<span id="cb8-170"><a href="#cb8-170" tabindex="-1"></a><span class="co">#&gt; l&#39;histoire du football américain universitaire avec 409 succès en Division I.</span></span>
+<span id="cb8-171"><a href="#cb8-171" tabindex="-1"></a><span class="co">#&gt; Son image est toutefois ternie en fin de carrière à cause de soupçons de</span></span>
+<span id="cb8-172"><a href="#cb8-172" tabindex="-1"></a><span class="co">#&gt; négligence dans une affaire d&#39;agressions sexuelles sur mineurs.&#39; cannot be</span></span>
+<span id="cb8-173"><a href="#cb8-173" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-174"><a href="#cb8-174" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-175"><a href="#cb8-175" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Lors de ses brillantes études de droit à l&#39;université Brown,</span></span>
+<span id="cb8-176"><a href="#cb8-176" tabindex="-1"></a><span class="co">#&gt; Joe Paterno joue au football américain et est entraîné par Rip Engle. Ce</span></span>
+<span id="cb8-177"><a href="#cb8-177" tabindex="-1"></a><span class="co">#&gt; dernier, embauché par l&#39;université de Penn State, le recrute comme entraîneur</span></span>
+<span id="cb8-178"><a href="#cb8-178" tabindex="-1"></a><span class="co">#&gt; assistant en 1950. Pendant quinze saisons, l&#39;assistant fait ses preuves avant</span></span>
+<span id="cb8-179"><a href="#cb8-179" tabindex="-1"></a><span class="co">#&gt; de devenir entraîneur principal des Nittany Lions en 1965. Surnommé JoePa, il</span></span>
+<span id="cb8-180"><a href="#cb8-180" tabindex="-1"></a><span class="co">#&gt; connaît rapidement le succès. Invaincu en 1968 et 1969, il est désiré par</span></span>
+<span id="cb8-181"><a href="#cb8-181" tabindex="-1"></a><span class="co">#&gt; plusieurs franchises de la National Football League (NFL), mais refuse pour</span></span>
+<span id="cb8-182"><a href="#cb8-182" tabindex="-1"></a><span class="co">#&gt; conserver son rôle d&#39;éducateur. Entraîneur de l&#39;équipe universitaire championne</span></span>
+<span id="cb8-183"><a href="#cb8-183" tabindex="-1"></a><span class="co">#&gt; en 1982 et 1986, vainqueur des quatre principaux Bowls universitaires, il</span></span>
+<span id="cb8-184"><a href="#cb8-184" tabindex="-1"></a><span class="co">#&gt; intègre le College Football Hall of Fame en 2007 alors qu&#39;il est encore en</span></span>
+<span id="cb8-185"><a href="#cb8-185" tabindex="-1"></a><span class="co">#&gt; activité, un accomplissement rare.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39;</span></span>
+<span id="cb8-186"><a href="#cb8-186" tabindex="-1"></a><span class="co">#&gt; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-187"><a href="#cb8-187" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-188"><a href="#cb8-188" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Reconnu pour ses succès sportifs, académiques et son</span></span>
+<span id="cb8-189"><a href="#cb8-189" tabindex="-1"></a><span class="co">#&gt; exemplarité, JoePa est adulé comme une icône populaire dans la région de State</span></span>
+<span id="cb8-190"><a href="#cb8-190" tabindex="-1"></a><span class="co">#&gt; College. Onze jours après avoir célébré sa 409e victoire avec les Lions, il est</span></span>
+<span id="cb8-191"><a href="#cb8-191" tabindex="-1"></a><span class="co">#&gt; démis de ses fonctions à la suite du scandale des agressions sexuelles de</span></span>
+<span id="cb8-192"><a href="#cb8-192" tabindex="-1"></a><span class="co">#&gt; l&#39;Université d&#39;État de Pennsylvanie. Accusé d&#39;avoir couvert les abus sexuels de</span></span>
+<span id="cb8-193"><a href="#cb8-193" tabindex="-1"></a><span class="co">#&gt; Jerry Sandusky, son image est ternie par cette affaire au retentissement</span></span>
+<span id="cb8-194"><a href="#cb8-194" tabindex="-1"></a><span class="co">#&gt; international. Il meurt deux mois plus tard des suites d&#39;un cancer du poumon.&#39;</span></span>
+<span id="cb8-195"><a href="#cb8-195" tabindex="-1"></a><span class="co">#&gt; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-196"><a href="#cb8-196" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-197"><a href="#cb8-197" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Chacun peut publier immédiatement du contenu en ligne, à</span></span>
+<span id="cb8-198"><a href="#cb8-198" tabindex="-1"></a><span class="co">#&gt; condition de respecter les règles essentielles établies par la Fondation</span></span>
+<span id="cb8-199"><a href="#cb8-199" tabindex="-1"></a><span class="co">#&gt; Wikimedia et par la communauté ; par exemple, la vérifiabilité du contenu,</span></span>
+<span id="cb8-200"><a href="#cb8-200" tabindex="-1"></a><span class="co">#&gt; l&#39;admissibilité des articles et garder une attitude cordiale.&#39; cannot be</span></span>
+<span id="cb8-201"><a href="#cb8-201" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-202"><a href="#cb8-202" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-203"><a href="#cb8-203" tabindex="-1"></a><span class="co">#&gt; : input string &#39;De nombreuses pages d’aide sont à votre disposition, notamment</span></span>
+<span id="cb8-204"><a href="#cb8-204" tabindex="-1"></a><span class="co">#&gt; pour créer un article, modifier un article ou insérer une image. N’hésitez pas</span></span>
+<span id="cb8-205"><a href="#cb8-205" tabindex="-1"></a><span class="co">#&gt; à poser une question pour être aidé dans vos premiers pas, notamment dans un</span></span>
+<span id="cb8-206"><a href="#cb8-206" tabindex="-1"></a><span class="co">#&gt; des projets thématiques ou dans divers espaces de discussion.&#39; cannot be</span></span>
+<span id="cb8-207"><a href="#cb8-207" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-208"><a href="#cb8-208" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-209"><a href="#cb8-209" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Les pages de discussion servent à centraliser les réflexions et</span></span>
+<span id="cb8-210"><a href="#cb8-210" tabindex="-1"></a><span class="co">#&gt; les remarques permettant d’améliorer les articles.&#39; cannot be translated from</span></span>
+<span id="cb8-211"><a href="#cb8-211" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-212"><a href="#cb8-212" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-213"><a href="#cb8-213" tabindex="-1"></a><span class="co">#&gt; : input string &#39;En 1894, l’explorateur Gustav Adolf von Götzen suivait les</span></span>
+<span id="cb8-214"><a href="#cb8-214" tabindex="-1"></a><span class="co">#&gt; traces d’un missionnaire en provenance de la cote orientale d’Afrique. Pendant</span></span>
+<span id="cb8-215"><a href="#cb8-215" tabindex="-1"></a><span class="co">#&gt; qu’il se rendait au Rwanda, il découvre un petit village des pécheurs appelé</span></span>
+<span id="cb8-216"><a href="#cb8-216" tabindex="-1"></a><span class="co">#&gt; Ngoma qui traduit signifie tam tam, par déformation il écrivit Goma. Ngoma</span></span>
+<span id="cb8-217"><a href="#cb8-217" tabindex="-1"></a><span class="co">#&gt; devint un poste belge en face de celui de Rubavu (au Rwanda) habité par les</span></span>
+<span id="cb8-218"><a href="#cb8-218" tabindex="-1"></a><span class="co">#&gt; Allemands. Au début, la cohabitation entre ces deux postes n’était pas facile.</span></span>
+<span id="cb8-219"><a href="#cb8-219" tabindex="-1"></a><span class="co">#&gt; À un certain moment, les chefs coutumiers du Rwanda, en complicité avec les</span></span>
+<span id="cb8-220"><a href="#cb8-220" tabindex="-1"></a><span class="co">#&gt; Allemands attaquent les Belges de Goma. Ces derniers se réfugient à Bukavu et</span></span>
+<span id="cb8-221"><a href="#cb8-221" tabindex="-1"></a><span class="co">#&gt; laissent les envahisseurs occuper la ville. Après des négociations, les</span></span>
+<span id="cb8-222"><a href="#cb8-222" tabindex="-1"></a><span class="co">#&gt; Allemands replient vers le Rwanda et les Belges reprennent leur position</span></span>
+<span id="cb8-223"><a href="#cb8-223" tabindex="-1"></a><span class="co">#&gt; initiale comme poste colonial. L’afflux des colonisateurs dans ce village joue</span></span>
+<span id="cb8-224"><a href="#cb8-224" tabindex="-1"></a><span class="co">#&gt; un rôle important dans son évolution pour devenir une grande agglomération. Les</span></span>
+<span id="cb8-225"><a href="#cb8-225" tabindex="-1"></a><span class="co">#&gt; colonisateurs venaient d’installer le chef lieu du [... truncated]</span></span>
+<span id="cb8-226"><a href="#cb8-226" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-227"><a href="#cb8-227" tabindex="-1"></a><span class="co">#&gt; : input string &#39;En ce moment, Goma reste un poste de transaction lacustre avec</span></span>
+<span id="cb8-228"><a href="#cb8-228" tabindex="-1"></a><span class="co">#&gt; Bukavu qui était une ville minière. Plus tard, Rutshuru, Masisi, Kalehe,</span></span>
+<span id="cb8-229"><a href="#cb8-229" tabindex="-1"></a><span class="co">#&gt; Gisenyi, etc. déverseront leurs populations dans Goma, à la rechercher de</span></span>
+<span id="cb8-230"><a href="#cb8-230" tabindex="-1"></a><span class="co">#&gt; l’emploi au près des colonisateurs. C’est en cette période que vu le jour le</span></span>
+<span id="cb8-231"><a href="#cb8-231" tabindex="-1"></a><span class="co">#&gt; quartier Birere (un bidonville de Goma) autour des entrepôts, bureaux et</span></span>
+<span id="cb8-232"><a href="#cb8-232" tabindex="-1"></a><span class="co">#&gt; habitations des colons. Le nom Birere (littéralement feuilles de bananier)</span></span>
+<span id="cb8-233"><a href="#cb8-233" tabindex="-1"></a><span class="co">#&gt; vient du fait qu’à l’époque, les gens y construisaient en feuilles des</span></span>
+<span id="cb8-234"><a href="#cb8-234" tabindex="-1"></a><span class="co">#&gt; bananiers.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid</span></span>
+<span id="cb8-235"><a href="#cb8-235" tabindex="-1"></a><span class="co">#&gt; UTF-8</span></span>
+<span id="cb8-236"><a href="#cb8-236" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-237"><a href="#cb8-237" tabindex="-1"></a><span class="co">#&gt; : input string &#39;La ville est la base arrière de l&#39;opération Turquoise organisée</span></span>
+<span id="cb8-238"><a href="#cb8-238" tabindex="-1"></a><span class="co">#&gt; en 1994 à la fin du génocide rwandais.&#39; cannot be translated from</span></span>
+<span id="cb8-239"><a href="#cb8-239" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-240"><a href="#cb8-240" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-241"><a href="#cb8-241" tabindex="-1"></a><span class="co">#&gt; : input string &#39;La ville et ses environs abriteront dans des camps autour de</span></span>
+<span id="cb8-242"><a href="#cb8-242" tabindex="-1"></a><span class="co">#&gt; 650 000 réfugiés hutus de 1994 jusqu&#39;à la chute du Zaïre, dont certains</span></span>
+<span id="cb8-243"><a href="#cb8-243" tabindex="-1"></a><span class="co">#&gt; supposés anciens génocidaires. Selon des ONG, l&#39;AFDL procède à des massacres</span></span>
+<span id="cb8-244"><a href="#cb8-244" tabindex="-1"></a><span class="co">#&gt; dans les camps entre 1996 et 19971.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39;</span></span>
+<span id="cb8-245"><a href="#cb8-245" tabindex="-1"></a><span class="co">#&gt; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-246"><a href="#cb8-246" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-247"><a href="#cb8-247" tabindex="-1"></a><span class="co">#&gt; : input string &#39;De 1998 à 2002/2003, la ville, sous contrôle du Rassemblement</span></span>
+<span id="cb8-248"><a href="#cb8-248" tabindex="-1"></a><span class="co">#&gt; congolais pour la démocratie (RCD) pro-rwandais échappe au contrôle du</span></span>
+<span id="cb8-249"><a href="#cb8-249" tabindex="-1"></a><span class="co">#&gt; gouvernement congolais.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb8-250"><a href="#cb8-250" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb8-251"><a href="#cb8-251" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-252"><a href="#cb8-252" tabindex="-1"></a><span class="co">#&gt; : input string &#39;De nombreux viols, massacres et crimes de guerre y ont été</span></span>
+<span id="cb8-253"><a href="#cb8-253" tabindex="-1"></a><span class="co">#&gt; perpétrés entre 1996 et 2006 par les troupes des généraux rebelles du RCD,</span></span>
+<span id="cb8-254"><a href="#cb8-254" tabindex="-1"></a><span class="co">#&gt; essentiellement sous les généraux Nkundabatware et Mutebusi.&#39; cannot be</span></span>
+<span id="cb8-255"><a href="#cb8-255" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-256"><a href="#cb8-256" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-257"><a href="#cb8-257" tabindex="-1"></a><span class="co">#&gt; : input string &#39;En 2002, le Nyiragongo entra en éruption, et une coulée de lave</span></span>
+<span id="cb8-258"><a href="#cb8-258" tabindex="-1"></a><span class="co">#&gt; atteignit le centre de la ville. La lave n&#39;a pas atteint le lac Kivu fort</span></span>
+<span id="cb8-259"><a href="#cb8-259" tabindex="-1"></a><span class="co">#&gt; heureusement, en effet ce lac est un lac méromictique et un changement brutal</span></span>
+<span id="cb8-260"><a href="#cb8-260" tabindex="-1"></a><span class="co">#&gt; de chaleur aurait des conséquences graves : Éruption limnique.&#39; cannot be</span></span>
+<span id="cb8-261"><a href="#cb8-261" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb8-262"><a href="#cb8-262" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = french, rules = list(fix_keys(c(&quot;z&quot;,</span></span>
+<span id="cb8-263"><a href="#cb8-263" tabindex="-1"></a><span class="co">#&gt; : input string &#39;Débordant de populations fuyant les violences, Goma compte en</span></span>
+<span id="cb8-264"><a href="#cb8-264" tabindex="-1"></a><span class="co">#&gt; 2012 plus de 400 000 habitants. Ceux qui ne peuvent pas trouver d&#39;abri</span></span>
+<span id="cb8-265"><a href="#cb8-265" tabindex="-1"></a><span class="co">#&gt; remplissent les camps de réfugiés, où l&#39;ONU et les ONG se débattent pour leur</span></span>
+<span id="cb8-266"><a href="#cb8-266" tabindex="-1"></a><span class="co">#&gt; fournir nourriture, eau et combustible.&#39; cannot be translated from</span></span>
+<span id="cb8-267"><a href="#cb8-267" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">print_layout</span>(result<span class="sc">$</span>layout)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; │ F │ B │ G │ K │ U │ R │ M │ Y │ Q │ H │</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; │ N │ O │ E │ A │ I │ L │ T │ S │ D │</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; │ Z │ X │ C │ V │ P │ W │ J │</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Improvement:&quot;</span>, <span class="fu">round</span>(result<span class="sc">$</span>improvement, <span class="dv">2</span>), <span class="st">&quot;%</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; Improvement: 35.03 %</span></span></code></pre></div>
+</div>
+<div id="choosing-weights" class="section level2">
+<h2>Choosing Weights</h2>
+<p>The <strong>weight</strong> parameter determines how strongly each
+preference influences the optimization. Here are some guidelines:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Weight</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0.5 - 1.0</td>
+<td>Mild preference, may be overridden</td>
+</tr>
+<tr class="even">
+<td>1.0 - 2.0</td>
+<td>Moderate preference</td>
+</tr>
+<tr class="odd">
+<td>2.0 - 5.0</td>
+<td>Strong preference</td>
+</tr>
+<tr class="even">
+<td>5.0+</td>
+<td>Very strong, almost like a constraint</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tips:</strong></p>
+<ul>
+<li>Start with weight = 1.0 and adjust based on results</li>
+<li>Higher weights can slow convergence</li>
+<li>Balance between typing efficiency and your preferences</li>
+</ul>
+</div>
+<div id="examples" class="section level2">
+<h2>Examples</h2>
+<div id="ergonomic-vowels-layout" class="section level3">
+<h3>Ergonomic Vowels Layout</h3>
+<p>Put vowels on strong fingers of the left hand:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">optimize_layout</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">text_samples =</span> french,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">rules =</span> <span class="fu">list</span>(</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>    <span class="co"># Vowels on left hand</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="fu">prefer_hand</span>(<span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;e&quot;</span>, <span class="st">&quot;i&quot;</span>, <span class="st">&quot;o&quot;</span>, <span class="st">&quot;u&quot;</span>), <span class="st">&quot;left&quot;</span>, <span class="at">weight =</span> <span class="fl">3.0</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>    </span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>    <span class="co"># Common consonants on right hand</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>    <span class="fu">prefer_hand</span>(<span class="fu">c</span>(<span class="st">&quot;t&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;s&quot;</span>, <span class="st">&quot;r&quot;</span>, <span class="st">&quot;l&quot;</span>), <span class="st">&quot;right&quot;</span>, <span class="at">weight =</span> <span class="fl">2.0</span>),</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>    </span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>    <span class="co"># Most frequent on home row</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>    <span class="fu">prefer_row</span>(<span class="fu">c</span>(<span class="st">&quot;e&quot;</span>, <span class="st">&quot;t&quot;</span>, <span class="st">&quot;a&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;i&quot;</span>, <span class="st">&quot;s&quot;</span>), <span class="dv">2</span>, <span class="at">weight =</span> <span class="fl">1.5</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  ),</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>  <span class="at">generations =</span> <span class="dv">50</span>,</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">print_layout</span>(result<span class="sc">$</span>layout)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; │ G │ Z │ K │ X │ D │ M │ R │ P │ Q │ J │</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; │ U │ E │ T │ O │ A │ I │ S │ N │ L │</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; │ H │ B │ Y │ F │ C │ W │ V │</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span></code></pre></div>
+</div>
+<div id="preserving-familiar-keys" class="section level3">
+<h3>Preserving Familiar Keys</h3>
+<p>Keep commonly-used keys in familiar positions:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">optimize_layout</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="at">text_samples =</span> french,</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">rules =</span> <span class="fu">list</span>(</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>    <span class="co"># Hard: fix entire bottom row</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>    <span class="fu">fix_keys</span>(<span class="fu">c</span>(<span class="st">&quot;z&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;v&quot;</span>, <span class="st">&quot;b&quot;</span>, <span class="st">&quot;n&quot;</span>, <span class="st">&quot;m&quot;</span>)),</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>    </span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>    <span class="co"># Soft: keep remaining keys roughly like QWERTY</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>    <span class="fu">keep_like</span>(<span class="st">&quot;qwerty&quot;</span>, <span class="at">weight =</span> <span class="fl">0.5</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>  ),</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>  <span class="at">generations =</span> <span class="dv">50</span>,</span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">print_layout</span>(result<span class="sc">$</span>layout)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt; │ H │ K │ W │ D │ F │ P │ U │ Q │ Y │ J │</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; │ A │ T │ O │ R │ S │ L │ G │ E │ I │</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt; │ Z │ X │ C │ V │ B │ N │ M │</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Fixed:&quot;</span>, result<span class="sc">$</span>n_fixed, <span class="st">&quot;keys</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; Fixed: 7 keys</span></span></code></pre></div>
+</div>
+<div id="balanced-multilingual-layout" class="section level3">
+<h3>Balanced Multilingual Layout</h3>
+<p>Optimize for multiple languages with balanced hands:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;german&quot;</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">data</span>(<span class="st">&quot;english&quot;</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">optimize_layout</span>(</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="at">text_samples =</span> <span class="fu">c</span>(french, german, english),</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="at">rules =</span> <span class="fu">list</span>(</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>    <span class="co"># Keep shortcuts</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>    <span class="fu">fix_keys</span>(<span class="fu">c</span>(<span class="st">&quot;z&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;v&quot;</span>)),</span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a>    </span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a>    <span class="co"># Strict hand balance for multilingual comfort</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a>    <span class="fu">balance_hands</span>(<span class="fl">0.5</span>, <span class="at">weight =</span> <span class="fl">2.0</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a>  ),</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a>  <span class="at">generations =</span> <span class="dv">50</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a>)</span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und die Erde war wüst und leer, und es war</span></span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co">#&gt; finster auf der Tiefe; und der Geist Gottes schwebte auf dem Wasser.&#39; cannot be</span></span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott sah, daß das Licht gut war. Da</span></span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="co">#&gt; schied Gott das Licht von der Finsternis&#39; cannot be translated from</span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Da machte Gott die Feste und schied das</span></span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a><span class="co">#&gt; Wasser unter der Feste von dem Wasser über der Feste. Und es geschah also.&#39;</span></span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a><span class="co">#&gt; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott sprach: Es sammle sich das Wasser</span></span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a><span class="co">#&gt; unter dem Himmel an besondere Örter, daß man das Trockene sehe. Und es geschah</span></span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a><span class="co">#&gt; also.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-33"><a href="#cb14-33" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott nannte das Trockene Erde, und die</span></span>
+<span id="cb14-34"><a href="#cb14-34" tabindex="-1"></a><span class="co">#&gt; Sammlung der Wasser nannte er Meer. Und Gott sah, daß es gut war.&#39; cannot be</span></span>
+<span id="cb14-35"><a href="#cb14-35" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-36"><a href="#cb14-36" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-37"><a href="#cb14-37" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott sprach: Es lasse die Erde</span></span>
+<span id="cb14-38"><a href="#cb14-38" tabindex="-1"></a><span class="co">#&gt; aufgehen Gras und Kraut, das sich besame, und fruchtbare Bäume, da ein</span></span>
+<span id="cb14-39"><a href="#cb14-39" tabindex="-1"></a><span class="co">#&gt; jeglicher nach seiner Art Frucht trage und habe seinen eigenen Samen bei sich</span></span>
+<span id="cb14-40"><a href="#cb14-40" tabindex="-1"></a><span class="co">#&gt; selbst auf Erden. Und es geschah also.&#39; cannot be translated from</span></span>
+<span id="cb14-41"><a href="#cb14-41" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-42"><a href="#cb14-42" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-43"><a href="#cb14-43" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und die Erde ließ aufgehen Gras und Kraut,</span></span>
+<span id="cb14-44"><a href="#cb14-44" tabindex="-1"></a><span class="co">#&gt; das sich besamte, ein jegliches nach seiner Art, und Bäume, die da Frucht</span></span>
+<span id="cb14-45"><a href="#cb14-45" tabindex="-1"></a><span class="co">#&gt; trugen und ihren eigenen Samen bei sich selbst hatten, ein jeglicher nach</span></span>
+<span id="cb14-46"><a href="#cb14-46" tabindex="-1"></a><span class="co">#&gt; seiner Art. Und Gott sah, daß es gut war.&#39; cannot be translated from</span></span>
+<span id="cb14-47"><a href="#cb14-47" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-48"><a href="#cb14-48" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-49"><a href="#cb14-49" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;und seien Lichter an der Feste des</span></span>
+<span id="cb14-50"><a href="#cb14-50" tabindex="-1"></a><span class="co">#&gt; Himmels, daß sie scheinen auf Erden. Und es geschah also.&#39; cannot be translated</span></span>
+<span id="cb14-51"><a href="#cb14-51" tabindex="-1"></a><span class="co">#&gt; from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-52"><a href="#cb14-52" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-53"><a href="#cb14-53" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott machte zwei große Lichter: ein</span></span>
+<span id="cb14-54"><a href="#cb14-54" tabindex="-1"></a><span class="co">#&gt; großes Licht, das den Tag regiere, und ein kleines Licht, das die Nacht</span></span>
+<span id="cb14-55"><a href="#cb14-55" tabindex="-1"></a><span class="co">#&gt; regiere, dazu auch Sterne.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to</span></span>
+<span id="cb14-56"><a href="#cb14-56" tabindex="-1"></a><span class="co">#&gt; UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-57"><a href="#cb14-57" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-58"><a href="#cb14-58" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott setzte sie an die Feste des</span></span>
+<span id="cb14-59"><a href="#cb14-59" tabindex="-1"></a><span class="co">#&gt; Himmels, daß sie schienen auf die Erde&#39; cannot be translated from</span></span>
+<span id="cb14-60"><a href="#cb14-60" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-61"><a href="#cb14-61" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-62"><a href="#cb14-62" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;und den Tag und die Nacht regierten und</span></span>
+<span id="cb14-63"><a href="#cb14-63" tabindex="-1"></a><span class="co">#&gt; schieden Licht und Finsternis. Und Gott sah, daß es gut war.&#39; cannot be</span></span>
+<span id="cb14-64"><a href="#cb14-64" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-65"><a href="#cb14-65" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-66"><a href="#cb14-66" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott sprach: Es errege sich das Wasser</span></span>
+<span id="cb14-67"><a href="#cb14-67" tabindex="-1"></a><span class="co">#&gt; mit webenden und lebendigen Tieren, und Gevögel fliege auf Erden unter der</span></span>
+<span id="cb14-68"><a href="#cb14-68" tabindex="-1"></a><span class="co">#&gt; Feste des Himmels.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is</span></span>
+<span id="cb14-69"><a href="#cb14-69" tabindex="-1"></a><span class="co">#&gt; valid UTF-8</span></span>
+<span id="cb14-70"><a href="#cb14-70" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-71"><a href="#cb14-71" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott schuf große Walfische und</span></span>
+<span id="cb14-72"><a href="#cb14-72" tabindex="-1"></a><span class="co">#&gt; allerlei Getier, daß da lebt und webt, davon das Wasser sich erregte, ein</span></span>
+<span id="cb14-73"><a href="#cb14-73" tabindex="-1"></a><span class="co">#&gt; jegliches nach seiner Art, und allerlei gefiedertes Gevögel, ein jegliches nach</span></span>
+<span id="cb14-74"><a href="#cb14-74" tabindex="-1"></a><span class="co">#&gt; seiner Art. Und Gott sah, daß es gut war.&#39; cannot be translated from</span></span>
+<span id="cb14-75"><a href="#cb14-75" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-76"><a href="#cb14-76" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-77"><a href="#cb14-77" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott segnete sie und sprach: Seid</span></span>
+<span id="cb14-78"><a href="#cb14-78" tabindex="-1"></a><span class="co">#&gt; fruchtbar und mehrt euch und erfüllt das Wasser im Meer; und das Gefieder mehre</span></span>
+<span id="cb14-79"><a href="#cb14-79" tabindex="-1"></a><span class="co">#&gt; sich auf Erden.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is</span></span>
+<span id="cb14-80"><a href="#cb14-80" tabindex="-1"></a><span class="co">#&gt; valid UTF-8</span></span>
+<span id="cb14-81"><a href="#cb14-81" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-82"><a href="#cb14-82" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Da ward aus Abend und Morgen der fünfte</span></span>
+<span id="cb14-83"><a href="#cb14-83" tabindex="-1"></a><span class="co">#&gt; Tag.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-84"><a href="#cb14-84" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-85"><a href="#cb14-85" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott sprach: Die Erde bringe hervor</span></span>
+<span id="cb14-86"><a href="#cb14-86" tabindex="-1"></a><span class="co">#&gt; lebendige Tiere, ein jegliches nach seiner Art: Vieh, Gewürm und Tiere auf</span></span>
+<span id="cb14-87"><a href="#cb14-87" tabindex="-1"></a><span class="co">#&gt; Erden, ein jegliches nach seiner Art. Und es geschah also.&#39; cannot be</span></span>
+<span id="cb14-88"><a href="#cb14-88" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-89"><a href="#cb14-89" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-90"><a href="#cb14-90" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott machte die Tiere auf Erden, ein</span></span>
+<span id="cb14-91"><a href="#cb14-91" tabindex="-1"></a><span class="co">#&gt; jegliches nach seiner Art, und das Vieh nach seiner Art, und allerlei Gewürm</span></span>
+<span id="cb14-92"><a href="#cb14-92" tabindex="-1"></a><span class="co">#&gt; auf Erden nach seiner Art. Und Gott sah, daß es gut war.&#39; cannot be translated</span></span>
+<span id="cb14-93"><a href="#cb14-93" tabindex="-1"></a><span class="co">#&gt; from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-94"><a href="#cb14-94" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-95"><a href="#cb14-95" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott sprach: Laßt uns Menschen machen,</span></span>
+<span id="cb14-96"><a href="#cb14-96" tabindex="-1"></a><span class="co">#&gt; ein Bild, das uns gleich sei, die da herrschen über die Fische im Meer und über</span></span>
+<span id="cb14-97"><a href="#cb14-97" tabindex="-1"></a><span class="co">#&gt; die Vögel unter dem Himmel und über das Vieh und über die ganze Erde und über</span></span>
+<span id="cb14-98"><a href="#cb14-98" tabindex="-1"></a><span class="co">#&gt; alles Gewürm, das auf Erden kriecht.&#39; cannot be translated from</span></span>
+<span id="cb14-99"><a href="#cb14-99" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-100"><a href="#cb14-100" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-101"><a href="#cb14-101" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott segnete sie und sprach zu ihnen:</span></span>
+<span id="cb14-102"><a href="#cb14-102" tabindex="-1"></a><span class="co">#&gt; Seid fruchtbar und mehrt euch und füllt die Erde und macht sie euch untertan</span></span>
+<span id="cb14-103"><a href="#cb14-103" tabindex="-1"></a><span class="co">#&gt; und herrscht über die Fische im Meer und über die Vögel unter dem Himmel und</span></span>
+<span id="cb14-104"><a href="#cb14-104" tabindex="-1"></a><span class="co">#&gt; über alles Getier, das auf Erden kriecht.&#39; cannot be translated from</span></span>
+<span id="cb14-105"><a href="#cb14-105" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-106"><a href="#cb14-106" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-107"><a href="#cb14-107" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Und Gott sprach: Seht da, ich habe euch</span></span>
+<span id="cb14-108"><a href="#cb14-108" tabindex="-1"></a><span class="co">#&gt; gegeben allerlei Kraut, das sich besamt, auf der ganzen Erde und allerlei</span></span>
+<span id="cb14-109"><a href="#cb14-109" tabindex="-1"></a><span class="co">#&gt; fruchtbare Bäume, die sich besamen, zu eurer Speise,&#39; cannot be translated from</span></span>
+<span id="cb14-110"><a href="#cb14-110" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-111"><a href="#cb14-111" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-112"><a href="#cb14-112" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;und allem Getier auf Erden und allen</span></span>
+<span id="cb14-113"><a href="#cb14-113" tabindex="-1"></a><span class="co">#&gt; Vögeln unter dem Himmel und allem Gewürm, das da lebt auf Erden, daß sie</span></span>
+<span id="cb14-114"><a href="#cb14-114" tabindex="-1"></a><span class="co">#&gt; allerlei grünes Kraut essen. Und es geschah also.&#39; cannot be translated from</span></span>
+<span id="cb14-115"><a href="#cb14-115" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-116"><a href="#cb14-116" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-117"><a href="#cb14-117" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Während des Bürgerkrieges und Völkermords</span></span>
+<span id="cb14-118"><a href="#cb14-118" tabindex="-1"></a><span class="co">#&gt; im nahe angrenzenden Ruanda 1994 war Goma eines der Hauptziele für Flüchtlinge.</span></span>
+<span id="cb14-119"><a href="#cb14-119" tabindex="-1"></a><span class="co">#&gt; Unter diesen waren nebst Zivilisten auch Mittäter des Genozids. Nachdem über</span></span>
+<span id="cb14-120"><a href="#cb14-120" tabindex="-1"></a><span class="co">#&gt; eine Million Flüchtlinge die Stadt erreicht hatten, brach in den Lagern eine</span></span>
+<span id="cb14-121"><a href="#cb14-121" tabindex="-1"></a><span class="co">#&gt; Cholera-Epidemie aus, die mehrere Tausend Opfer forderte. In den Jahren 1997</span></span>
+<span id="cb14-122"><a href="#cb14-122" tabindex="-1"></a><span class="co">#&gt; und 1998, als der Bürgerkrieg im Kongo nach dem Sturz von Präsident Mobutu Sese</span></span>
+<span id="cb14-123"><a href="#cb14-123" tabindex="-1"></a><span class="co">#&gt; Seko eskalierte, eroberten ruandische Regierungstruppen Goma. Im Zuge der</span></span>
+<span id="cb14-124"><a href="#cb14-124" tabindex="-1"></a><span class="co">#&gt; Verfolgung von Hutu, die in der Stadt Zuflucht gesucht hatten, töteten sie auch</span></span>
+<span id="cb14-125"><a href="#cb14-125" tabindex="-1"></a><span class="co">#&gt; Hunderte Unbeteiligte.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8,</span></span>
+<span id="cb14-126"><a href="#cb14-126" tabindex="-1"></a><span class="co">#&gt; but is valid UTF-8</span></span>
+<span id="cb14-127"><a href="#cb14-127" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-128"><a href="#cb14-128" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Im Jahre 2002 wurde die Stadt von einem</span></span>
+<span id="cb14-129"><a href="#cb14-129" tabindex="-1"></a><span class="co">#&gt; Lavastrom aus dem etwa 14 km entfernten Nyiragongo im Norden zu großen Teilen</span></span>
+<span id="cb14-130"><a href="#cb14-130" tabindex="-1"></a><span class="co">#&gt; zerstört. Viele Gebäude gerade im Stadtzentrum sowie der Flughafen Goma waren</span></span>
+<span id="cb14-131"><a href="#cb14-131" tabindex="-1"></a><span class="co">#&gt; betroffen. Von den 3.000 Metern der Start- und Landebahn sind bis heute noch</span></span>
+<span id="cb14-132"><a href="#cb14-132" tabindex="-1"></a><span class="co">#&gt; fast 1.000 Meter unter einer Lavaschicht begraben, so dass der internationale</span></span>
+<span id="cb14-133"><a href="#cb14-133" tabindex="-1"></a><span class="co">#&gt; Verkehr ihn meidet. Rund 250.000 Einwohner der Stadt mussten flüchten. Es gab</span></span>
+<span id="cb14-134"><a href="#cb14-134" tabindex="-1"></a><span class="co">#&gt; 147 Todesopfer, viele Flüchtlinge blieben obdachlos oder haben sich am Rande</span></span>
+<span id="cb14-135"><a href="#cb14-135" tabindex="-1"></a><span class="co">#&gt; der Lavafelder Notunterkünfte gebaut. Seit April 2009 wird unter Führung der</span></span>
+<span id="cb14-136"><a href="#cb14-136" tabindex="-1"></a><span class="co">#&gt; Welthungerhilfe das Rollfeld des Flughafens von der Lava befreit. Die</span></span>
+<span id="cb14-137"><a href="#cb14-137" tabindex="-1"></a><span class="co">#&gt; Bedrohung, dass sich bei einer erneuten Eruption Lavamassen aus dem innerhalb</span></span>
+<span id="cb14-138"><a href="#cb14-138" tabindex="-1"></a><span class="co">#&gt; des Vulkankraters befindlichen Lavasee erneut ins Tal und auf die Stadt</span></span>
+<span id="cb14-139"><a href="#cb14-139" tabindex="-1"></a><span class="co">#&gt; ergießen, besteht nach wie vor.[3]&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39;</span></span>
+<span id="cb14-140"><a href="#cb14-140" tabindex="-1"></a><span class="co">#&gt; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-141"><a href="#cb14-141" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-142"><a href="#cb14-142" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Am 15. April 2008 raste nach dem Start vom</span></span>
+<span id="cb14-143"><a href="#cb14-143" tabindex="-1"></a><span class="co">#&gt; Flughafen Goma eine Douglas DC-9 mit 79 Passagieren und 6 Besatzungsmitgliedern</span></span>
+<span id="cb14-144"><a href="#cb14-144" tabindex="-1"></a><span class="co">#&gt; über das südliche Startbahnende hinaus in das Wohn- und Marktgebiet Birere.</span></span>
+<span id="cb14-145"><a href="#cb14-145" tabindex="-1"></a><span class="co">#&gt; Etwa 40 Personen aus dem angrenzenden Siedlungsgebiet kamen ums Leben,</span></span>
+<span id="cb14-146"><a href="#cb14-146" tabindex="-1"></a><span class="co">#&gt; mindestens 53 Passagiere und die 6 Besatzungsmitglieder überlebten jedoch. Das</span></span>
+<span id="cb14-147"><a href="#cb14-147" tabindex="-1"></a><span class="co">#&gt; Feuer aus dem brennenden Wrack konnte sich aufgrund des starken Regens nicht</span></span>
+<span id="cb14-148"><a href="#cb14-148" tabindex="-1"></a><span class="co">#&gt; ausbreiten, Anwohner konnten das Feuer zusätzlich eindämmen.&#39; cannot be</span></span>
+<span id="cb14-149"><a href="#cb14-149" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-150"><a href="#cb14-150" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-151"><a href="#cb14-151" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Am 21. November 2012 wurden große Teile</span></span>
+<span id="cb14-152"><a href="#cb14-152" tabindex="-1"></a><span class="co">#&gt; der Stadt von der gegen die Zentralregierung unter Präsident Joseph Kabila</span></span>
+<span id="cb14-153"><a href="#cb14-153" tabindex="-1"></a><span class="co">#&gt; kämpfenden Rebellenbewegung M23 eingenommen. Dort stationierte</span></span>
+<span id="cb14-154"><a href="#cb14-154" tabindex="-1"></a><span class="co">#&gt; UNO-Friedens-Truppen griffen im Gegensatz zu früheren Aktivitäten nicht mehr</span></span>
+<span id="cb14-155"><a href="#cb14-155" tabindex="-1"></a><span class="co">#&gt; ein.[5] Am 1. Dezember begannen sie nach Überschreitung eines Ultimatums der</span></span>
+<span id="cb14-156"><a href="#cb14-156" tabindex="-1"></a><span class="co">#&gt; Internationalen Konferenz der Großen Seen Afrikas und zwei Resolutionen des</span></span>
+<span id="cb14-157"><a href="#cb14-157" tabindex="-1"></a><span class="co">#&gt; UN-Sicherheitsrats, sich aus der Stadt zurückzuziehen.&#39; cannot be translated</span></span>
+<span id="cb14-158"><a href="#cb14-158" tabindex="-1"></a><span class="co">#&gt; from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-159"><a href="#cb14-159" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-160"><a href="#cb14-160" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Im Jahre 2019 wurden mehrere Einzelfälle</span></span>
+<span id="cb14-161"><a href="#cb14-161" tabindex="-1"></a><span class="co">#&gt; von Ebola in der Stadt registriert, nachdem die Ebola Epidemie bereits zuvor im</span></span>
+<span id="cb14-162"><a href="#cb14-162" tabindex="-1"></a><span class="co">#&gt; Ostkongo ausgebrochen war.[6]&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to</span></span>
+<span id="cb14-163"><a href="#cb14-163" tabindex="-1"></a><span class="co">#&gt; UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-164"><a href="#cb14-164" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-165"><a href="#cb14-165" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Seit 1959 ist Goma Sitz des</span></span>
+<span id="cb14-166"><a href="#cb14-166" tabindex="-1"></a><span class="co">#&gt; römisch-katholischen Bistums Goma.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39;</span></span>
+<span id="cb14-167"><a href="#cb14-167" tabindex="-1"></a><span class="co">#&gt; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-168"><a href="#cb14-168" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-169"><a href="#cb14-169" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Die Transporteure werden Frachtführer (in</span></span>
+<span id="cb14-170"><a href="#cb14-170" tabindex="-1"></a><span class="co">#&gt; Österreich Frächter) genannt. Sie organisieren nicht den Transport, sondern</span></span>
+<span id="cb14-171"><a href="#cb14-171" tabindex="-1"></a><span class="co">#&gt; führen diesen aus, meistens im Auftrag eines Spediteurs. Die Höhe der Fracht</span></span>
+<span id="cb14-172"><a href="#cb14-172" tabindex="-1"></a><span class="co">#&gt; wird im Frachtvertrag vereinbart und in der Regel im Frachtbrief festgehalten.</span></span>
+<span id="cb14-173"><a href="#cb14-173" tabindex="-1"></a><span class="co">#&gt; Seit mit der Transportrechtsreform 1998 in Deutschland die Erstellung eines</span></span>
+<span id="cb14-174"><a href="#cb14-174" tabindex="-1"></a><span class="co">#&gt; Frachtbriefes für nationale Transporte nicht mehr zwingend erforderlich ist,</span></span>
+<span id="cb14-175"><a href="#cb14-175" tabindex="-1"></a><span class="co">#&gt; sondern auch Lieferscheine, Ladelisten oder vergleichbare Papiere als</span></span>
+<span id="cb14-176"><a href="#cb14-176" tabindex="-1"></a><span class="co">#&gt; Warenbegleitdokument verwendet werden können, wird zunehmend kein Frachtbrief</span></span>
+<span id="cb14-177"><a href="#cb14-177" tabindex="-1"></a><span class="co">#&gt; mehr ausgestellt. Beim Frachtbrief gibt es drei Originalausfertigungen. Eine</span></span>
+<span id="cb14-178"><a href="#cb14-178" tabindex="-1"></a><span class="co">#&gt; Ausfertigung verbleibt beim Absender, nachdem ihm darauf der Frachtführer die</span></span>
+<span id="cb14-179"><a href="#cb14-179" tabindex="-1"></a><span class="co">#&gt; Übernahme des Frachtguts bestätigt hat. Die zweite verbleibt nach Ablieferung</span></span>
+<span id="cb14-180"><a href="#cb14-180" tabindex="-1"></a><span class="co">#&gt; des Frachtguts als Ablieferbestätigung beim Frachtführer und die dritte erhält</span></span>
+<span id="cb14-181"><a href="#cb14-181" tabindex="-1"></a><span class="co">#&gt; der Empfänger.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is</span></span>
+<span id="cb14-182"><a href="#cb14-182" tabindex="-1"></a><span class="co">#&gt; valid UTF [... truncated]</span></span>
+<span id="cb14-183"><a href="#cb14-183" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-184"><a href="#cb14-184" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Für die Verladung des Frachtguts ist der</span></span>
+<span id="cb14-185"><a href="#cb14-185" tabindex="-1"></a><span class="co">#&gt; Absender zuständig. Er ist dabei gem. § 412 HGB für eine beförderungssichere</span></span>
+<span id="cb14-186"><a href="#cb14-186" tabindex="-1"></a><span class="co">#&gt; Verladung des Frachtguts verantwortlich, wohingegen der Frachtführer für die</span></span>
+<span id="cb14-187"><a href="#cb14-187" tabindex="-1"></a><span class="co">#&gt; verkehrssichere Verladung (z. B. Gewichtsverteilung, Einhaltung der zulässigen</span></span>
+<span id="cb14-188"><a href="#cb14-188" tabindex="-1"></a><span class="co">#&gt; Achslasten), als auch für die Ladungssicherung zu sorgen hat.&#39; cannot be</span></span>
+<span id="cb14-189"><a href="#cb14-189" tabindex="-1"></a><span class="co">#&gt; translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-190"><a href="#cb14-190" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-191"><a href="#cb14-191" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Bei Kontrollen muss der Frachtbrief den</span></span>
+<span id="cb14-192"><a href="#cb14-192" tabindex="-1"></a><span class="co">#&gt; Zoll- und Polizeibehörden, sowie dem Bundesamt für Güterverkehr (BAG)</span></span>
+<span id="cb14-193"><a href="#cb14-193" tabindex="-1"></a><span class="co">#&gt; ausgehändigt werden.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but</span></span>
+<span id="cb14-194"><a href="#cb14-194" tabindex="-1"></a><span class="co">#&gt; is valid UTF-8</span></span>
+<span id="cb14-195"><a href="#cb14-195" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-196"><a href="#cb14-196" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Es gibt anmeldepflichtige Frachtgüter, für</span></span>
+<span id="cb14-197"><a href="#cb14-197" tabindex="-1"></a><span class="co">#&gt; deren Transport es einer ausdrücklichen behördlichen Genehmigung bedarf.</span></span>
+<span id="cb14-198"><a href="#cb14-198" tabindex="-1"></a><span class="co">#&gt; Schwertransporte erfordern eine behördliche Ausnahmegenehmigung und bei</span></span>
+<span id="cb14-199"><a href="#cb14-199" tabindex="-1"></a><span class="co">#&gt; Überschreiten bestimmter Abmessungen sind gemäß § 29 Absatz. 3 StVO (Übermäßige</span></span>
+<span id="cb14-200"><a href="#cb14-200" tabindex="-1"></a><span class="co">#&gt; Straßennutzung) definitiv Begleitfahrzeuge und/oder eine Begleitung durch die</span></span>
+<span id="cb14-201"><a href="#cb14-201" tabindex="-1"></a><span class="co">#&gt; Polizei vorgeschrieben, um Sicherungsmaßnahmen einzuleiten und für einen</span></span>
+<span id="cb14-202"><a href="#cb14-202" tabindex="-1"></a><span class="co">#&gt; reibungslosen Ablauf zu sorgen. Fällt das zu befördernde Frachtgut unter die</span></span>
+<span id="cb14-203"><a href="#cb14-203" tabindex="-1"></a><span class="co">#&gt; Gefahrgutverordnung, muss das Transportfahrzeug neben der Einhaltung</span></span>
+<span id="cb14-204"><a href="#cb14-204" tabindex="-1"></a><span class="co">#&gt; gefahrgutrelevanter Vorschriften auch mit entsprechenden Warntafeln</span></span>
+<span id="cb14-205"><a href="#cb14-205" tabindex="-1"></a><span class="co">#&gt; gekennzeichnet sein. Darüber hinaus benötigt dann der Fahrzeugführer und ein</span></span>
+<span id="cb14-206"><a href="#cb14-206" tabindex="-1"></a><span class="co">#&gt; eventueller Beifahrer auch eine ADR-Bescheinigung.&#39; cannot be translated from</span></span>
+<span id="cb14-207"><a href="#cb14-207" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-208"><a href="#cb14-208" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-209"><a href="#cb14-209" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Die Aufteilung der Frachtkosten zwischen</span></span>
+<span id="cb14-210"><a href="#cb14-210" tabindex="-1"></a><span class="co">#&gt; Absender und Empfänger wird über die im Kaufvertrag festgehaltenen</span></span>
+<span id="cb14-211"><a href="#cb14-211" tabindex="-1"></a><span class="co">#&gt; Lieferbedingungen geregelt, im internationalen Warenverkehr durch die</span></span>
+<span id="cb14-212"><a href="#cb14-212" tabindex="-1"></a><span class="co">#&gt; Incoterms.&#39; cannot be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid</span></span>
+<span id="cb14-213"><a href="#cb14-213" tabindex="-1"></a><span class="co">#&gt; UTF-8</span></span>
+<span id="cb14-214"><a href="#cb14-214" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-215"><a href="#cb14-215" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;In 1996, Wales and two partners founded</span></span>
+<span id="cb14-216"><a href="#cb14-216" tabindex="-1"></a><span class="co">#&gt; Bomis, a web portal primarily known for featuring adult content. Bomis provided</span></span>
+<span id="cb14-217"><a href="#cb14-217" tabindex="-1"></a><span class="co">#&gt; the initial funding for the free peer-reviewed encyclopedia Nupedia</span></span>
+<span id="cb14-218"><a href="#cb14-218" tabindex="-1"></a><span class="co">#&gt; (2000–2003). On January 15, 2001, with Larry Sanger and others, Wales launched</span></span>
+<span id="cb14-219"><a href="#cb14-219" tabindex="-1"></a><span class="co">#&gt; Wikipedia, a free open-content encyclopedia that enjoyed rapid growth and</span></span>
+<span id="cb14-220"><a href="#cb14-220" tabindex="-1"></a><span class="co">#&gt; popularity. As its public profile grew, Wales became its promoter and</span></span>
+<span id="cb14-221"><a href="#cb14-221" tabindex="-1"></a><span class="co">#&gt; spokesman. Though he is historically credited as co-founder, he has disputed</span></span>
+<span id="cb14-222"><a href="#cb14-222" tabindex="-1"></a><span class="co">#&gt; this, declaring himself the sole founder.&#39; cannot be translated from</span></span>
+<span id="cb14-223"><a href="#cb14-223" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-224"><a href="#cb14-224" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-225"><a href="#cb14-225" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Jesus is also revered in other religions.</span></span>
+<span id="cb14-226"><a href="#cb14-226" tabindex="-1"></a><span class="co">#&gt; In Islam, Jesus (often referred to by his Quranic name ʿĪsā) is considered the</span></span>
+<span id="cb14-227"><a href="#cb14-227" tabindex="-1"></a><span class="co">#&gt; penultimate prophet of God and the messiah, who will return before the Day of</span></span>
+<span id="cb14-228"><a href="#cb14-228" tabindex="-1"></a><span class="co">#&gt; Judgement. Muslims believe Jesus was born of the virgin Mary (another figure</span></span>
+<span id="cb14-229"><a href="#cb14-229" tabindex="-1"></a><span class="co">#&gt; revered in Islam), but was neither God nor a son of God; In contrast, Judaism</span></span>
+<span id="cb14-230"><a href="#cb14-230" tabindex="-1"></a><span class="co">#&gt; rejects the belief that Jesus was the awaited messiah, arguing that he did not</span></span>
+<span id="cb14-231"><a href="#cb14-231" tabindex="-1"></a><span class="co">#&gt; fulfill messianic prophecies, and was neither divine nor resurrected.&#39; cannot</span></span>
+<span id="cb14-232"><a href="#cb14-232" tabindex="-1"></a><span class="co">#&gt; be translated from &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-233"><a href="#cb14-233" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-234"><a href="#cb14-234" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Formal unification of Germany into the</span></span>
+<span id="cb14-235"><a href="#cb14-235" tabindex="-1"></a><span class="co">#&gt; modern nation-state was commenced on 18 August 1866 with the North German</span></span>
+<span id="cb14-236"><a href="#cb14-236" tabindex="-1"></a><span class="co">#&gt; Confederation Treaty establishing the Prussia-led North German Confederation</span></span>
+<span id="cb14-237"><a href="#cb14-237" tabindex="-1"></a><span class="co">#&gt; later transformed in 1871 into the German Empire. After World War I and the</span></span>
+<span id="cb14-238"><a href="#cb14-238" tabindex="-1"></a><span class="co">#&gt; German Revolution of 1918–1919, the Empire was in turn transformed into the</span></span>
+<span id="cb14-239"><a href="#cb14-239" tabindex="-1"></a><span class="co">#&gt; semi-presidential Weimar Republic. The Nazi seizure of power in 1933 led to the</span></span>
+<span id="cb14-240"><a href="#cb14-240" tabindex="-1"></a><span class="co">#&gt; establishment of a totalitarian dictatorship, World War II, and the Holocaust.</span></span>
+<span id="cb14-241"><a href="#cb14-241" tabindex="-1"></a><span class="co">#&gt; After the end of World War II in Europe and a period of Allied occupation, in</span></span>
+<span id="cb14-242"><a href="#cb14-242" tabindex="-1"></a><span class="co">#&gt; 1949, Germany as a whole was organized into two separate polities with limited</span></span>
+<span id="cb14-243"><a href="#cb14-243" tabindex="-1"></a><span class="co">#&gt; sovereignity: the Federal Republic of Germany, generally known as West Germany,</span></span>
+<span id="cb14-244"><a href="#cb14-244" tabindex="-1"></a><span class="co">#&gt; and the German Democratic Republic, East Germany, while Berlin de jure</span></span>
+<span id="cb14-245"><a href="#cb14-245" tabindex="-1"></a><span class="co">#&gt; continued its Four Power status. The Federal Republic of Germany was a founding</span></span>
+<span id="cb14-246"><a href="#cb14-246" tabindex="-1"></a><span class="co">#&gt; member of the European Economic Community and the European Union, while the</span></span>
+<span id="cb14-247"><a href="#cb14-247" tabindex="-1"></a><span class="co">#&gt; German Democratic R [... truncated]</span></span>
+<span id="cb14-248"><a href="#cb14-248" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-249"><a href="#cb14-249" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Over the centuries, the City and Fortress</span></span>
+<span id="cb14-250"><a href="#cb14-250" tabindex="-1"></a><span class="co">#&gt; of Luxembourg—of great strategic importance due to its location between the</span></span>
+<span id="cb14-251"><a href="#cb14-251" tabindex="-1"></a><span class="co">#&gt; Kingdom of France and the Habsburg territories—was gradually built up to be one</span></span>
+<span id="cb14-252"><a href="#cb14-252" tabindex="-1"></a><span class="co">#&gt; of the most reputed fortifications in Europe. &#39; cannot be translated from</span></span>
+<span id="cb14-253"><a href="#cb14-253" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-254"><a href="#cb14-254" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-255"><a href="#cb14-255" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;Geometrically, this is seen as the sum of</span></span>
+<span id="cb14-256"><a href="#cb14-256" tabindex="-1"></a><span class="co">#&gt; the squared distances, parallel to the axis of the dependent variable, between</span></span>
+<span id="cb14-257"><a href="#cb14-257" tabindex="-1"></a><span class="co">#&gt; each data point in the set and the corresponding point on the regression</span></span>
+<span id="cb14-258"><a href="#cb14-258" tabindex="-1"></a><span class="co">#&gt; surface—the smaller the differences, the better the model fits the data. The</span></span>
+<span id="cb14-259"><a href="#cb14-259" tabindex="-1"></a><span class="co">#&gt; resulting estimator can be expressed by a simple formula, especially in the</span></span>
+<span id="cb14-260"><a href="#cb14-260" tabindex="-1"></a><span class="co">#&gt; case of a simple linear regression, in which there is a single regressor on the</span></span>
+<span id="cb14-261"><a href="#cb14-261" tabindex="-1"></a><span class="co">#&gt; right side of the regression equation.&#39; cannot be translated from</span></span>
+<span id="cb14-262"><a href="#cb14-262" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span>
+<span id="cb14-263"><a href="#cb14-263" tabindex="-1"></a><span class="co">#&gt; Warning in optimize_layout(text_samples = c(french, german, english), rules =</span></span>
+<span id="cb14-264"><a href="#cb14-264" tabindex="-1"></a><span class="co">#&gt; list(fix_keys(c(&quot;z&quot;, : input string &#39;The OLS estimator is consistent for the</span></span>
+<span id="cb14-265"><a href="#cb14-265" tabindex="-1"></a><span class="co">#&gt; level-one fixed effects when the regressors are exogenous and forms perfect</span></span>
+<span id="cb14-266"><a href="#cb14-266" tabindex="-1"></a><span class="co">#&gt; colinearity (rank condition), consistent for the variance estimate of the</span></span>
+<span id="cb14-267"><a href="#cb14-267" tabindex="-1"></a><span class="co">#&gt; residuals when regressors have finite fourth moments and—by the Gauss–Markov</span></span>
+<span id="cb14-268"><a href="#cb14-268" tabindex="-1"></a><span class="co">#&gt; theorem—optimal in the class of linear unbiased estimators when the errors are</span></span>
+<span id="cb14-269"><a href="#cb14-269" tabindex="-1"></a><span class="co">#&gt; homoscedastic and serially uncorrelated. Under these conditions, the method of</span></span>
+<span id="cb14-270"><a href="#cb14-270" tabindex="-1"></a><span class="co">#&gt; OLS provides minimum-variance mean-unbiased estimation when the errors have</span></span>
+<span id="cb14-271"><a href="#cb14-271" tabindex="-1"></a><span class="co">#&gt; finite variances. Under the additional assumption that the errors are normally</span></span>
+<span id="cb14-272"><a href="#cb14-272" tabindex="-1"></a><span class="co">#&gt; distributed with zero mean, OLS is the maximum likelihood estimator that</span></span>
+<span id="cb14-273"><a href="#cb14-273" tabindex="-1"></a><span class="co">#&gt; outperforms any non-linear unbiased estimator.&#39; cannot be translated from</span></span>
+<span id="cb14-274"><a href="#cb14-274" tabindex="-1"></a><span class="co">#&gt; &#39;ANSI_X3.4-1968&#39; to UTF-8, but is valid UTF-8</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">print_layout</span>(result<span class="sc">$</span>layout)</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; │ B │ J │ F │ Q │ N │ H │ O │ U │ M │ P │</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt; │ I │ T │ D │ S │ R │ L │ E │ A │ W │</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt; │ Z │ X │ C │ V │ K │ G │ Y │</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span></code></pre></div>
+</div>
+</div>
+<div id="comparison-with-vs-without-rules" class="section level2">
+<h2>Comparison: With vs Without Rules</h2>
+<p>Let’s compare optimization results:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># Without rules</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>result_plain <span class="ot">&lt;-</span> <span class="fu">optimize_layout</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">text_samples =</span> french,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">generations =</span> <span class="dv">50</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>)</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="co"># With rules</span></span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>result_rules <span class="ot">&lt;-</span> <span class="fu">optimize_layout</span>(</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>  <span class="at">text_samples =</span> french,</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>  <span class="at">rules =</span> <span class="fu">list</span>(</span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>    <span class="fu">fix_keys</span>(<span class="fu">c</span>(<span class="st">&quot;z&quot;</span>, <span class="st">&quot;x&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;v&quot;</span>)),</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>    <span class="fu">prefer_hand</span>(<span class="fu">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;e&quot;</span>, <span class="st">&quot;i&quot;</span>, <span class="st">&quot;o&quot;</span>, <span class="st">&quot;u&quot;</span>), <span class="st">&quot;left&quot;</span>, <span class="at">weight =</span> <span class="fl">2.0</span>)</span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>  ),</span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>  <span class="at">generations =</span> <span class="dv">50</span>,</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Without rules - Effort:&quot;</span>, <span class="fu">round</span>(result_plain<span class="sc">$</span>effort, <span class="dv">2</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="co">#&gt; Without rules - Effort: 33525.49</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="fu">print_layout</span>(result_plain<span class="sc">$</span>layout)</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="co">#&gt; │ X │ K │ W │ Y │ O │ M │ N │ G │ C │ Z │</span></span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="co">#&gt; │ D │ S │ I │ R │ E │ T │ L │ A │ U │</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a><span class="co">#&gt; │ F │ J │ Q │ B │ V │ P │ H │</span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a></span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">With rules - Effort:&quot;</span>, <span class="fu">round</span>(result_rules<span class="sc">$</span>effort, <span class="dv">2</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb17-14"><a href="#cb17-14" tabindex="-1"></a><span class="co">#&gt; With rules - Effort: 39861.7</span></span>
+<span id="cb17-15"><a href="#cb17-15" tabindex="-1"></a><span class="fu">print_layout</span>(result_rules<span class="sc">$</span>layout)</span>
+<span id="cb17-16"><a href="#cb17-16" tabindex="-1"></a><span class="co">#&gt; ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐</span></span>
+<span id="cb17-17"><a href="#cb17-17" tabindex="-1"></a><span class="co">#&gt; │ K │ W │ M │ Y │ E │ P │ Q │ D │ F │ J │</span></span>
+<span id="cb17-18"><a href="#cb17-18" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb17-19"><a href="#cb17-19" tabindex="-1"></a><span class="co">#&gt; │ A │ U │ I │ H │ O │ T │ L │ S │ R │</span></span>
+<span id="cb17-20"><a href="#cb17-20" tabindex="-1"></a><span class="co">#&gt; ├───┼───┼───┼───┼───┼───┼───┘</span></span>
+<span id="cb17-21"><a href="#cb17-21" tabindex="-1"></a><span class="co">#&gt; │ Z │ X │ C │ V │ G │ N │ B │</span></span>
+<span id="cb17-22"><a href="#cb17-22" tabindex="-1"></a><span class="co">#&gt; └───┴───┴───┴───┴───┴───┴───┘</span></span></code></pre></div>
+<p>The layout with rules might have slightly higher effort, but it
+respects your preferences and constraints.</p>
+</div>
+<div id="rule-reference" class="section level2">
+<h2>Rule Reference</h2>
+<table>
+<colgroup>
+<col width="28%" />
+<col width="34%" />
+<col width="37%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Function</th>
+<th>Parameters</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>fix_keys(keys)</code></td>
+<td>keys: character vector</td>
+<td>Hard constraint - keys don’t move</td>
+</tr>
+<tr class="even">
+<td><code>prefer_hand(keys, hand, weight)</code></td>
+<td>hand: “left”/“right”</td>
+<td>Soft penalty for wrong hand</td>
+</tr>
+<tr class="odd">
+<td><code>prefer_row(keys, row, weight)</code></td>
+<td>row: 1, 2, or 3</td>
+<td>Soft penalty for wrong row</td>
+</tr>
+<tr class="even">
+<td><code>prefer_finger(keys, fingers, weight)</code></td>
+<td>fingers: 0-9</td>
+<td>Soft penalty for wrong finger</td>
+</tr>
+<tr class="odd">
+<td><code>balance_hands(target, weight)</code></td>
+<td>target: 0-1</td>
+<td>Soft penalty for hand imbalance</td>
+</tr>
+<tr class="even">
+<td><code>keep_like(ref, keys, weight)</code></td>
+<td>ref: “qwerty” or vector</td>
+<td>Soft penalty for layout mismatch</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
