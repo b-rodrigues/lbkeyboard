@@ -73,12 +73,27 @@ structure, but with modifications that:
 The home row had to change substantially—QWERTZ’s home row is simply too
 inefficient. But I tried to minimize disruption elsewhere.
 
+## The Corpus: What Does Luxembourg Type?
+
+To evaluate keyboard layouts fairly, we need text that reflects what
+people actually type in Luxembourg. I created a balanced multilingual
+corpus with:
+
+- **30% French** — Administrative and business language
+- **30% English** — International communication  
+- **20% German** — Media and education
+- **20% Luxembourgish** — Daily life and national identity
+
+This weighting roughly matches language usage patterns in Luxembourg
+workplaces and daily communication. The top letters across all
+languages? **E, N, S, T, R, I, A** — exactly what you’d want on your
+home row.
+
 ## How Much Better Is It?
 
-Let’s look at the numbers. Using the **lbkeyboard** package’s effort
-model (which accounts for finger travel, same-finger penalties, and
-ergonomic factors), here’s how the layouts compare on a typical
-multilingual Luxembourg corpus:
+Using the **lbkeyboard** package’s effort model (which accounts for
+finger travel, same-finger penalties, and ergonomic factors), here’s how
+the layouts compare:
 
 | Layout         | Effort Score | Relative (%) | Improvement vs QWERTZ |
 |:---------------|-------------:|-------------:|----------------------:|
@@ -87,6 +102,21 @@ multilingual Luxembourg corpus:
 | QWERTZ (Swiss) |    1094468.2 |        172.7 |                    0% |
 
 Typing effort comparison (lower is better)
+
+## Visualizing the Difference: Heatmaps
+
+Heatmaps show where your fingers spend time. Brighter colors = more
+keystrokes. Ideally, you want the brightness concentrated on the home
+row.
+
+![](introduction_files/figure-html/heatmaps-1.png)
+
+![](introduction_files/figure-html/heatmap-bepo-1.png)
+
+![](introduction_files/figure-html/heatmap-qwertz-lux-1.png)
+
+Notice how BÉPO and QWERTZ-LUX concentrate activity on the home row,
+while QWERTZ spreads effort across all rows.
 
 ## The QWERTZ-LUX Layout
 
@@ -201,21 +231,22 @@ sessionInfo()
 #> [1] ggplot2_4.0.1    dplyr_1.1.4      lbkeyboard_0.1.0 testthat_3.3.1  
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] sass_0.4.10        generics_0.1.4     GA_3.2.4           stringi_1.8.7     
-#>  [5] digest_0.6.39      magrittr_2.0.4     RColorBrewer_1.1-3 grid_4.5.2        
-#>  [9] evaluate_1.0.5     iterators_1.0.14   pkgload_1.4.1      fastmap_1.2.0     
-#> [13] foreach_1.5.2      rprojroot_2.1.1    jsonlite_2.0.0     processx_3.8.6    
-#> [17] pkgbuild_1.4.8     sessioninfo_1.2.3  brio_1.1.5         ps_1.9.1          
-#> [21] purrr_1.2.0        scales_1.4.0       codetools_0.2-20   textshaping_1.0.4 
-#> [25] jquerylib_0.1.4    cli_3.6.5          rlang_1.1.6        crayon_1.5.3      
-#> [29] ellipsis_0.3.2     withr_3.0.2        remotes_2.5.0      cachem_1.1.0      
-#> [33] yaml_2.3.12        devtools_2.4.6     otel_0.2.0         tools_4.5.2       
-#> [37] memoise_2.0.1      vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4   
-#> [41] stringr_1.6.0      fs_1.6.6           htmlwidgets_1.6.4  usethis_3.2.1     
-#> [45] ragg_1.5.0         pkgconfig_2.0.3    desc_1.4.3         callr_3.7.6       
-#> [49] gtable_0.3.6       pkgdown_2.2.0      bslib_0.9.0        pillar_1.11.1     
-#> [53] glue_1.8.0         Rcpp_1.1.0         systemfonts_1.3.1  xfun_0.55         
-#> [57] tibble_3.3.0       tidyselect_1.2.1   rstudioapi_0.17.1  knitr_1.51        
-#> [61] farver_2.1.2       htmltools_0.5.9    rmarkdown_2.30     compiler_4.5.2    
-#> [65] S7_0.2.1
+#>  [1] gtable_0.3.6       xfun_0.55          bslib_0.9.0        htmlwidgets_1.6.4 
+#>  [5] devtools_2.4.6     remotes_2.5.0      processx_3.8.6     callr_3.7.6       
+#>  [9] vctrs_0.6.5        tools_4.5.2        ps_1.9.1           generics_0.1.4    
+#> [13] tibble_3.3.0       pkgconfig_2.0.3    RColorBrewer_1.1-3 S7_0.2.1          
+#> [17] desc_1.4.3         lifecycle_1.0.4    compiler_4.5.2     farver_2.1.2      
+#> [21] stringr_1.6.0      textshaping_1.0.4  brio_1.1.5         ggforce_0.5.0     
+#> [25] codetools_0.2-20   htmltools_0.5.9    usethis_3.2.1      sass_0.4.10       
+#> [29] yaml_2.3.12        pillar_1.11.1      pkgdown_2.2.0      crayon_1.5.3      
+#> [33] jquerylib_0.1.4    MASS_7.3-65        ellipsis_0.3.2     cachem_1.1.0      
+#> [37] sessioninfo_1.2.3  iterators_1.0.14   foreach_1.5.2      tidyselect_1.2.1  
+#> [41] digest_0.6.39      stringi_1.8.7      purrr_1.2.0        labeling_0.4.3    
+#> [45] polyclip_1.10-7    rprojroot_2.1.1    fastmap_1.2.0      grid_4.5.2        
+#> [49] cli_3.6.5          magrittr_2.0.4     pkgbuild_1.4.8     withr_3.0.2       
+#> [53] scales_1.4.0       rmarkdown_2.30     otel_0.2.0         ragg_1.5.0        
+#> [57] memoise_2.0.1      evaluate_1.0.5     GA_3.2.4           knitr_1.51        
+#> [61] rlang_1.1.6        Rcpp_1.1.0         glue_1.8.0         tweenr_2.0.3      
+#> [65] pkgload_1.4.1      rstudioapi_0.17.1  jsonlite_2.0.0     R6_2.6.1          
+#> [69] systemfonts_1.3.1  fs_1.6.6           prismatic_1.1.2
 ```
