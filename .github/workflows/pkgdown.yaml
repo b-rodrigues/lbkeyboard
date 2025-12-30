@@ -44,9 +44,6 @@ jobs:
       - name: Build dev environment
         run: nix-shell --quiet --run "echo 'Dev environment ready'"
 
-      - name: Install package
-        run: nix-shell --quiet --run "Rscript -e 'devtools::install()'"
-
       - name: Build website
         run: nix-shell --quiet --run "Rscript -e 'pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)'"
 
