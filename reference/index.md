@@ -32,6 +32,8 @@
   : Sample of german text
 - [`ggkeyboard()`](https://b-rodrigues.github.io/lbkeyboard/reference/ggkeyboard.md)
   : Plot a keyboard using ggplot2. Originally from ggkeyboard
+- [`ggkeyboard_layers()`](https://b-rodrigues.github.io/lbkeyboard/reference/ggkeyboard_layers.md)
+  : Plot multiple layers of a PKL layout
 - [`heatmapize()`](https://b-rodrigues.github.io/lbkeyboard/reference/heatmapize.md)
   : Colours the keys of the keyboard according the relative frequency of
   characters appearing in a text.
@@ -45,19 +47,22 @@
   : Rule Builder Functions for Keyboard Layout Optimization
 - [`layout_to_keyboard()`](https://b-rodrigues.github.io/lbkeyboard/reference/layout_to_keyboard.md)
   : Convert optimized layout to full keyboard format
-- [`lbkeyboard`](https://b-rodrigues.github.io/lbkeyboard/reference/lbkeyboard-package.md)
-  [`lbkeyboard-package`](https://b-rodrigues.github.io/lbkeyboard/reference/lbkeyboard-package.md)
-  : lbkeyboard: Keyboard Layout Analysis and Optimization
 - [`letter_freq()`](https://b-rodrigues.github.io/lbkeyboard/reference/letter_freq.md)
   : Counts the frequency of each letter in a string of text
+- [`list_layouts()`](https://b-rodrigues.github.io/lbkeyboard/reference/list_layouts.md)
+  : List available layouts in a directory
 - [`luxembourguish`](https://b-rodrigues.github.io/lbkeyboard/reference/luxembourguish.md)
   : Sample of luxembourguish text
 - [`min_max()`](https://b-rodrigues.github.io/lbkeyboard/reference/min_max.md)
   : Standardizes an atomic vector of numbers using the min-max method
 - [`optimize_layout()`](https://b-rodrigues.github.io/lbkeyboard/reference/optimize_layout.md)
   : Optimize keyboard layout using genetic algorithm
+- [`parse_layout_ini()`](https://b-rodrigues.github.io/lbkeyboard/reference/parse_layout_ini.md)
+  : Parse a PKL layout.ini file
 - [`plot_layout()`](https://b-rodrigues.github.io/lbkeyboard/reference/plot_layout.md)
   : Plot keyboard layout using ggkeyboard
+- [`plot_layout_ini()`](https://b-rodrigues.github.io/lbkeyboard/reference/plot_layout_ini.md)
+  : Plot a PKL layout
 - [`prefer_finger()`](https://b-rodrigues.github.io/lbkeyboard/reference/prefer_finger.md)
   : Prefer keys on specific fingers
 - [`prefer_hand()`](https://b-rodrigues.github.io/lbkeyboard/reference/prefer_hand.md)
@@ -66,6 +71,8 @@
   : Prefer keys on a specific row
 - [`print(`*`<layout_rule>`*`)`](https://b-rodrigues.github.io/lbkeyboard/reference/print.layout_rule.md)
   : Print method for layout rules
+- [`print(`*`<pkl_layout>`*`)`](https://b-rodrigues.github.io/lbkeyboard/reference/print.pkl_layout.md)
+  : Print method for pkl_layout objects
 - [`print_layout()`](https://b-rodrigues.github.io/lbkeyboard/reference/print_layout.md)
   : Print keyboard layout in ASCII format
 - [`qwertz_accent_layers`](https://b-rodrigues.github.io/lbkeyboard/reference/qwertz_accent_layers.md)

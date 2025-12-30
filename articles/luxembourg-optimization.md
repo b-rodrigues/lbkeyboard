@@ -1103,18 +1103,7 @@ word_count_df <- data.frame(
   `Percentage` = paste0(c(30, 30, 20, 20), "%"),
   check.names = FALSE
 )
-
-knitr::kable(word_count_df, caption = "Corpus composition by language")
 ```
-
-|               | Language      | Words | Characters | Percentage |
-|:--------------|:--------------|:------|:-----------|:-----------|
-| French        | French        | 4,845 | 27,948     | 30%        |
-| English       | English       | 7,530 | 48,129     | 30%        |
-| German        | German        | 2,788 | 17,874     | 20%        |
-| Luxembourgish | Luxembourgish | 9,232 | 49,304     | 20%        |
-
-Corpus composition by language
 
 ### Letter Frequency Analysis
 
@@ -1133,12 +1122,15 @@ top_n <- 10
 # Create comparison table
 top_letters <- data.frame(
   Rank = 1:top_n,
-  French = paste0(head(freq_french$characters, top_n), " (", 
+  French = paste0(head(freq_french$characters, top_n), " (",
                   round(head(freq_french$frequencies, top_n) * 100, 1), "%)"),
+
   English = paste0(head(freq_english$characters, top_n), " (",
                    round(head(freq_english$frequencies, top_n) * 100, 1), "%)"),
+
   German = paste0(head(freq_german$characters, top_n), " (",
                   round(head(freq_german$frequencies, top_n) * 100, 1), "%)"),
+
   Luxembourgish = paste0(head(freq_lux$characters, top_n), " (",
                          round(head(freq_lux$frequencies, top_n) * 100, 1), "%)")
 )

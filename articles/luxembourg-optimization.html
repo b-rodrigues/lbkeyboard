@@ -33,6 +33,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/getting-started.html">Getting Started with lbkeyboard</a></li>
+    <li><a class="dropdown-item" href="../articles/introduction.html">Introducing QWERTZ-LUX: A Better Keyboard Layout for Luxembourg</a></li>
     <li><a class="dropdown-item" href="../articles/luxembourg-optimization.html">Optimizing Keyboard Layouts for Luxembourg</a></li>
     <li><a class="dropdown-item" href="../articles/qwertz-comparison.html">UNKNOWN TITLE</a></li>
     <li><a class="dropdown-item" href="../articles/rules-system.html">Composable Rules System</a></li>
@@ -1180,49 +1181,7 @@ identity</li>
 <span>  Characters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">char_counts</span>, big.mark <span class="op">=</span> <span class="st">","</span><span class="op">)</span>,</span>
 <span>  `Percentage` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">30</span>, <span class="fl">30</span>, <span class="fl">20</span>, <span class="fl">20</span><span class="op">)</span>, <span class="st">"%"</span><span class="op">)</span>,</span>
 <span>  check.names <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">word_count_df</span>, caption <span class="op">=</span> <span class="st">"Corpus composition by language"</span><span class="op">)</span></span></code></pre></div>
-<table class="table">
-<caption>Corpus composition by language</caption>
-<thead><tr class="header">
-<th align="left"></th>
-<th align="left">Language</th>
-<th align="left">Words</th>
-<th align="left">Characters</th>
-<th align="left">Percentage</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left">French</td>
-<td align="left">French</td>
-<td align="left">4,845</td>
-<td align="left">27,948</td>
-<td align="left">30%</td>
-</tr>
-<tr class="even">
-<td align="left">English</td>
-<td align="left">English</td>
-<td align="left">7,530</td>
-<td align="left">48,129</td>
-<td align="left">30%</td>
-</tr>
-<tr class="odd">
-<td align="left">German</td>
-<td align="left">German</td>
-<td align="left">2,788</td>
-<td align="left">17,874</td>
-<td align="left">20%</td>
-</tr>
-<tr class="even">
-<td align="left">Luxembourgish</td>
-<td align="left">Luxembourgish</td>
-<td align="left">9,232</td>
-<td align="left">49,304</td>
-<td align="left">20%</td>
-</tr>
-</tbody>
-</table>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="letter-frequency-analysis">Letter Frequency Analysis<a class="anchor" aria-label="anchor" href="#letter-frequency-analysis"></a>
 </h3>
@@ -1240,12 +1199,15 @@ identity</li>
 <span><span class="co"># Create comparison table</span></span>
 <span><span class="va">top_letters</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  Rank <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">top_n</span>,</span>
-<span>  French <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_french</span><span class="op">$</span><span class="va">characters</span>, <span class="va">top_n</span><span class="op">)</span>, <span class="st">" ("</span>, </span>
+<span>  French <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_french</span><span class="op">$</span><span class="va">characters</span>, <span class="va">top_n</span><span class="op">)</span>, <span class="st">" ("</span>,</span>
 <span>                  <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_french</span><span class="op">$</span><span class="va">frequencies</span>, <span class="va">top_n</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%)"</span><span class="op">)</span>,</span>
+<span></span>
 <span>  English <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_english</span><span class="op">$</span><span class="va">characters</span>, <span class="va">top_n</span><span class="op">)</span>, <span class="st">" ("</span>,</span>
 <span>                   <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_english</span><span class="op">$</span><span class="va">frequencies</span>, <span class="va">top_n</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%)"</span><span class="op">)</span>,</span>
+<span></span>
 <span>  German <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_german</span><span class="op">$</span><span class="va">characters</span>, <span class="va">top_n</span><span class="op">)</span>, <span class="st">" ("</span>,</span>
 <span>                  <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_german</span><span class="op">$</span><span class="va">frequencies</span>, <span class="va">top_n</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%)"</span><span class="op">)</span>,</span>
+<span></span>
 <span>  Luxembourgish <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_lux</span><span class="op">$</span><span class="va">characters</span>, <span class="va">top_n</span><span class="op">)</span>, <span class="st">" ("</span>,</span>
 <span>                         <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">freq_lux</span><span class="op">$</span><span class="va">frequencies</span>, <span class="va">top_n</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%)"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
