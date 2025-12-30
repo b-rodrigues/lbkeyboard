@@ -98,7 +98,7 @@ the layouts compare:
 | Layout         | Effort Score | Relative (%) | Improvement vs QWERTZ |
 |:---------------|-------------:|-------------:|----------------------:|
 | BÉPO           |     633624.9 |        100.0 |                 42.1% |
-| QWERTZ-LUX     |     636345.6 |        100.4 |                 41.9% |
+| QWERTZ-LUX     |     642547.9 |        101.4 |                 41.3% |
 | QWERTZ (Swiss) |    1094468.2 |        172.7 |                    0% |
 
 Typing effort comparison (lower is better)
@@ -111,9 +111,9 @@ row.
 
 ![](introduction_files/figure-html/heatmaps-1.png)
 
-![](introduction_files/figure-html/heatmap-bepo-1.png)
-
 ![](introduction_files/figure-html/heatmap-qwertz-lux-1.png)
+
+![](introduction_files/figure-html/heatmap-bepo-1.png)
 
 Notice how BÉPO and QWERTZ-LUX concentrate activity on the home row,
 while QWERTZ spreads effort across all rows.
@@ -122,15 +122,7 @@ while QWERTZ spreads effort across all rows.
 
 Here’s what the optimized layout looks like:
 
-**Base Layer (normal keys):**
-
-    Q W F O G Z U K L P J 
-    A S D E , H N T R I M É 
-    Y X C V B . Ä ' Ë Ç 
-
-**AltGr Layer (additional accents via AltGr):**
-
-    è  à  ü  ö  (and more via dead keys: ê, â, ô, î, û, ï)
+![](introduction_files/figure-html/show-layout-1.png)
 
 ### Key Features
 

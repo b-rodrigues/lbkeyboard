@@ -1372,7 +1372,7 @@ AltGr + base letter</li>
 <span></span>
 <span><span class="co"># 3. QWERTZ-LUX (optimized letters + direct accents + remaining accent penalties)</span></span>
 <span><span class="va">effort_lux</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_layout_effort.html">calculate_layout_effort</a></span><span class="op">(</span></span>
-<span>  <span class="va">qwertz_lux</span>, <span class="va">all_texts</span>, </span>
+<span>  <span class="va">qwertz_lux</span><span class="op">$</span><span class="va">base</span>, <span class="va">all_texts</span>, </span>
 <span>  keys_to_evaluate <span class="op">=</span> <span class="va">lux_keys</span>,</span>
 <span>  layer_map <span class="op">=</span> <span class="va">qwertz_lux_accent_layers</span>,</span>
 <span>  effort_weights <span class="op">=</span> <span class="va">effort_weights</span></span>
@@ -1417,9 +1417,9 @@ AltGr + base letter</li>
 </tr>
 <tr class="odd">
 <td align="left">QWERTZ-LUX</td>
-<td align="right">636726.4</td>
-<td align="right">58.1</td>
-<td align="left">41.9%</td>
+<td align="right">642928.6</td>
+<td align="right">58.7</td>
+<td align="left">41.3%</td>
 </tr>
 </tbody>
 </table>
@@ -1446,13 +1446,13 @@ AltGr + base letter</li>
 </h3>
 <ol style="list-style-type: decimal">
 <li>
-<strong>QWERTZ-LUX is 41.9% more efficient</strong> than Standard
+<strong>QWERTZ-LUX is 41.3% more efficient</strong> than Standard
 QWERTZ</li>
 <li>
 <strong>Optimized QWERTZ is 47.9% more efficient</strong> than
 Standard QWERTZ</li>
 <li>
-<strong>QWERTZ-LUX is -11.5% more efficient</strong> than Optimized
+<strong>QWERTZ-LUX is -12.6% more efficient</strong> than Optimized
 QWERTZ alone</li>
 </ol>
 <p>The additional improvement of QWERTZ-LUX over Optimized QWERTZ comes

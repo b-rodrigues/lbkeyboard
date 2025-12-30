@@ -821,7 +821,7 @@ effort_optimized_fair <- calculate_layout_effort(
 
 # 3. QWERTZ-LUX (optimized letters + direct accents + remaining accent penalties)
 effort_lux <- calculate_layout_effort(
-  qwertz_lux, all_texts, 
+  qwertz_lux$base, all_texts, 
   keys_to_evaluate = lux_keys,
   layer_map = qwertz_lux_accent_layers,
   effort_weights = effort_weights
@@ -849,7 +849,7 @@ knitr::kable(
 |:-----------------|-------------:|-----------:|:------------|
 | Standard QWERTZ  |    1096191.7 |      100.0 | 0%          |
 | Optimized QWERTZ |     570850.1 |       52.1 | 47.9%       |
-| QWERTZ-LUX       |     636726.4 |       58.1 | 41.9%       |
+| QWERTZ-LUX       |     642928.6 |       58.7 | 41.3%       |
 
 Fair comparison including accent access penalties
 
@@ -875,9 +875,9 @@ ggplot(comparison_df, aes(x = reorder(Layout, -Effort), y = Effort, fill = Layou
 
 ### Key Findings
 
-1.  **QWERTZ-LUX is 41.9% more efficient** than Standard QWERTZ
+1.  **QWERTZ-LUX is 41.3% more efficient** than Standard QWERTZ
 2.  **Optimized QWERTZ is 47.9% more efficient** than Standard QWERTZ
-3.  **QWERTZ-LUX is -11.5% more efficient** than Optimized QWERTZ alone
+3.  **QWERTZ-LUX is -12.6% more efficient** than Optimized QWERTZ alone
 
 The additional improvement of QWERTZ-LUX over Optimized QWERTZ comes
 from:
