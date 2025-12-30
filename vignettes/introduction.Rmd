@@ -94,11 +94,15 @@ with modifications that:
 The home row had to change substantially—QWERTZ's home row is simply too inefficient.
 But I tried to minimize disruption elsewhere.
 
-## How Much Better Is It?
+## The Corpus: What Does Luxembourg Type?
 
-Let's look at the numbers. Using the **lbkeyboard** package's effort model (which
-accounts for finger travel, same-finger penalties, and ergonomic factors), here's
-how the layouts compare on a typical multilingual Luxembourg corpus:
+To evaluate keyboard layouts fairly, we need text that reflects what people actually
+type in Luxembourg. I created a balanced multilingual corpus with:
+
+- **30% French** — Administrative and business language
+- **30% English** — International communication  
+- **20% German** — Media and education
+- **20% Luxembourgish** — Daily life and national identity
 
 ```{r load-corpus, echo=FALSE}
 # Load sample texts and create weighted corpus
@@ -117,6 +121,15 @@ corpus <- list(
 all_texts <- unlist(corpus)
 freq_all <- letter_freq(paste(all_texts, collapse = " "))
 ```
+
+This weighting roughly matches language usage patterns in Luxembourg workplaces
+and daily communication. The top letters across all languages? **E, N, S, T, R, I, A**
+— exactly what you'd want on your home row.
+
+## How Much Better Is It?
+
+Using the **lbkeyboard** package's effort model (which accounts for finger travel,
+same-finger penalties, and ergonomic factors), here's how the layouts compare:
 
 ```{r effort-comparison, echo=FALSE}
 # Load layouts
@@ -171,6 +184,45 @@ knitr::kable(
   align = c("l", "r", "r", "r")
 )
 ```
+
+## Visualizing the Difference: Heatmaps
+
+Heatmaps show where your fingers spend time. Brighter colors = more keystrokes.
+Ideally, you want the brightness concentrated on the home row.
+
+```{r heatmaps, echo=FALSE, fig.width=8, fig.height=4, warning=FALSE}
+# QWERTZ heatmap
+heatmap_qwertz <- heatmapize(ch_qwertz, freq_all)
+p1 <- ggkeyboard(heatmap_qwertz) + ggtitle("QWERTZ (Swiss)")
+p1
+```
+
+```{r heatmap-bepo, echo=FALSE, fig.width=8, fig.height=4, warning=FALSE}
+# BÉPO heatmap
+heatmap_bepo <- heatmapize(afnor_bepo, freq_all)
+p2 <- ggkeyboard(heatmap_bepo) + ggtitle("BÉPO")
+p2
+```
+
+```{r heatmap-qwertz-lux, echo=FALSE, fig.width=8, fig.height=4, warning=FALSE}
+# QWERTZ-LUX heatmap - need to use keyboard template
+qwertz_lux_kb <- ch_qwertz
+letter_mask <- tolower(qwertz_lux_kb$key) %in% c(letters, "é", "ä", "ë", "ç")
+letter_indices <- which(letter_mask)
+
+# Map QWERTZ-LUX keys to QWERTZ positions for visualization
+if (length(letter_indices) >= nrow(qwertz_lux)) {
+  qwertz_lux_kb$key[letter_indices[1:nrow(qwertz_lux)]] <- qwertz_lux$key
+  qwertz_lux_kb$key_label[letter_indices[1:nrow(qwertz_lux)]] <- toupper(qwertz_lux$key)
+}
+
+heatmap_qwertz_lux <- heatmapize(qwertz_lux_kb, freq_all)
+p3 <- ggkeyboard(heatmap_qwertz_lux) + ggtitle("QWERTZ-LUX")
+p3
+```
+
+Notice how BÉPO and QWERTZ-LUX concentrate activity on the home row, while
+QWERTZ spreads effort across all rows.
 
 ## The QWERTZ-LUX Layout
 
