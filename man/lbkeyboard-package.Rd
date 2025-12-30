@@ -53,3 +53,4 @@ Useful links:
 \strong{Maintainer}: Bruno Rodrigues \email{bruno@brodrigues.co} (\href{https://orcid.org/0000-0002-3211-3689}{ORCID})
 
 }
+\keyword{internal}

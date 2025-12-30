@@ -23,8 +23,9 @@
 #' - \code{\link{balance_hands}}: Hand balance preference
 #' - \code{\link{keep_like}}: Match reference layout
 #'
-#' @docType package
-#' @name lbkeyboard-package
+#' @keywords internal
+"_PACKAGE"
+
 #' @useDynLib lbkeyboard, .registration = TRUE
 #' @importFrom Rcpp evalCpp
 #' @importFrom GA ga

@@ -16,13 +16,7 @@ knitr::opts_chunk$set(
   fig.height = 4,
   cache = FALSE
 )
-
-# Load the package - supports both installed and development mode
-if (requireNamespace("lbkeyboard", quietly = TRUE)) {
-  library(lbkeyboard)
-} else {
-  devtools::load_all()
-}
+library(lbkeyboard)
 library(dplyr)
 ```
 
@@ -122,15 +116,8 @@ freq_all <- letter_freq(paste(all_texts, collapse = " "))
 data("ch_qwertz")
 data("afnor_bepo")
 
-# Load QWERTZ-LUX from INI file
-qwertz_lux <- parse_layout_ini(
-  system.file("layouts/qwertz-lux/layout.ini", package = "lbkeyboard")
-)
-
-# If package install path doesn't work, try relative path
-if (is.null(qwertz_lux$base) || nrow(qwertz_lux$base) == 0) {
-  qwertz_lux <- parse_layout_ini("../layouts/qwertz-lux/layout.ini")
-}
+# Create QWERTZ-LUX layout using the package function
+qwertz_lux <- create_qwertz_lux_keyboard()
 
 # Effort weights
 effort_weights <- list(
@@ -150,8 +137,10 @@ effort_bepo <- calculate_layout_effort(afnor_bepo, all_texts,
                                        keys_to_evaluate = letters,
                                        effort_weights = effort_weights)
 
-effort_qwertz_lux <- calculate_layout_effort(qwertz_lux$base, all_texts,
-                                             keys_to_evaluate = c(letters, "é", "à", "ç", "ü", "ö", "ä"),
+# QWERTZ-LUX: include both letters and the direct accents
+qwertz_lux_keys <- c(letters, "é", "ä", "ë", "ç")
+effort_qwertz_lux <- calculate_layout_effort(qwertz_lux, all_texts,
+                                             keys_to_evaluate = qwertz_lux_keys,
                                              effort_weights = effort_weights)
 
 # Create comparison table
@@ -182,38 +171,21 @@ Here's what the optimized layout looks like:
 
 ```{r show-layout, echo=FALSE, results='asis'}
 # Display layout in text format grouped by row
-if (!is.null(qwertz_lux$base) && nrow(qwertz_lux$base) > 0) {
-  cat("**Base Layer (normal keys):**\n\n")
-  cat("```\n")
-  
-  # Get keys by row
-  layout_df <- qwertz_lux$base
-  for (r in sort(unique(layout_df$row))) {
-    row_keys <- layout_df[layout_df$row == r, ]
-    row_keys <- row_keys[order(row_keys$number), ]
-    cat(paste(toupper(row_keys$key), collapse = " "), "\n")
-  }
-  cat("```\n\n")
-  
-  # Also show AltGr if available
-  if (!is.null(qwertz_lux$altgr) && nrow(qwertz_lux$altgr) > 0) {
-    cat("**AltGr Layer (accented characters and symbols):**\n\n")
-    cat("```\n")
-    
-    layout_df <- qwertz_lux$altgr
-    for (r in sort(unique(layout_df$row))) {
-      row_keys <- layout_df[layout_df$row == r, ]
-      row_keys <- row_keys[order(row_keys$number), ]
-      # Show only non-empty keys
-      keys_display <- sapply(row_keys$key, function(k) {
-        if (is.na(k) || k == "" || grepl("^dk", k) || k == "--") return("·")
-        return(k)
-      })
-      cat(paste(keys_display, collapse = " "), "\n")
-    }
-    cat("```\n")
-  }
+cat("**Base Layer (normal keys):**\n\n")
+cat("```\n")
+
+# Get keys by row from qwertz_lux data frame
+for (r in sort(unique(qwertz_lux$row))) {
+  row_keys <- qwertz_lux[qwertz_lux$row == r, ]
+  row_keys <- row_keys[order(row_keys$number), ]
+  cat(paste(toupper(row_keys$key), collapse = " "), "\n")
 }
+cat("```\n\n")
+
+cat("**AltGr Layer (additional accents via AltGr):**\n\n")
+cat("```\n")
+cat("è  à  ü  ö  (and more via dead keys: ê, â, ô, î, û, ï)\n")
+cat("```\n")
 ```
 
 ### Key Features

@@ -20,7 +20,7 @@
 #'
 #' @details
 #' PKL layout.ini files use scan codes (SC010, SC011, etc.) to define key positions.
-#' The shift states are defined in the [global] section as `shiftstates = 0:1:2:6:7`.
+#' The shift states are defined in the \code{[global]} section as \code{shiftstates = 0:1:2:6:7}.
 #'
 #' Standard scan code mapping:
 #' - SC010-SC01b: Top row (Q to ])
