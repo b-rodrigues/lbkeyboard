@@ -111,6 +111,20 @@ parse_layout_ini <- function(file_path, layer = NULL, include_special = FALSE) {
   
   # Define scan code to row/position mapping for ISO keyboard
   scancode_map <- list(
+    # Number row (positions 1-12 for number keys)
+    "SC002" = list(row = 0, number = 1),   # 1
+    "SC003" = list(row = 0, number = 2),   # 2
+    "SC004" = list(row = 0, number = 3),   # 3
+    "SC005" = list(row = 0, number = 4),   # 4
+    "SC006" = list(row = 0, number = 5),   # 5
+    "SC007" = list(row = 0, number = 6),   # 6
+    "SC008" = list(row = 0, number = 7),   # 7
+    "SC009" = list(row = 0, number = 8),   # 8
+    "SC00A" = list(row = 0, number = 9),   # 9
+    "SC00B" = list(row = 0, number = 10),  # 0
+    "SC00C" = list(row = 0, number = 11),  # - 
+    "SC00D" = list(row = 0, number = 12),  # =
+    
     # Top row (positions 0-11 for 12 keys in QWERTY positions)
     "SC010" = list(row = 1, number = 0),   # Q
     "SC011" = list(row = 1, number = 1),   # W
@@ -238,7 +252,7 @@ parse_layout_ini <- function(file_path, layer = NULL, include_special = FALSE) {
   }
   
   # Convert to data frames
-  x_offset <- c(0, 0.25, 0.5)  # row offsets for plotting
+  x_offset <- c(0, 0, 0.25, 0.5)  # row offsets for plotting (row 0=number, 1=top, 2=home, 3=bottom)
   
   result <- lapply(layer_keys, function(keys) {
     if (length(keys) == 0) {
@@ -271,7 +285,8 @@ parse_layout_ini <- function(file_path, layer = NULL, include_special = FALSE) {
     }
     
     # Calculate x_mid and y_mid for plotting
-    df$x_mid <- df$number + x_offset[df$row]
+    # Use row+1 as index since x_offset is 1-indexed and row starts at 0
+    df$x_mid <- df$number + x_offset[df$row + 1]
     df$y_mid <- df$row
     
     # Sort by row and number for consistent ordering

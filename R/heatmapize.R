@@ -30,6 +30,6 @@ heatmapize <- function(keyboard, letter_freq_df, low = "light green", high = "re
   }
 
   keyboard %>%
-    dplyr::full_join(letter_freq_df, by = c("key" = "characters")) %>%
+    dplyr::left_join(letter_freq_df, by = c("key" = "characters")) %>%
     dplyr::mutate(fill = dplyr::coalesce(fill.y, fill.x))
 }

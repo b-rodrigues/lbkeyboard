@@ -159,7 +159,7 @@ effort_bepo <- calculate_layout_effort(afnor_bepo, all_texts,
 
 # QWERTZ-LUX: include both letters and the direct accents
 qwertz_lux_keys <- c(letters, "é", "ä", "ë", "ç")
-effort_qwertz_lux <- calculate_layout_effort(qwertz_lux, all_texts,
+effort_qwertz_lux <- calculate_layout_effort(qwertz_lux$base, all_texts,
                                              keys_to_evaluate = qwertz_lux_keys,
                                              effort_weights = effort_weights)
 
@@ -197,6 +197,13 @@ p1 <- ggkeyboard(heatmap_qwertz) + ggtitle("QWERTZ (Swiss)")
 p1
 ```
 
+```{r heatmap-qwertz-lux, echo=FALSE, fig.width=8, fig.height=4, warning=FALSE}
+# QWERTZ-LUX heatmap - use the base layer directly (already ggkeyboard-compatible)
+heatmap_qwertz_lux <- heatmapize(qwertz_lux$base, freq_all)
+p3 <- ggkeyboard(heatmap_qwertz_lux) + ggtitle("QWERTZ-LUX")
+p3
+```
+
 ```{r heatmap-bepo, echo=FALSE, fig.width=8, fig.height=4, warning=FALSE}
 # BÉPO heatmap
 heatmap_bepo <- heatmapize(afnor_bepo, freq_all)
@@ -204,22 +211,7 @@ p2 <- ggkeyboard(heatmap_bepo) + ggtitle("BÉPO")
 p2
 ```
 
-```{r heatmap-qwertz-lux, echo=FALSE, fig.width=8, fig.height=4, warning=FALSE}
-# QWERTZ-LUX heatmap - need to use keyboard template
-qwertz_lux_kb <- ch_qwertz
-letter_mask <- tolower(qwertz_lux_kb$key) %in% c(letters, "é", "ä", "ë", "ç")
-letter_indices <- which(letter_mask)
 
-# Map QWERTZ-LUX keys to QWERTZ positions for visualization
-if (length(letter_indices) >= nrow(qwertz_lux)) {
-  qwertz_lux_kb$key[letter_indices[1:nrow(qwertz_lux)]] <- qwertz_lux$key
-  qwertz_lux_kb$key_label[letter_indices[1:nrow(qwertz_lux)]] <- toupper(qwertz_lux$key)
-}
-
-heatmap_qwertz_lux <- heatmapize(qwertz_lux_kb, freq_all)
-p3 <- ggkeyboard(heatmap_qwertz_lux) + ggtitle("QWERTZ-LUX")
-p3
-```
 
 Notice how BÉPO and QWERTZ-LUX concentrate activity on the home row, while
 QWERTZ spreads effort across all rows.
@@ -229,22 +221,7 @@ QWERTZ spreads effort across all rows.
 Here's what the optimized layout looks like:
 
 ```{r show-layout, echo=FALSE, results='asis'}
-# Display layout in text format grouped by row
-cat("**Base Layer (normal keys):**\n\n")
-cat("```\n")
-
-# Get keys by row from qwertz_lux data frame
-for (r in sort(unique(qwertz_lux$row))) {
-  row_keys <- qwertz_lux[qwertz_lux$row == r, ]
-  row_keys <- row_keys[order(row_keys$number), ]
-  cat(paste(toupper(row_keys$key), collapse = " "), "\n")
-}
-cat("```\n\n")
-
-cat("**AltGr Layer (additional accents via AltGr):**\n\n")
-cat("```\n")
-cat("è  à  ü  ö  (and more via dead keys: ê, â, ô, î, û, ï)\n")
-cat("```\n")
+p3
 ```
 
 ### Key Features
