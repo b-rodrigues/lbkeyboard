@@ -22,10 +22,10 @@ library(dplyr)
 
 ## Introduction
 
-Luxembourg's multilingual environment requires a keyboard that works efficiently 
-for French, German, Luxembourgish, and English. This vignette demonstrates 
-how to analyze text corpora, evaluate existing keyboard layouts, and optimize 
-new ones using the **lbkeyboard** package's typing effort model.
+Luxembourg's multilingual environment requires a keyboard that works efficiently
+for French, German, Luxembourgish, and English. This vignette demonstrates how
+to analyze text corpora, evaluate existing keyboard layouts, and optimize new
+ones using the **lbkeyboard** package's typing effort model.
 
 We will:
 
@@ -76,8 +76,6 @@ word_count_df <- data.frame(
   `Percentage` = paste0(c(30, 30, 20, 20), "%"),
   check.names = FALSE
 )
-
-knitr::kable(word_count_df, caption = "Corpus composition by language")
 ```
 
 ### Letter Frequency Analysis
@@ -97,12 +95,15 @@ top_n <- 10
 # Create comparison table
 top_letters <- data.frame(
   Rank = 1:top_n,
-  French = paste0(head(freq_french$characters, top_n), " (", 
+  French = paste0(head(freq_french$characters, top_n), " (",
                   round(head(freq_french$frequencies, top_n) * 100, 1), "%)"),
+
   English = paste0(head(freq_english$characters, top_n), " (",
                    round(head(freq_english$frequencies, top_n) * 100, 1), "%)"),
+
   German = paste0(head(freq_german$characters, top_n), " (",
                   round(head(freq_german$frequencies, top_n) * 100, 1), "%)"),
+
   Luxembourgish = paste0(head(freq_lux$characters, top_n), " (",
                          round(head(freq_lux$frequencies, top_n) * 100, 1), "%)")
 )

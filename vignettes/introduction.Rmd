@@ -1,0 +1,288 @@
+---
+title: "Introducing QWERTZ-LUX: A Better Keyboard Layout for Luxembourg"
+author: "Bruno Rodrigues"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introducing QWERTZ-LUX: A Better Keyboard Layout for Luxembourg}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 4,
+  cache = FALSE
+)
+
+# Load the package - supports both installed and development mode
+if (requireNamespace("lbkeyboard", quietly = TRUE)) {
+  library(lbkeyboard)
+} else {
+  devtools::load_all()
+}
+library(dplyr)
+```
+
+## TL;DR
+
+I've been thinking about keyboard layouts for a while. QWERTZ isn't great, and France
+recently adopted BÉPO as an official standard alongside a revised AZERTY. What would
+such an optimized layout look like for Luxembourg? Here's my proposal: **QWERTZ-LUX**.
+
+## The Problem with QWERTZ
+
+If you've ever wondered why you're typing "E" with your middle finger stretched up
+to the top row while "J" (which you barely use) sits comfortably on the home row...
+well, you're not alone. The QWERTZ layout, like its QWERTY cousin, was designed in
+the 1870s for typewriters. The primary concern wasn't typing efficiency—it was
+preventing mechanical jamming of type bars.
+
+**Fast forward 150 years**: we're still using essentially the same layout, even though
+the mechanical constraints disappeared decades ago.
+
+The home row—where your fingers naturally rest—should contain the most frequently
+used letters. But look at QWERTZ's home row:
+
+```
+A S D F G H J K L
+```
+
+For a multilingual environment like Luxembourg (where we type in French, German,
+Luxembourgish, and English), this means:
+
+- **E** (the most frequent letter in all four languages) is on the top row
+- **T, N, R, I** (all extremely common) are scattered or require reaching
+- **J, K** (rarely used) take prime real estate on the home row
+
+This is objectively inefficient.
+
+## France Shows the Way
+
+In 2019, France officially adopted two new keyboard standards:
+
+1. **A revised AZERTY** that fixes many issues while maintaining familiarity
+2. **BÉPO** — a completely redesigned layout optimized for French
+
+I've been using BÉPO for years, and I can honestly say it's a game-changer. Typing
+feels more natural, there's less finger movement, and the learning curve, while steep
+at first, pays off significantly.
+
+But here's the thing: BÉPO was designed primarily for French. Luxembourg is unique—
+we need something that works for French *and* German *and* Luxembourgish *and* English.
+
+## The QWERTZ-LUX Approach
+
+So I started wondering: what would an optimized keyboard layout for Luxembourg look
+like?
+
+I had two options:
+
+1. **Go full BÉPO** and adapt it for Luxembourgish needs
+2. **Keep QWERTZ as a base** and optimize only what's necessary
+
+I chose a middle path. QWERTZ-LUX is essentially a fork of BÉPO's structure, but
+with modifications that:
+
+- Keep familiar elements for QWERTZ users (Ctrl+Z, Ctrl+X, Ctrl+C, Ctrl+V shortcuts)
+- Optimize the letter arrangement for our multilingual corpus
+- Provide direct access to accented characters (é, à, ü, ö, ç, ä) without dead keys
+
+The home row had to change substantially—QWERTZ's home row is simply too inefficient.
+But I tried to minimize disruption elsewhere.
+
+## How Much Better Is It?
+
+Let's look at the numbers. Using the **lbkeyboard** package's effort model (which
+accounts for finger travel, same-finger penalties, and ergonomic factors), here's
+how the layouts compare on a typical multilingual Luxembourg corpus:
+
+```{r load-corpus, echo=FALSE}
+# Load sample texts and create weighted corpus
+data("french")
+data("german")
+data("english")
+data("luxembourguish")
+
+corpus <- list(
+  French = rep(french, 3),         # 30%
+  English = rep(english, 3),       # 30%
+  German = rep(german, 2),         # 20%
+  Luxembourgish = rep(luxembourguish, 2)  # 20%
+)
+
+all_texts <- unlist(corpus)
+freq_all <- letter_freq(paste(all_texts, collapse = " "))
+```
+
+```{r effort-comparison, echo=FALSE}
+# Load layouts
+data("ch_qwertz")
+data("afnor_bepo")
+
+# Load QWERTZ-LUX from INI file
+qwertz_lux <- parse_layout_ini(
+  system.file("layouts/qwertz-lux/layout.ini", package = "lbkeyboard")
+)
+
+# If package install path doesn't work, try relative path
+if (is.null(qwertz_lux$base) || nrow(qwertz_lux$base) == 0) {
+  qwertz_lux <- parse_layout_ini("../layouts/qwertz-lux/layout.ini")
+}
+
+# Effort weights
+effort_weights <- list(
+  base = 3.0,
+  same_finger = 3.0,
+  same_hand = 0.5,
+  row_change = 0.5,
+  trigram = 0.3
+)
+
+# Calculate effort for each layout
+effort_qwertz <- calculate_layout_effort(ch_qwertz, all_texts, 
+                                         keys_to_evaluate = letters,
+                                         effort_weights = effort_weights)
+
+effort_bepo <- calculate_layout_effort(afnor_bepo, all_texts,
+                                       keys_to_evaluate = letters,
+                                       effort_weights = effort_weights)
+
+effort_qwertz_lux <- calculate_layout_effort(qwertz_lux$base, all_texts,
+                                             keys_to_evaluate = c(letters, "é", "à", "ç", "ü", "ö", "ä"),
+                                             effort_weights = effort_weights)
+
+# Create comparison table
+comparison_df <- data.frame(
+  Layout = c("QWERTZ (Swiss)", "BÉPO", "QWERTZ-LUX"),
+  Effort = c(effort_qwertz, effort_bepo, effort_qwertz_lux),
+  stringsAsFactors = FALSE
+) %>%
+  mutate(
+    `Relative (%)` = round(Effort / min(Effort) * 100, 1),
+    `vs QWERTZ` = paste0(round((1 - Effort / effort_qwertz) * 100, 1), "%")
+  ) %>%
+  arrange(Effort)
+
+comparison_df$Effort <- round(comparison_df$Effort, 2)
+
+knitr::kable(
+  comparison_df,
+  caption = "Typing effort comparison (lower is better)",
+  col.names = c("Layout", "Effort Score", "Relative (%)", "Improvement vs QWERTZ"),
+  align = c("l", "r", "r", "r")
+)
+```
+
+## The QWERTZ-LUX Layout
+
+Here's what the optimized layout looks like:
+
+```{r show-layout, echo=FALSE, results='asis'}
+# Display layout in text format grouped by row
+if (!is.null(qwertz_lux$base) && nrow(qwertz_lux$base) > 0) {
+  cat("**Base Layer (normal keys):**\n\n")
+  cat("```\n")
+  
+  # Get keys by row
+  layout_df <- qwertz_lux$base
+  for (r in sort(unique(layout_df$row))) {
+    row_keys <- layout_df[layout_df$row == r, ]
+    row_keys <- row_keys[order(row_keys$number), ]
+    cat(paste(toupper(row_keys$key), collapse = " "), "\n")
+  }
+  cat("```\n\n")
+  
+  # Also show AltGr if available
+  if (!is.null(qwertz_lux$altgr) && nrow(qwertz_lux$altgr) > 0) {
+    cat("**AltGr Layer (accented characters and symbols):**\n\n")
+    cat("```\n")
+    
+    layout_df <- qwertz_lux$altgr
+    for (r in sort(unique(layout_df$row))) {
+      row_keys <- layout_df[layout_df$row == r, ]
+      row_keys <- row_keys[order(row_keys$number), ]
+      # Show only non-empty keys
+      keys_display <- sapply(row_keys$key, function(k) {
+        if (is.na(k) || k == "" || grepl("^dk", k) || k == "--") return("·")
+        return(k)
+      })
+      cat(paste(keys_display, collapse = " "), "\n")
+    }
+    cat("```\n")
+  }
+}
+```
+
+### Key Features
+
+| Feature | Benefit |
+|---------|---------|
+| **Optimized home row** | High-frequency letters (E, T, N, R, I, S) within easy reach |
+| **Direct accents** | é, à, ü, ö, ç, ä accessible without dead key combinations |
+| **ZXCV preserved** | Common shortcuts (Ctrl+Z/X/C/V) stay in familiar positions |
+| **BÉPO-compatible** | Same modifier layer philosophy as BÉPO |
+
+## Should You Switch?
+
+That depends on your priorities:
+
+- **If you value efficiency**: Yes. The numbers don't lie—QWERTZ-LUX requires
+  meaningfully less effort for the same typing tasks.
+  
+- **If you're a touch typist**: You'll need to relearn the layout, but the
+  investment pays off. I'd estimate 2-4 weeks of practice to regain full speed.
+  
+- **If you type casually**: The switch might not be worth the learning curve.
+  But if you're reading this, you're probably not a casual typist!
+
+## What's Next?
+
+I'm still refining this layout based on real-world usage. The **lbkeyboard** package
+lets you:
+
+- Analyze your own text corpora
+- Experiment with different layout modifications
+- Quantify improvements with the effort model
+
+Want to try it? Install the package and dive in:
+
+```{r install, eval=FALSE}
+# Install from GitHub
+# remotes::install_github("b-rodrigues/lbkeyboard")
+
+library(lbkeyboard)
+
+# Explore the layout
+qwertz_lux <- parse_layout_ini("layouts/qwertz-lux/layout.ini")
+print(qwertz_lux)
+
+# Visualize it
+plot_layout_ini("layouts/qwertz-lux/layout.ini")
+```
+
+---
+
+## Discussion
+
+I'd love to hear your thoughts:
+
+1. **What letters/symbols do you type most often?** (This helps tune the model)
+2. **What shortcuts can't you live without?** (I tried to preserve common ones)
+3. **Would you try an optimized layout?** (Or are you QWERTZ-for-life?)
+
+The beauty of having this as an R package is that *you* can fork it and create
+your own optimized layout for your specific needs. The code is open source, the
+methodology is transparent, and the effort model is documented.
+
+Happy typing! 🎹
+
+---
+
+## Session Info
+
+```{r session-info}
+sessionInfo()
+```
