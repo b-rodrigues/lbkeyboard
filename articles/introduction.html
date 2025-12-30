@@ -183,35 +183,14 @@ want on your home row.</p>
 <p>Using the <strong>lbkeyboard</strong> package’s effort model (which
 accounts for finger travel, same-finger penalties, and ergonomic
 factors), here’s how the layouts compare:</p>
-<table class="table">
-<caption>Typing effort comparison (lower is better)</caption>
-<thead><tr class="header">
-<th align="left">Layout</th>
-<th align="right">Effort Score</th>
-<th align="right">Relative (%)</th>
-<th align="right">Improvement vs QWERTZ</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left">BÉPO</td>
-<td align="right">633624.9</td>
-<td align="right">100.0</td>
-<td align="right">42.1%</td>
-</tr>
-<tr class="even">
-<td align="left">QWERTZ-LUX</td>
-<td align="right">642547.9</td>
-<td align="right">101.4</td>
-<td align="right">41.3%</td>
-</tr>
-<tr class="odd">
-<td align="left">QWERTZ (Swiss)</td>
-<td align="right">1094468.2</td>
-<td align="right">172.7</td>
-<td align="right">0%</td>
-</tr>
-</tbody>
-</table>
+<pre><code><span><span class="co">#&gt;           Layout Effort Score Hand Balance (L/R %) Relative (%)</span></span>
+<span><span class="co">#&gt; 1           BÉPO     633624.9            43.5/56.5        100.0</span></span>
+<span><span class="co">#&gt; 2     QWERTZ-LUX     642547.9            45.8/54.2        101.4</span></span>
+<span><span class="co">#&gt; 3 QWERTZ (Swiss)    1094468.2            48.1/51.9        172.7</span></span>
+<span><span class="co">#&gt;   Improvement vs QWERTZ</span></span>
+<span><span class="co">#&gt; 1                 42.1%</span></span>
+<span><span class="co">#&gt; 2                 41.3%</span></span>
+<span><span class="co">#&gt; 3                    0%</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="visualizing-the-difference-heatmaps">Visualizing the Difference: Heatmaps<a class="anchor" aria-label="anchor" href="#visualizing-the-difference-heatmaps"></a>
@@ -290,7 +269,7 @@ not a casual typist!</p></li>
 <li>Quantify improvements with the effort model</li>
 </ul>
 <p>Want to try it? Install the package and dive in:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install from GitHub</span></span>
 <span><span class="co"># remotes::install_github("b-rodrigues/lbkeyboard")</span></span>
 <span></span>
@@ -329,7 +308,7 @@ model is documented.</p>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>

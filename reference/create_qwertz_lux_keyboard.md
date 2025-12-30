@@ -12,8 +12,14 @@ create_qwertz_lux_keyboard()
 
 ## Value
 
-A data frame with 34 keys (26 letters + 4 accents + comma + period +
-apostrophe + É) and columns: key, key_label, row, number, x_mid, y_mid
+A list with class "qwertz_lux_layout" containing:
+
+- base: Data frame of base layer keys (compatible with
+  heatmapize/ggkeyboard)
+
+- altgr: Data frame of AltGr layer keys
+
+- metadata: List with layout name and info
 
 ## Details
 
@@ -46,6 +52,7 @@ Additional accents via AltGr or dead keys (use layer_map):
 ``` r
 kb <- create_qwertz_lux_keyboard()
 #> Error in create_qwertz_lux_keyboard(): could not find function "create_qwertz_lux_keyboard"
-nrow(kb)  # 33
-#> Error: object 'kb' not found
+# Use base layer for heatmap
+# heatmap <- heatmapize(kb$base, letter_freq_df)
+# ggkeyboard(heatmap)
 ```

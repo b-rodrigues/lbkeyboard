@@ -95,13 +95,14 @@ Using the **lbkeyboard** package’s effort model (which accounts for
 finger travel, same-finger penalties, and ergonomic factors), here’s how
 the layouts compare:
 
-| Layout         | Effort Score | Relative (%) | Improvement vs QWERTZ |
-|:---------------|-------------:|-------------:|----------------------:|
-| BÉPO           |     633624.9 |        100.0 |                 42.1% |
-| QWERTZ-LUX     |     642547.9 |        101.4 |                 41.3% |
-| QWERTZ (Swiss) |    1094468.2 |        172.7 |                    0% |
-
-Typing effort comparison (lower is better)
+    #>           Layout Effort Score Hand Balance (L/R %) Relative (%)
+    #> 1           BÉPO     633624.9            43.5/56.5        100.0
+    #> 2     QWERTZ-LUX     642547.9            45.8/54.2        101.4
+    #> 3 QWERTZ (Swiss)    1094468.2            48.1/51.9        172.7
+    #>   Improvement vs QWERTZ
+    #> 1                 42.1%
+    #> 2                 41.3%
+    #> 3                    0%
 
 ## Visualizing the Difference: Heatmaps
 

@@ -8,6 +8,8 @@
   : Afnor BÉPO keyboard
 - [`balance_hands()`](https://b-rodrigues.github.io/lbkeyboard/reference/balance_hands.md)
   : Balance hand usage
+- [`calculate_hand_balance()`](https://b-rodrigues.github.io/lbkeyboard/reference/calculate_hand_balance.md)
+  : Calculate hand balance for a keyboard layout
 - [`calculate_layout_effort()`](https://b-rodrigues.github.io/lbkeyboard/reference/calculate_layout_effort.md)
   : Calculate typing effort for a keyboard layout
 - [`ch_qwertz`](https://b-rodrigues.github.io/lbkeyboard/reference/ch_qwertz.md)
