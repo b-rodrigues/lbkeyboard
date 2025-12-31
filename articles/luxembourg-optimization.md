@@ -752,13 +752,13 @@ knitr::kable(
 
 | Rank | Layout | Type | Effort | Relative (%) | vs QWERTZ | L/R Balance |
 |:--:|:---|:---|---:|---:|---:|:--:|
-| 1 | Optimized (QWERTZ Home) | Custom | 569538.3 | 100.0 | 48% | 55.4/44.6 |
-| 2 | Optimized (Unconstrained) | Custom | 575227.0 | 101.0 | 47.4% | 47.3/52.7 |
-| 3 | Dvorak | Standard | 624181.2 | 109.6 | 43% | 43.1/56.9 |
-| 4 | BÉPO | Standard | 633624.9 | 111.3 | 42.1% | 43.5/56.5 |
-| 5 | Optimized (QWERTZ + Accents) | Custom | 651157.0 | 114.3 | 40.5% | 57/43 |
-| 6 | QWERTZ | Standard | 1094468.2 | 192.2 | 0% | 48.1/51.9 |
-| 7 | AZERTY | Standard | 1147510.6 | 201.5 | -4.8% | 49.1/50.9 |
+| 1 | Optimized (QWERTZ Home) | Custom | 569538.3 | 100.0 | 48% | 67.2/32.8 |
+| 2 | Optimized (Unconstrained) | Custom | 575227.0 | 101.0 | 47.4% | 66.3/33.7 |
+| 3 | Dvorak | Standard | 624181.2 | 109.6 | 43% | 50.9/49.1 |
+| 4 | BÉPO | Standard | 633624.9 | 111.3 | 42.1% | 43.6/56.4 |
+| 5 | Optimized (QWERTZ + Accents) | Custom | 651157.0 | 114.3 | 40.5% | 71.1/28.9 |
+| 6 | QWERTZ | Standard | 1094468.2 | 192.2 | 0% | 59/41 |
+| 7 | AZERTY | Standard | 1147510.6 | 201.5 | -4.8% | 60/40 |
 
 Final layout rankings - Lower effort is better. Hand balance shows
 Left/Right percentage.

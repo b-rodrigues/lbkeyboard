@@ -178,15 +178,145 @@ languages? <strong>E, N, S, T, R, I, A</strong> — exactly what you’d
 want on your home row.</p>
 </div>
 <div class="section level2">
+<h2 id="the-effort-model-explained">The Effort Model Explained<a class="anchor" aria-label="anchor" href="#the-effort-model-explained"></a>
+</h2>
+<p>Before comparing layouts, let’s understand how we measure “typing
+effort.” The <strong>lbkeyboard</strong> package uses a Carpalx-inspired
+model that considers five components:</p>
+<div class="section level3">
+<h3 id="base-effort-weight-3-0">1. Base Effort (Weight: 3.0)<a class="anchor" aria-label="anchor" href="#base-effort-weight-3-0"></a>
+</h3>
+<p>Every key has an inherent effort based on position. Home row keys
+(where fingers rest) have the lowest effort; reaching up to the top row
+or down to the bottom row costs more. Finger strength matters too—index
+fingers are stronger than pinkies.</p>
+<p><strong>Example</strong>: Typing “e” on QWERTZ (top row, middle
+finger reach) costs more than typing “j” (home row, index finger)—even
+though we use “e” 100× more often!</p>
+</div>
+<div class="section level3">
+<h3 id="same-finger-bigram-penalty-weight-3-0">2. Same-Finger Bigram Penalty (Weight: 3.0)<a class="anchor" aria-label="anchor" href="#same-finger-bigram-penalty-weight-3-0"></a>
+</h3>
+<p>Using the same finger twice in a row is slow and uncomfortable. The
+model heavily penalizes these sequences.</p>
+<p><strong>Example</strong>: Typing “de” on QWERTZ uses the same finger
+(middle finger, D→E). This is penalized. On BÉPO, these letters are on
+different hands, so no penalty.</p>
+</div>
+<div class="section level3">
+<h3 id="same-hand-penalty-weight-0-5">3. Same-Hand Penalty (Weight: 0.5)<a class="anchor" aria-label="anchor" href="#same-hand-penalty-weight-0-5"></a>
+</h3>
+<p>Consecutive keys on the same hand are slightly harder than
+alternating hands, because one hand must do all the work.</p>
+</div>
+<div class="section level3">
+<h3 id="row-change-penalty-weight-0-5">4. Row Change Penalty (Weight: 0.5)<a class="anchor" aria-label="anchor" href="#row-change-penalty-weight-0-5"></a>
+</h3>
+<p>Jumping between rows (e.g., top→bottom) requires more finger travel
+than staying on the same row.</p>
+</div>
+<div class="section level3">
+<h3 id="layer-penalties">5. Layer Penalties<a class="anchor" aria-label="anchor" href="#layer-penalties"></a>
+</h3>
+<p>Characters requiring modifier keys (Shift, AltGr, dead keys) incur
+extra effort: - <strong>Shift</strong>: +5% effort -
+<strong>AltGr</strong>: +20% effort<br>
+- <strong>Dead key</strong> (e.g., ˆ + o = ô): +40% effort (two
+keystrokes!)</p>
+</div>
+<div class="section level3">
+<h3 id="putting-it-together">Putting It Together<a class="anchor" aria-label="anchor" href="#putting-it-together"></a>
+</h3>
+<p>The total effort formula is:</p>
+<pre><code>Total = Σ (base × frequency) + Σ (same_finger_penalty) + Σ (same_hand_penalty) 
+        + Σ (row_change_penalty) + Σ (layer_penalties)</code></pre>
+<p><strong>Numerical Example</strong>: Consider typing “the” (one of the
+most common English trigrams):</p>
+<table class="table">
+<thead><tr class="header">
+<th>Layout</th>
+<th>Key Positions</th>
+<th>Same-Finger?</th>
+<th>Row Changes</th>
+<th>Effort</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>QWERTZ</td>
+<td>T(top), H(home), E(top)</td>
+<td>No</td>
+<td>2</td>
+<td>Moderate</td>
+</tr>
+<tr class="even">
+<td>BÉPO</td>
+<td>T(home), H(home), E(home)</td>
+<td>No</td>
+<td>0</td>
+<td><strong>Low</strong></td>
+</tr>
+</tbody>
+</table>
+<p>BÉPO places all three letters on the home row, eliminating row
+changes entirely.</p>
+</div>
+<div class="section level3">
+<h3 id="a-concrete-example-the-pangram">A Concrete Example: The Pangram<a class="anchor" aria-label="anchor" href="#a-concrete-example-the-pangram"></a>
+</h3>
+<p>Let’s calculate actual effort scores for “the quick brown fox jumps
+over the lazy dog” (a pangram using every letter of the alphabet):</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Load layouts</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"ch_qwertz"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"afnor_bepo"</span><span class="op">)</span></span>
+<span><span class="va">qwertz_lux</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_qwertz_lux_keyboard.html">create_qwertz_lux_keyboard</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Effort weights (same as used throughout)</span></span>
+<span><span class="va">effort_weights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  base <span class="op">=</span> <span class="fl">3.0</span>,</span>
+<span>  same_finger <span class="op">=</span> <span class="fl">3.0</span>,</span>
+<span>  same_hand <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  row_change <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  trigram <span class="op">=</span> <span class="fl">0.3</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">pangram</span> <span class="op">&lt;-</span> <span class="st">"the quick brown fox jumps over the lazy dog"</span></span>
+<span></span>
+<span><span class="co"># Calculate effort for each layout</span></span>
+<span><span class="va">pangram_qwertz</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_layout_effort.html">calculate_layout_effort</a></span><span class="op">(</span><span class="va">ch_qwertz</span>, <span class="va">pangram</span>, </span>
+<span>                                          keys_to_evaluate <span class="op">=</span> <span class="va">letters</span>,</span>
+<span>                                          effort_weights <span class="op">=</span> <span class="va">effort_weights</span><span class="op">)</span></span>
+<span><span class="va">pangram_bepo</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_layout_effort.html">calculate_layout_effort</a></span><span class="op">(</span><span class="va">afnor_bepo</span>, <span class="va">pangram</span>,</span>
+<span>                                        keys_to_evaluate <span class="op">=</span> <span class="va">letters</span>,</span>
+<span>                                        effort_weights <span class="op">=</span> <span class="va">effort_weights</span><span class="op">)</span></span>
+<span><span class="va">pangram_lux</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_layout_effort.html">calculate_layout_effort</a></span><span class="op">(</span><span class="va">qwertz_lux</span><span class="op">$</span><span class="va">base</span>, <span class="va">pangram</span>,</span>
+<span>                                       keys_to_evaluate <span class="op">=</span> <span class="va">letters</span>,</span>
+<span>                                       effort_weights <span class="op">=</span> <span class="va">effort_weights</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  Layout <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"QWERTZ"</span>, <span class="st">"BÉPO"</span>, <span class="st">"QWERTZ-LUX"</span><span class="op">)</span>,</span>
+<span>  Effort <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">pangram_qwertz</span>, <span class="va">pangram_bepo</span>, <span class="va">pangram_lux</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  `vs QWERTZ` <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">pangram_qwertz</span>, <span class="va">pangram_bepo</span>, <span class="va">pangram_lux</span><span class="op">)</span> <span class="op">/</span> </span>
+<span>                               <span class="va">pangram_qwertz</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span>, <span class="fl">1</span><span class="op">)</span>, <span class="st">"%"</span><span class="op">)</span>,</span>
+<span>  check.names <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt;       Layout Effort vs QWERTZ</span></span>
+<span><span class="co">#&gt; 1     QWERTZ 338.69        0%</span></span>
+<span><span class="co">#&gt; 2       BÉPO 268.79     20.6%</span></span>
+<span><span class="co">#&gt; 3 QWERTZ-LUX 303.08     10.5%</span></span></code></pre></div>
+<p>Even for this short 35-letter sentence, the optimized layouts require
+measurably less effort.</p>
+</div>
+</div>
+<div class="section level2">
 <h2 id="how-much-better-is-it">How Much Better Is It?<a class="anchor" aria-label="anchor" href="#how-much-better-is-it"></a>
 </h2>
-<p>Using the <strong>lbkeyboard</strong> package’s effort model (which
-accounts for finger travel, same-finger penalties, and ergonomic
-factors), here’s how the layouts compare:</p>
+<p>Using this effort model (with the weights shown above), here’s how
+the layouts compare:</p>
 <pre><code><span><span class="co">#&gt;           Layout Effort Score Hand Balance (L/R %) Relative (%)</span></span>
-<span><span class="co">#&gt; 1           BÉPO     633624.9            43.5/56.5        100.0</span></span>
-<span><span class="co">#&gt; 2     QWERTZ-LUX     642547.9            45.8/54.2        101.4</span></span>
-<span><span class="co">#&gt; 3 QWERTZ (Swiss)    1094468.2            48.1/51.9        172.7</span></span>
+<span><span class="co">#&gt; 1           BÉPO     633624.9            43.6/56.4        100.0</span></span>
+<span><span class="co">#&gt; 2     QWERTZ-LUX     642547.9            52.1/47.9        101.4</span></span>
+<span><span class="co">#&gt; 3 QWERTZ (Swiss)    1094468.2                59/41        172.7</span></span>
 <span><span class="co">#&gt;   Improvement vs QWERTZ</span></span>
 <span><span class="co">#&gt; 1                 42.1%</span></span>
 <span><span class="co">#&gt; 2                 41.3%</span></span>
@@ -269,7 +399,7 @@ not a casual typist!</p></li>
 <li>Quantify improvements with the effort model</li>
 </ul>
 <p>Want to try it? Install the package and dive in:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Install from GitHub</span></span>
 <span><span class="co"># remotes::install_github("b-rodrigues/lbkeyboard")</span></span>
 <span></span>
@@ -308,7 +438,7 @@ model is documented.</p>
 <div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.2 (2025-10-31)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
