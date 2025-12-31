@@ -76,6 +76,13 @@ great, and France recently adopted BÉPO as an official standard
 alongside a revised AZERTY. What would such an optimized layout look
 like for Luxembourg? Here’s my proposal:
 <strong>QWERTZ-LUX</strong>.</p>
+<blockquote>
+<p>⚠️ <strong>This is a work in progress!</strong> The layout, the name,
+and even the methodology are all open for discussion. I’m sharing this
+early because I’d love to hear from the community—especially those who
+type in multiple languages daily. Your feedback will shape the final
+version.</p>
+</blockquote>
 </div>
 <div class="section level2">
 <h2 id="the-problem-with-qwertz">The Problem with QWERTZ<a class="anchor" aria-label="anchor" href="#the-problem-with-qwertz"></a>
@@ -141,7 +148,13 @@ needs</li>
 <strong>Keep QWERTZ as a base</strong> and optimize only what’s
 necessary</li>
 </ol>
-<p>I chose a middle path. QWERTZ-LUX is essentially a fork of BÉPO’s
+<p>I chose a middle path, inspired by Carpalx’s <a href="https://mk.bcgsc.ca/carpalx/?partial_optimization" class="external-link">partial
+optimization</a> philosophy. Martin Krzywinski demonstrated that you
+don’t need to remap the entire keyboard to reap most of the rewards—just
+5 strategic key swaps can achieve <strong>70% of the effort
+reduction</strong> of a fully optimized layout, while the learning curve
+remains manageable.</p>
+<p>QWERTZ-LUX follows this principle. It’s essentially a fork of BÉPO’s
 structure, but with modifications that:</p>
 <ul>
 <li>Keep familiar elements for QWERTZ users (Ctrl+Z, Ctrl+X, Ctrl+C,
@@ -151,7 +164,9 @@ Ctrl+V shortcuts)</li>
 without dead keys</li>
 </ul>
 <p>The home row had to change substantially—QWERTZ’s home row is simply
-too inefficient. But I tried to minimize disruption elsewhere.</p>
+too inefficient. But I tried to minimize disruption elsewhere, following
+the partial optimization insight that the first few key swaps matter
+most.</p>
 </div>
 <div class="section level2">
 <h2 id="the-corpus-what-does-luxembourg-type">The Corpus: What Does Luxembourg Type?<a class="anchor" aria-label="anchor" href="#the-corpus-what-does-luxembourg-type"></a>
@@ -181,8 +196,60 @@ want on your home row.</p>
 <h2 id="the-effort-model-explained">The Effort Model Explained<a class="anchor" aria-label="anchor" href="#the-effort-model-explained"></a>
 </h2>
 <p>Before comparing layouts, let’s understand how we measure “typing
-effort.” The <strong>lbkeyboard</strong> package uses a Carpalx-inspired
-model that considers five components:</p>
+effort.” The <strong>lbkeyboard</strong> package uses a model inspired
+by <a href="https://mk.bcgsc.ca/carpalx/?typing_effort" class="external-link">Carpalx</a>, the
+seminal keyboard layout optimization tool created by Martin
+Krzywinski.</p>
+<div class="section level3">
+<h3 id="carpalx-vs-lbkeyboard">Carpalx vs lbkeyboard<a class="anchor" aria-label="anchor" href="#carpalx-vs-lbkeyboard"></a>
+</h3>
+<table class="table">
+<colgroup>
+<col width="27%">
+<col width="31%">
+<col width="41%">
+</colgroup>
+<thead><tr class="header">
+<th>Aspect</th>
+<th>Carpalx</th>
+<th>lbkeyboard</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><strong>Unit of analysis</strong></td>
+<td>Triads (3-key sequences)</td>
+<td>Bigrams + individual keys</td>
+</tr>
+<tr class="even">
+<td><strong>Base effort</strong></td>
+<td>Finger travel distance</td>
+<td>Position-based (row + column)</td>
+</tr>
+<tr class="odd">
+<td><strong>Penalties</strong></td>
+<td>Hand, row, finger costs</td>
+<td>Same-finger, same-hand, row-change</td>
+</tr>
+<tr class="even">
+<td><strong>Stroke path</strong></td>
+<td>Complex path penalties</td>
+<td>Simplified via bigram weights</td>
+</tr>
+<tr class="odd">
+<td><strong>Layer support</strong></td>
+<td>Not built-in</td>
+<td>Shift, AltGr, dead key penalties</td>
+</tr>
+</tbody>
+</table>
+<p>Carpalx uses triads and a sophisticated stroke path model. We
+simplify this to bigrams (2-key sequences) for faster computation while
+retaining the key ergonomic insights.</p>
+</div>
+<div class="section level3">
+<h3 id="our-model-components">Our Model Components<a class="anchor" aria-label="anchor" href="#our-model-components"></a>
+</h3>
+</div>
 <div class="section level3">
 <h3 id="base-effort-weight-3-0">1. Base Effort (Weight: 3.0)<a class="anchor" aria-label="anchor" href="#base-effort-weight-3-0"></a>
 </h3>
@@ -433,6 +500,51 @@ fork it and create your own optimized layout for your specific needs.
 The code is open source, the methodology is transparent, and the effort
 model is documented.</p>
 <p>Happy typing! 🎹</p>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="about-the-name">About the Name<a class="anchor" aria-label="anchor" href="#about-the-name"></a>
+</h2>
+<p>The current working name “QWERTZ-LUX” is descriptive but not final.
+The first letters of the layout are <strong>QWFOG</strong>, which
+doesn’t exactly roll off the tongue like “QWERTY” or “BÉPO.” Here are
+some alternatives I’m considering:</p>
+<table class="table">
+<colgroup>
+<col width="40%">
+<col width="60%">
+</colgroup>
+<thead><tr class="header">
+<th>Name</th>
+<th>Meaning</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><strong>QWERTZ-LUX</strong></td>
+<td>Current name; descriptive (QWERTZ variant for Luxembourg)</td>
+</tr>
+<tr class="even">
+<td><strong>LÉTZ</strong></td>
+<td>Short for <em>Lëtzebuergesch</em> (Luxembourgish); catchy and
+culturally meaningful</td>
+</tr>
+<tr class="odd">
+<td><strong>AUIE</strong></td>
+<td>From the home row left hand (A, U, I, E); pronounceable as
+“ow-ee”</td>
+</tr>
+<tr class="even">
+<td><strong>LUXO</strong></td>
+<td>Luxembourg Optimized</td>
+</tr>
+<tr class="odd">
+<td><strong>TRIGLOT</strong></td>
+<td>Reflects the trilingual focus (French, German, Luxembourgish)</td>
+</tr>
+</tbody>
+</table>
+<p>What do you think? I’m genuinely open to suggestions—a good name
+helps adoption!</p>
 <hr>
 </div>
 <div class="section level2">
