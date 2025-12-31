@@ -33,6 +33,11 @@ I've been thinking about keyboard layouts for a while. QWERTZ isn't great, and F
 recently adopted BÉPO as an official standard alongside a revised AZERTY. What would
 such an optimized layout look like for Luxembourg? Here's my proposal: **QWERTZ-LUX**.
 
+> ⚠️ **This is a work in progress!** The layout, the name, and even the methodology 
+> are all open for discussion. I'm sharing this early because I'd love to hear from
+> the community—especially those who type in multiple languages daily. Your feedback
+> will shape the final version.
+
 ## The Problem with QWERTZ
 
 If you've ever wondered why you're typing "E" with your middle finger stretched up
@@ -84,7 +89,13 @@ I had two options:
 1. **Go full BÉPO** and adapt it for Luxembourgish needs
 2. **Keep QWERTZ as a base** and optimize only what's necessary
 
-I chose a middle path. QWERTZ-LUX is essentially a fork of BÉPO's structure, but
+I chose a middle path, inspired by Carpalx's 
+[partial optimization](https://mk.bcgsc.ca/carpalx/?partial_optimization) philosophy. 
+Martin Krzywinski demonstrated that you don't need to remap the entire keyboard to 
+reap most of the rewards—just 5 strategic key swaps can achieve **70% of the effort 
+reduction** of a fully optimized layout, while the learning curve remains manageable.
+
+QWERTZ-LUX follows this principle. It's essentially a fork of BÉPO's structure, but
 with modifications that:
 
 - Keep familiar elements for QWERTZ users (Ctrl+Z, Ctrl+X, Ctrl+C, Ctrl+V shortcuts)
@@ -92,7 +103,8 @@ with modifications that:
 - Provide direct access to accented characters (é, à, ü, ö, ç, ä) without dead keys
 
 The home row had to change substantially—QWERTZ's home row is simply too inefficient.
-But I tried to minimize disruption elsewhere.
+But I tried to minimize disruption elsewhere, following the partial optimization insight
+that the first few key swaps matter most.
 
 ## The Corpus: What Does Luxembourg Type?
 
@@ -129,7 +141,23 @@ and daily communication. The top letters across all languages? **E, N, S, T, R, 
 ## The Effort Model Explained
 
 Before comparing layouts, let's understand how we measure "typing effort." The **lbkeyboard** 
-package uses a Carpalx-inspired model that considers five components:
+package uses a model inspired by [Carpalx](https://mk.bcgsc.ca/carpalx/?typing_effort), 
+the seminal keyboard layout optimization tool created by Martin Krzywinski.
+
+### Carpalx vs lbkeyboard
+
+| Aspect | Carpalx | lbkeyboard |
+|--------|---------|------------|
+| **Unit of analysis** | Triads (3-key sequences) | Bigrams + individual keys |
+| **Base effort** | Finger travel distance | Position-based (row + column) |
+| **Penalties** | Hand, row, finger costs | Same-finger, same-hand, row-change |
+| **Stroke path** | Complex path penalties | Simplified via bigram weights |
+| **Layer support** | Not built-in | Shift, AltGr, dead key penalties |
+
+Carpalx uses triads and a sophisticated stroke path model. We simplify this to bigrams 
+(2-key sequences) for faster computation while retaining the key ergonomic insights.
+
+### Our Model Components
 
 ### 1. Base Effort (Weight: 3.0)
 
@@ -393,6 +421,24 @@ your own optimized layout for your specific needs. The code is open source, the
 methodology is transparent, and the effort model is documented.
 
 Happy typing! 🎹
+
+---
+
+## About the Name
+
+The current working name "QWERTZ-LUX" is descriptive but not final. The first letters
+of the layout are **QWFOG**, which doesn't exactly roll off the tongue like "QWERTY" 
+or "BÉPO." Here are some alternatives I'm considering:
+
+| Name | Meaning |
+|------|---------|
+| **QWERTZ-LUX** | Current name; descriptive (QWERTZ variant for Luxembourg) |
+| **LÉTZ** | Short for *Lëtzebuergesch* (Luxembourgish); catchy and culturally meaningful |
+| **AUIE** | From the home row left hand (A, U, I, E); pronounceable as "ow-ee" |
+| **LUXO** | Luxembourg Optimized |
+| **TRIGLOT** | Reflects the trilingual focus (French, German, Luxembourgish) |
+
+What do you think? I'm genuinely open to suggestions—a good name helps adoption!
 
 ---
 
