@@ -27,12 +27,16 @@ calculate_hand_balance <- function(kb, freq_df, threshold = NULL) {
   right_freq <- 0
   
   # Determine column start to adapt threshold if not provided
+  # Left hand covers 5 letter keys (columns 2-6 in 1-based, or 1-5 in 0-based)
+  # Right hand covers the rest (columns 7+ in 1-based, or 6+ in 0-based)
   if (is.null(threshold)) {
     if (nrow(kb) > 0) {
       min_col <- min(kb$number, na.rm = TRUE)
-      threshold <- if (min_col == 0) 5 else 6
+      # For 1-based indexing (min_col == 1): threshold = 7 (left = 2-6, right = 7+)
+      # For 0-based indexing (min_col == 0): threshold = 6 (left = 1-5, right = 6+)
+      threshold <- if (min_col == 0) 6 else 7
     } else {
-      threshold <- 6
+      threshold <- 7
     }
   }
   

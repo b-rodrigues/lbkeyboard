@@ -126,10 +126,111 @@ This weighting roughly matches language usage patterns in Luxembourg workplaces
 and daily communication. The top letters across all languages? **E, N, S, T, R, I, A**
 — exactly what you'd want on your home row.
 
+## The Effort Model Explained
+
+Before comparing layouts, let's understand how we measure "typing effort." The **lbkeyboard** 
+package uses a Carpalx-inspired model that considers five components:
+
+### 1. Base Effort (Weight: 3.0)
+
+Every key has an inherent effort based on position. Home row keys (where fingers rest) 
+have the lowest effort; reaching up to the top row or down to the bottom row costs more. 
+Finger strength matters too—index fingers are stronger than pinkies.
+
+**Example**: Typing "e" on QWERTZ (top row, middle finger reach) costs more than 
+typing "j" (home row, index finger)—even though we use "e" 100× more often!
+
+### 2. Same-Finger Bigram Penalty (Weight: 3.0)
+
+Using the same finger twice in a row is slow and uncomfortable. The model heavily 
+penalizes these sequences.
+
+**Example**: Typing "de" on QWERTZ uses the same finger (middle finger, D→E). 
+This is penalized. On BÉPO, these letters are on different hands, so no penalty.
+
+### 3. Same-Hand Penalty (Weight: 0.5)
+
+Consecutive keys on the same hand are slightly harder than alternating hands, 
+because one hand must do all the work.
+
+### 4. Row Change Penalty (Weight: 0.5)
+
+Jumping between rows (e.g., top→bottom) requires more finger travel than 
+staying on the same row.
+
+### 5. Layer Penalties
+
+Characters requiring modifier keys (Shift, AltGr, dead keys) incur extra effort:
+- **Shift**: +5% effort
+- **AltGr**: +20% effort  
+- **Dead key** (e.g., ˆ + o = ô): +40% effort (two keystrokes!)
+
+### Putting It Together
+
+The total effort formula is:
+
+```
+Total = Σ (base × frequency) + Σ (same_finger_penalty) + Σ (same_hand_penalty) 
+        + Σ (row_change_penalty) + Σ (layer_penalties)
+```
+
+**Numerical Example**: Consider typing "the" (one of the most common English trigrams):
+
+| Layout | Key Positions | Same-Finger? | Row Changes | Effort |
+|--------|--------------|--------------|-------------|--------|
+| QWERTZ | T(top), H(home), E(top) | No | 2 | Moderate |
+| BÉPO   | T(home), H(home), E(home) | No | 0 | **Low** |
+
+BÉPO places all three letters on the home row, eliminating row changes entirely.
+
+### A Concrete Example: The Pangram
+
+Let's calculate actual effort scores for "the quick brown fox jumps over the lazy dog" 
+(a pangram using every letter of the alphabet):
+
+```{r pangram-example, echo=TRUE}
+# Load layouts
+data("ch_qwertz")
+data("afnor_bepo")
+qwertz_lux <- create_qwertz_lux_keyboard()
+
+# Effort weights (same as used throughout)
+effort_weights <- list(
+  base = 3.0,
+  same_finger = 3.0,
+  same_hand = 0.5,
+  row_change = 0.5,
+  trigram = 0.3
+)
+
+pangram <- "the quick brown fox jumps over the lazy dog"
+
+# Calculate effort for each layout
+pangram_qwertz <- calculate_layout_effort(ch_qwertz, pangram, 
+                                          keys_to_evaluate = letters,
+                                          effort_weights = effort_weights)
+pangram_bepo <- calculate_layout_effort(afnor_bepo, pangram,
+                                        keys_to_evaluate = letters,
+                                        effort_weights = effort_weights)
+pangram_lux <- calculate_layout_effort(qwertz_lux$base, pangram,
+                                       keys_to_evaluate = letters,
+                                       effort_weights = effort_weights)
+
+data.frame(
+  Layout = c("QWERTZ", "BÉPO", "QWERTZ-LUX"),
+  Effort = round(c(pangram_qwertz, pangram_bepo, pangram_lux), 2),
+  `vs QWERTZ` = paste0(round((1 - c(pangram_qwertz, pangram_bepo, pangram_lux) / 
+                               pangram_qwertz) * 100, 1), "%"),
+  check.names = FALSE
+)
+```
+
+Even for this short 35-letter sentence, the optimized layouts require measurably less effort.
+
 ## How Much Better Is It?
 
-Using the **lbkeyboard** package's effort model (which accounts for finger travel,
-same-finger penalties, and ergonomic factors), here's how the layouts compare:
+Using this effort model (with the weights shown above), here's how the layouts compare:
+
 
 ```{r effort-comparison, echo=FALSE}
 # Load layouts
